@@ -14,8 +14,8 @@
 # Keterbatasan bukti dicatat di field limitation, BUKAN di nama status.
 
 version: "1.0"
-updated: "2026-11-22T13:05:00+07:00"
-updated_by: "Repository Engineering Audit Sprint (item P0 #1)"
+updated: "2026-11-22T14:50:00+07:00"
+updated_by: "Autonomous Readiness Cycle 6 (cron local-only)"
 overall_readiness: NOT_READY
 overall_readiness_reason: "Batch 1: 1 EXECUTED (dengan keterbatasan bukti) + 2 READY_FOR_REVIEW dari 10; gerbang V2-007 + V2-009 belum lolos; harga Master + VPS 8 belum terverifikasi panel; biaya storage/backup belum dihitung; D9/D10 menunggu user."
 
@@ -71,9 +71,9 @@ tickets:
   V2-005:
     title: "Baseline snapshot"
     priority: P1
-    ticket_status: STUB
+    ticket_status: COMPLETE
     work_status: NOT_STARTED
-    note: "Perlu rekonsiliasi baseline kematian encoder (5x/24 jam di scorecard vs 12x/17 jam V2-002) + konfirmasi sumber median delay 11,6 mnt."
+    note: "Tiket diperluas ke format 15 elemen (Cycle 6, 22 Nov 14:50). Eksekusi QUEUED-FOR-INTERACTIVE — menunggu sesi interaktif + SSH. Rekonsiliasi baseline kematian encoder (5x/24 jam di scorecard vs 12x/17 jam V2-002) + konfirmasi sumber median delay 11,6 mnt kini OQ-016/OQ-017/OQ-018 di tiket."
   V2-006:
     title: "Service inventory"
     priority: P1
