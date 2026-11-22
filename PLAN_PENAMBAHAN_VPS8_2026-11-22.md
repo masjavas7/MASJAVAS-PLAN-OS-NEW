@@ -38,8 +38,11 @@ lolos gerbang + pemicu demand tercapai. Fase 2 (box ke-3) hanya bila
 dana + kebutuhan membenarkan (persetujuan terpisah).
 
 **Goal "makin solid" diukur dengan scorecard §2** — setiap fase harus
-mempertahankan atau memperbaiki SEMUA metrik baseline; satu metrik yang
-memburuk = gerbang gagal = rollback.
+mempertahankan atau memperbaiki SEMUA metrik baseline; klasifikasi
+gerbang memakai 3 kategori (rollback runbook §1.1/§3.1): hard safety
+breach → stop/rollback darurat; SLO degradation → hold + investigasi +
+keputusan owner; transient noise → observasi. Aturan lama "satu metrik
+memburuk = rollback" SUPERSEDED 22 Nov 13:08 (false positive).
 
 ---
 
@@ -118,8 +121,9 @@ lain lewat 12 guard yang terverifikasi (G1–G12, detail di
 
 ### 1.6 Live tidak stabil (di luar soal box)
 
-- Encoder slot 706 mati mendadak **5×/24 jam** (pola berulang; akar
-  penyebab belum didiagnosis; auto-restart ±15 dtk tiap kali).
+- Encoder slot 114 mati mendadak **12×/17 jam** (21–22 Nov, V2-002;
+  akar: RTMP timeout + relay feeder stall; perbaikan R3–R8 + iterasi
+  2 sudah di-deploy, observasi 24 jam berjalan).
 - 1 encoder ORPHAN (18 jam, parent PID 1) berjalan tanpa pengawas.
 - Traceback live = DB-locked di health check (`live_supervisor.py:878,
   920`). Pindah box TIDAK memperbaiki ketiganya — perlu perbaikan
@@ -139,13 +143,15 @@ adalah perbaikan yang GAGAL.**
 
 "Solid" bukan slogan — ini scorecard-nya. Baseline = kondisi
 terverifikasi 21–22 Nov. **Setiap fase harus mempertahankan atau
-memperbaiki SEMUA baris; satu baris memburuk = gerbang gagal.**
+memperbaiki SEMUA baris; klasifikasi gerbang memakai 3 kategori
+(rollback runbook §1.1/§3.1) — bukan lagi "satu baris memburuk =
+gagal" (SUPERSEDED 22 Nov 13:08).**
 
 | # | Metrik | Baseline (21–22 Nov) | Target setelah Fase 0 | Target setelah Fase 1 |
 |---|---|---|---|---|
 | 1 | Publish/hari | 206 (21 Nov) | ≥200, 0 FAILED | ≥200, 0 FAILED |
 | 2 | Keterlambatan terbit p90 | 30,2 menit | ≤30 menit | ≤25 menit |
-| 3 | Kematian encoder tak direncanakan | 5×/24 jam (slot 706) | ≤1×/24 jam (setelah P16) | 0×/72 jam |
+| 3 | Kematian encoder tak direncanakan | 12×/17 jam (slot 114, 21–22 Nov) | ≤1×/24 jam (setelah P16) | 0×/72 jam |
 | 4 | Encoder orphan | 1 | 0 | 0 |
 | 5 | "database is locked"/24 jam | 31× | <20× | <10× |
 | 6 | Load Master (rata-rata) | 3,5–4,2 | <3,0 | <2,5 |
@@ -272,8 +278,9 @@ Live-01 — Contabo Core VPS 8 (8 vCPU / 24 GB / 300 GB / 600 Mbit/s)
 ## 6. Phasing + gerbang verifikasi
 
 Setiap langkah: verifikasi pra → implementasi → verifikasi pasca →
-observasi 72 jam → lanjut/rollback. **Satu metrik scorecard (§2)
-memburuk = gerbang gagal = rollback.**
+observasi 72 jam → lanjut/rollback. **Klasifikasi gerbang memakai
+3 kategori (rollback runbook §1.1/§3.1); aturan lama "satu metrik
+memburuk = rollback" SUPERSEDED 22 Nov 13:08.**
 
 ### Fase 0 — $0 (Master saja; tanpa pembelian)
 
@@ -283,7 +290,7 @@ memburuk = gerbang gagal = rollback.**
 | 0.2 | Job berat keluar dari web (P15: reassemble, regen, fleet, AI-video → worker) | CPU web <0,2 core; 0 anak ffmpeg di web | Kembalikan route lama (git revert) |
 | 0.3 | Klaim pull + 1-owner per (channel, kind) (G9) | Churn SUPERSEDED <20% dalam 7 hari | Kembalikan logika antrean lama |
 | 0.4 | Sweeper batch 2 → 5; guard dilokalkan + log alasannya | Feed ±2,5 channel/menit; setiap penahanan tercatat | Kembalikan batch 2 |
-| 0.5 | Diagnosis + perbaikan P16 (encoder 706 + orphan) | 0 kematian/72 jam; 0 orphan | — (diagnosis dulu) |
+| 0.5 | Diagnosis + perbaikan P16 (encoder 114 + orphan) | 0 kematian/72 jam; 0 orphan | Sebagian besar selesai (R3–R8 + iterasi 2 deployed 07:24/08:20; observasi 24 jam berjalan) |
 | 0.6 | Janitor status-only (P4/R1) | 0 GB file channel CONNECTED terhapus berlabel "unpaired" dalam audit 24 jam | Kembalikan klausa lama |
 
 **Gerbang Fase 0:** scorecard baris 1, 2, 5, 6, 7, 8, 9, 11 membaik
@@ -363,7 +370,7 @@ tanpa isolasi). Detail: Lampiran A rancangan lama.
 - **Kuota sync P2:** mekanisme belum terpecahkan (6 teori dieliminasi).
   Plan ini mengurangi beban tulis DB, bukan mengobati kuota.
 - **Kuota KEIN:** Tahap 1/2 tetap API-bound; plan KEIN berakhir 23 Nov.
-- **Encoder 706 (P16):** diagnosis akar penyebab terpisah (langkah 0.5).
+- **Encoder 114 (P16):** diagnosis akar penyebab terpisah (langkah 0.5).
 
 ## 10. Keputusan yang dibutuhkan dari user
 
