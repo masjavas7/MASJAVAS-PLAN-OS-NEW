@@ -14,8 +14,8 @@
 # Keterbatasan bukti dicatat di field limitation, BUKAN di nama status.
 
 version: "1.0"
-updated: "2026-11-22T18:50:00+07:00"
-updated_by: "Autonomous Readiness Cycle 7 (cron local-only)"
+updated: "2026-11-22T22:50:00+07:00"
+updated_by: "Autonomous Readiness Cycle 8 (cron local-only)"
 overall_readiness: NOT_READY
 overall_readiness_reason: "Batch 1: 1 EXECUTED (dengan keterbatasan bukti) + 2 READY_FOR_REVIEW dari 10; gerbang V2-007 + V2-009 belum lolos; harga Master + VPS 8 belum terverifikasi panel; biaya storage/backup belum dihitung; D9/D10 menunggu user."
 
@@ -83,9 +83,9 @@ tickets:
   V2-007:
     title: "Database schema audit (GERBANG TEKNIS)"
     priority: P1
-    ticket_status: STUB
+    ticket_status: COMPLETE
     work_status: NOT_STARTED
-    note: "Gerbang teknis: TIDAK ADA migrasi schema sebelum V2-007 disetujui."
+    note: "Tiket diperluas ke format 15 elemen (Cycle 8, 22 Nov 22:50). Eksekusi QUEUED-FOR-INTERACTIVE — menunggu sesi interaktif + SSH. Gerbang teknis: TIDAK ADA migrasi schema sebelum V2-007 disetujui. Audit dari SALINAN backup (OQ-024: jalur tulis-live init_schema() belum terbukti aman); OQ-001 (loopgen_agent_tasks kosong) + OQ-002 (updated_at 20 Nov) dijawab dari data; keputusan perluas-vs-tabel-baru kini OQ-027; indeks hilang penyebab lock kini OQ-026; status/transisi data-vs-kode kini OQ-028."
   V2-008:
     title: "Resource budget benchmark"
     priority: P1
@@ -135,5 +135,5 @@ counts:
   executed_with_limitation: 1
   ready_for_review: 2
   not_started: 7
-  ticket_complete: 5
-  ticket_stub: 5
+  ticket_complete: 6
+  ticket_stub: 4
