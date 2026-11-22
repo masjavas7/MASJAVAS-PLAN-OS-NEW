@@ -2,6 +2,7 @@
 
 **Dokumen acuan (frozen):** `MASTER_ARCHITECTURE_MASJAVAS_TUBE_OS_V2.md` (Draft Baseline),
 `IMPLEMENTATION_CHECKLIST_MASJAVAS_TUBE_OS_V2.md` (v1.0)
+**Versi:** 1.9 — V2-009 diperluas Cycle 10, 23 Nov 06:50 WIB (cron local-only)
 **Versi:** 1.8 — V2-008 diperluas Cycle 9, 23 Nov 02:50 WIB (cron local-only)
 **Versi:** 1.7 — V2-007 diperluas Cycle 8, 22 Nov 22:50 WIB (cron local-only)
 **Versi:** 1.6 — V2-006 diperluas Cycle 7, 22 Nov 18:50 WIB (cron local-only)
@@ -2716,19 +2717,475 @@ tidak dapat dibandingkan.**
 
 ---
 
-# TIKET V2-009 — VPS 8 PRICE + STORAGE COST VERIFICATION (STUB — GERBANG BIAYA)
+# TIKET V2-009 — VPS 8 PRICE + STORAGE COST VERIFICATION (GERBANG BIAYA)
 
-**Prioritas:** P1 | **Workstream:** P6.1 + P6.2 | **Status:** NOT_STARTED
-**Dependency:** panel Contabo + quote object storage
+**Judul:** Verifikasi harga Master aktual + VPS 8 aktual + pajak + setup fee
++ periode billing + kebijakan renewal/pembatalan di panel Contabo; hitung
+biaya object storage off-site (volume backup + retensi + egress +
+request) untuk Restic + Litestream; hitung ulang TCO penuh vs cap
+$34,67/bln (cap = SELURUH TCO, diputuskan owner 22 Nov 13:13); keluarkan
+verdict gerbang biaya C-1–C-5 (lolos / gagal / tidak dapat dinilai)
+**Prioritas:** P1 | **Workstream:** P6.1 + P6.2 | **Owner:** Muse
+(verifikasi + hitung ulang) — angka panel: user
+**Status:** NOT_STARTED (tiket lengkap — eksekusi menunggu sesi interaktif
++ angka panel dari user; TIDAK butuh SSH)
+**Dibuat:** 22 Nov 2026 (stub) — **Diperluas:** 23 Nov 2026 06:50 WIB
+(Cycle 10, cron local-only)
+**Dependency:** panel Contabo (harga Master + VPS 8 + kuota trafik +
+snapshot — input dari USER, bukan blocker teknis); `MASJAVAS_TCO_MODEL.md`
+(model yang diverifikasi — BUKAN pengganti angka panel);
+`MASJAVAS_BACKUP_RECOVERY_PLAN.md` §8 (storage cost gate, retensi
+target); `VPS8_PURCHASE_GATE.md` §4 (daftar verifikasi C-1–C-5);
+`MASJAVAS_COST_REGISTER.md` (label harga); V2-005 baseline (ukuran DB
++ pertumbuhan, bila tersedia); V2-007 schema audit (ukuran DB + tabel,
+input, BUKAN blocker)
+**Diblokir oleh:** tidak ada — membutuhkan angka panel Contabo dari user
+(Turnstile memblokir browser cloud — lihat §A.5) + pemilihan provider
+object storage (keputusan owner, STORAGE MENUNGGU)
 
-**Scope:** verifikasi harga Master aktual + VPS 8 aktual + pajak + setup fee
-+ periode billing + cancellation policy di panel Contabo; hitung total vs
-cap $34,67/bln; hitung biaya object storage (DB size + pertumbuhan +
-retensi + egress + request) untuk Litestream + Restic.
-**Praktis:** panel Contabo dilindungi Cloudflare Turnstile yang TIDAK BISA
-dilewati browser cloud Muse — verifikasi harga butuh user cek sendiri di
-browsernya atau ambil alih browser live.
-**Batas:** verifikasi saja; JANGAN beli/langganan apa pun.
+## A. Masalah
+
+Gerbang biaya adalah satu-satunya gerbang Batch 1 yang menahan
+PEMBELIAN — dan hari ini gerbang itu tidak dapat dinilai, karena dua
+pilarnya belum terverifikasi:
+
+1. **Infrastruktur saja sudah menghabiskan cap.** Subtotal Master +
+   VPS 8 = $34,67/bln — tepat sama dengan cap $34,67/bln yang
+   DIPUTUSKAN owner mencakup SELURUH TCO (22 Nov 13:13, OQ-TCO-1
+   tertutup). Headroom anggaran $0. Skenario EXPECTED yang diketahui
+   saja sudah $36,17/bln (+$1,50/bln dari agregator Offside) —
+   SEBELUM storage, domain, monitoring, atau cadangan apa pun
+   dihitung. Bila harga panel ternyata lebih tinggi dari listing,
+   skenario MINIMUM pun melampaui cap.
+2. **Harga Master adalah ESTIMASI, harga VPS 8 adalah listing.**
+   Master ±$16,02/bln (±$14,43 pra-pajak) belum pernah diverifikasi
+   di panel; VPS 8 $18,65/bln + $2,66 setup adalah DOCUMENTED FACT
+   NOT YET REVALIDATED dari listing PLAN §7 — bukan harga renewal
+   yang dikonfirmasi panel. Bila harga renewal naik, seluruh model
+   TCO bergeser.
+3. **Biaya storage/backup BELUM DIHITUNG — dan itu bukan nol.**
+   Object storage off-site (Restic), retensi backup, Litestream,
+   snapshot VPS, egress, domain masjavastube.my.id, monitoring
+   eksternal — semuanya BELUM DIHITUNG di TCO model §2.2–2.3.
+   Tanpa angkanya, total TCO tidak dapat dibandingkan dengan cap
+   secara jujur; gerbang pembelian (VPS8_PURCHASE_GATE.md §4.3)
+   menyatakan pembelian TIDAK lolos bila total all-in > $34,67/bln.
+4. **Jalur hemat yang tersedia belum diputuskan.** Kontrak 12 bulan
+   VPS 8 (total $31,87/bln, bayar di muka $190,21 — ESTIMASI)
+   membebaskan ±$2,80/bln dan membuat EXPECTED yang diketahui
+   menjadi $33,37/bln (di bawah cap $1,30/bln) — tetapi komposisi
+   $190,21 belum didokumentasikan (OQ-TCO-2) dan keputusan
+   KONTRAK-12 MENUNGGU ("bulanan dulu, putuskan setelah model
+   terbukti").
+5. **Verifikasi panel TIDAK BISA dilakukan browser cloud Muse.**
+   Panel Contabo dilindungi Cloudflare Turnstile yang menolak
+   browser/jaringan ini (terbukti 17 Nov — panel Contabo; terbukti
+   lagi 22 Nov 05:29 — dashboard KEIN kein.my.id + beliapi.com,
+   7+ kali gagal, 2 lingkungan). Pola yang sama berlaku untuk
+   panel Contabo: eksekutor menyiapkan daftar periksa angka yang
+   persis (F.1) dan user memeriksa panel di browsernya sendiri
+   ATAU mengambil alih browser live. **JANGAN coba browser task
+   untuk panel Contabo** — sudah terbukti gagal dua kali; itu
+   membuang siklus, bukan verifikasi.
+
+**Fakta terverifikasi (bukan asumsi):**
+
+| Fakta | Nilai | Sumber |
+|---|---|---|
+| Cap TCO (mengikat) | $34,67/bln mencakup SELURUH TCO (infrastruktur + storage + backup + domain + layanan) | Owner 22 Nov 13:13 (OQ-TCO-1 DIPUTUSKAN); TCO model §1 + §4; purchase gate §4.2–4.3 |
+| Master (Contabo Plus 4) | ±$16,02/bln incl-tax (±$14,43 pra-pajak) | **ESTIMASI** — PLAN §7; cost register; TCO model §2.1 (belum verifikasi panel) |
+| VPS 8 (Contabo Core, 8 vCPU/24 GB/300 GB/600 Mbit/s) | $18,65/bln incl-tax ($16,80 pra-pajak) + $2,66 setup sekali ($2,40 pra-pajak) | **DF** — listing PLAN §7; pra-pajak hasil hitung (÷1,11), bukan harga panel; TCO model §2.1 |
+| Subtotal infrastruktur | $31,23 pra-pajak + $3,44 PPN 11% = $34,67 — PAS di cap, headroom $0 | TCO model §2.1 (aritmetika konsisten: 31,23 × 1,11 = 34,67) |
+| Skenario MINIMUM | $34,67/bln; $418,70/thn (termasuk setup $2,66) | TCO model §3 |
+| Skenario EXPECTED (yang diketahui) | $36,17/bln — LEBIH $1,50/bln dari cap, SEBELUM storage/domain | TCO model §3 (Offside $1,50/bln) |
+| Skenario WORST CASE (yang diketahui) | $39,64/bln — LEBIH $4,97/bln dari cap, SEBELUM yang belum diketahui | TCO model §3 (cadangan 10% $3,47/bln [PR]) |
+| Kontrak 12 bulan (opsi hemat) | VPS 8 $15,85/bln; total $31,87/bln; bayar di muka $190,21; EXPECTED yang diketahui → $33,37/bln (di bawah cap $1,30/bln) | **ESTIMASI** — PLAN §7; TCO model §2.6 + §3; keputusan KONTRAK-12 MENUNGGU |
+| DB live (volume backup inti) | 118 MB — `/opt/masjavas-os/data/masjavas_tube.sqlite` | **VERIFIED FACT** — backup plan §2 (22 Nov 2026) |
+| Retensi backup (target) | 7 backup harian, 4 mingguan, bulanan sesuai kebutuhan; retensi final menyesuaikan biaya storage (gerbang §8) | **PROPOSAL** — backup plan §3 (V2.0 §14.4); belum diputuskan owner |
+| Storage cost gate | 8 langkah (§8 backup plan): pilih backend → volume → retensi → hitung Litestream → hitung Restic; status NOT READY | Backup plan §8; dashboard (storage and backup costs NOT READY) |
+| Agregator Offside (Content ID) | $18/tahun = $1,50/bln | **DF** — MEMORY.md 23 Okt 2026; perlakuan pajak tidak tercatat |
+| Turnstile memblokir browser cloud | Panel Contabo (17 Nov) + dashboard KEIN (22 Nov 05:29, 7+ kali, 2 lingkungan) — verifikasi harga butuh user | AGENTS.md / TOOLS.md (Contabo); log Cycle 1 addendum F.5 (KEIN) |
+| Gerbang biaya menahan pembelian | V2-009_cost_gate: NOT_STARTED — "TIDAK ADA pembelian sebelum V2-009 lolos"; purchase gate: BELI ⟺ Fase0 AND (Demand OR Risk) AND Cost terverifikasi AND Rollback AND Persetujuan owner | STATUS_REGISTRY.yaml; VPS8_PURCHASE_GATE.md §5.1 |
+| Fase 0 belum lolos | Kendala terbesar live TERBUKTI rantai kuota + deteksi + pemulihan, bukan kapasitas server (load ~3,4/4 vCPU, egress ~33 Mbps dari 500 Mbps); gerbang beli VPS 8 tetap tertutup | MEMORY.md 23 Nov ~06:31 WIB (lane live-monitor) |
+| Kurs asumsi | ±Rp 18.300/USD (PLAN §7; dokumen BIAYA memakai Rp 18.000/USD — catat kurs yang dipakai tiap angka Rupiah) | TCO model (peringatan kurs) |
+| Baseline lantai (mengikat) | 206 PUBLISHED/hari, 0 FAILED/BLOCKED, delay p90 30,2 mnt | User 22 Nov 12:40 (OPTIMASI, BUKAN PENGGANTIAN) |
+
+**Fakta yang BELUM terverifikasi (jangan diperlakukan sebagai fakta):**
+harga Master aktual di panel (pra-pajak + incl-tax + periode billing);
+harga VPS 8 aktual + harga renewal (apakah $18,65 bertahan); kuota
+trafik paket Contabo (apakah egress live masuk kuota atau berbayar);
+provider + harga object storage off-site (per GB/bulan); biaya retensi
+backup; harga snapshot VPS; biaya domain masjavastube.my.id; tier
+monitoring eksternal (gratis cukup atau berbayar); komposisi $190,21
+kontrak 12 bulan; harga perpanjangan KEIN + paket Dahono (OQ-TCO-4);
+volume backup total (DB 118 MB + staging + salinan DR + pertumbuhan).
+
+**OPEN QUESTION (ditemukan saat perluasan tiket — wajib dijawab saat eksekusi):**
+OQ-036 — berapa harga Master AKTUAL di panel Contabo (nama paket,
+pra-pajak + incl-tax, periode billing, harga renewal)? OQ-037 — berapa
+harga VPS 8 AKTUAL + harga RENEWAL di panel (apakah $18,65/bln listing
+bertahan di renewal, atau naik)? OQ-038 — berapa kuota trafik paket
+Contabo (Master + VPS 8) dan apakah egress live (±310 Mbps terukur
+terhadap port 500 Mbps) masuk kuota atau berbayar? OQ-039 — provider
+object storage off-site mana + berapa harga per GB/bulan (termasuk
+egress + request) untuk Restic + Litestream? OQ-040 — berapa harga
+snapshot VPS Contabo + biaya domain masjavastube.my.id (registrasi +
+perpanjangan)? OQ-041 — berapa volume backup total yang harus disimpan
+(DB 118 MB + file staging + salinan DR + pertumbuhan/bulan) pada
+retensi target 7 harian + 4 mingguan + bulanan? OQ-042 — apakah free
+tier object storage cukup untuk volume itu (storage $0 — satu-satunya
+jalan agar TCO bulanan muat cap tanpa revisi infrastruktur)? OQ-043 —
+komposisi $190,21 bayar di muka kontrak 12 bulan (OQ-TCO-2): murni
+12× $15,85 VPS 8 atau termasuk komponen lain? OQ-044 — harga
+perpanjangan KEIN + harga paket Dahono (OQ-TCO-4): perlu dicari sebelum
+V2-009, atau tetap BELUM DIHITUNG karena D1 DITUTUP? OQ-045 — tier
+monitoring eksternal: apakah tier gratis (Healthchecks.io /
+UptimeRobot) cukup, atau ada biaya berbayar?
+
+**Dua pekerjaan berbeda (jangan dicampur):**
+
+1. **Verifikasi biaya (tiket ini)** — kumpulkan angka primer (panel
+   Contabo via user + quote object storage + hitung volume) dan
+   hitung ulang TCO penuh vs cap; keluarkan verdict C-1–C-5.
+   JANGAN beli/langganan apa pun.
+2. **Keputusan pembelian + revisi anggaran (keputusan terpisah)** —
+   memakai verdict tiket ini: bila total all-in > $34,67/bln,
+   eskalasi ke owner (revisi infrastruktur / kontrak 12 bulan /
+   storage $0 / naikkan cap) — itu D4, bukan isi tiket ini.
+
+## B. Target
+
+1. Harga Master terverifikasi dari panel Contabo (nama paket,
+   pra-pajak + incl-tax, periode billing, harga renewal) — Q1 (C-1).
+2. Harga VPS 8 terverifikasi dari panel/listing (harga bulanan +
+   harga renewal + setup fee + periode billing + kebijakan
+   pembatalan) — Q2 (C-2).
+3. Kuota trafik paket Contabo terverifikasi (Master + VPS 8) +
+   jawaban apakah egress live masuk kuota — Q3.
+4. Provider object storage dipilih (dari daftar kandidat, BUKAN
+   dari tebakan) + harga per GB/bulan + egress + request —
+   Q4 (C-3 sebagian).
+5. Volume backup total dihitung (DB 118 MB + staging + salinan DR
+   + pertumbuhan) pada retensi target 7/4/bulanan — Q5.
+6. Biaya storage/backup off-site dihitung penuh (Restic + Litestream
+   + snapshot + retensi) — Q6 (C-3).
+7. Biaya domain + monitoring eksternal dihitung (atau dicatat
+   eksplisit "BELUM DIHITUNG + alasannya" bila tidak dapat
+   diverifikasi) — Q7.
+8. TCO penuh dihitung ulang (3 skenario MINIMUM / EXPECTED / WORST
+   vs cap $34,67/bln) dengan angka terverifikasi menggantikan
+   ESTIMASI/DF — Q8 (C-4).
+9. Verdict gerbang biaya C-1–C-5 tercatat (lolos / gagal / tidak
+   dapat dinilai) + paket bukti keputusan untuk owner — Q9 (C-5).
+10. OQ-036–OQ-045 terjawab dengan bukti; yang tidak bisa dijawab
+    dicatat eksplisit sebagai "TIDAK DAPAT DIVERIFIKASI + alasannya";
+    handoff ke purchase gate (VPS8_PURCHASE_GATE.md §4) + TCO model
+    + cost register tercatat eksplisit.
+
+## C. Prasyarat
+
+- [ ] `MASJAVAS_TCO_MODEL.md` + `VPS8_PURCHASE_GATE.md` §4 +
+      `MASJAVAS_COST_REGISTER.md` + `MASJAVAS_BACKUP_RECOVERY_PLAN.md`
+      §8 dibaca sebagai pembanding — BUKAN pengganti angka panel.
+- [ ] **Daftar periksa angka panel (F.1) disiapkan SEBELUM meminta
+      user** — user hanya diminta sekali, dengan daftar yang persis
+      (nama paket, harga pra-pajak + incl-tax, billing, renewal,
+      setup, kuota trafik, snapshot, pembatalan).
+- [ ] **Turnstile:** JANGAN coba browser task untuk panel Contabo
+      (terbukti gagal 17 Nov + 22 Nov). Verifikasi panel = user di
+      browsernya sendiri ATAU takeover browser live — bukan browser
+      cloud Muse.
+- [ ] Retensi target (7 harian + 4 mingguan + bulanan) dicatat sebagai
+      PROPOSAL yang diuji biayanya — bukan keputusan (keputusan
+      retensi final = owner, setelah melihat harga).
+- [ ] Kandidat provider object storage disiapkan dari sumber publik
+      (halaman pricing resmi) — JANGAN dari ingatan; catat URL +
+      tanggal akses tiap quote.
+- [ ] Kurs yang dipakai tiap angka Rupiah dicatat (Rp 18.300/USD
+      PLAN §7 vs Rp 18.000/USD dokumen BIAYA — jangan campur).
+
+## D. Scope pemeriksaan (item biaya / sumber)
+
+| # | Area | Lokasi / cara periksa |
+|---|---|---|
+| D1 | Harga Master | Panel Contabo via user (F.1): nama paket, pra-pajak + incl-tax, periode billing, harga renewal, tanggal verifikasi |
+| D2 | Harga VPS 8 | Panel Contabo via user (F.1) + halaman pricing publik: bulanan + renewal + setup $2,66 + kebijakan pembatalan |
+| D3 | Kuota trafik | Panel Contabo via user (F.1): kuota paket Master + VPS 8; bandingkan dengan egress live terukur (±310 Mbps vs port 500 Mbps, V2-005/F.4) |
+| D4 | Object storage | Quote halaman pricing resmi (F.2): per GB/bulan + egress + request; kandidat free tier (OQ-042) |
+| D5 | Volume backup | Hitung lokal (F.3): DB 118 MB + staging + salinan DR + pertumbuhan; retensi 7/4/bulanan → GB tersimpan |
+| D6 | Biaya storage/backup | Hitung lokal (F.4): Restic + Litestream + snapshot + retensi (D5 × D4) |
+| D7 | Domain + monitoring | Domain masjavastube.my.id (registrar — via user bila perlu) + tier monitoring eksternal (F.2/F.4) |
+| D8 | TCO vs cap | Hitung ulang lokal (F.4): 3 skenario MINIMUM/EXPECTED/WORST dengan angka terverifikasi; bandingkan dengan cap $34,67/bln |
+| D9 | Kontrak 12 bulan | Verifikasi komposisi $190,21 (F.5): 12× $15,85 murni atau termasuk lain; hitung EXPECTED dengan kontrak |
+| D10 | Verdict gerbang + handoff | Rangkai D1–D9: verdict C-1–C-5 + paket bukti owner + handoff purchase gate §4 + TCO model + cost register |
+
+## E. Pertanyaan teknis yang harus dijawab
+
+| # | Pertanyaan | Bukti yang menjawab |
+|---|---|---|
+| Q1 | Berapa harga Master AKTUAL di panel (nama paket, pra-pajak + incl-tax, billing, renewal — OQ-036)? | D1 (F.1) |
+| Q2 | Berapa harga VPS 8 AKTUAL + RENEWAL di panel + setup + pembatalan (OQ-037)? | D2 (F.1) |
+| Q3 | Berapa kuota trafik paket Contabo — apakah egress live masuk kuota atau berbayar (OQ-038)? | D3 (F.1 + F.4) |
+| Q4 | Provider object storage mana + harga per GB/bulan + egress + request (OQ-039)? | D4 (F.2) |
+| Q5 | Berapa volume backup total pada retensi target (DB 118 MB + staging + DR + pertumbuhan — OQ-041)? | D5 (F.3) |
+| Q6 | Berapa biaya storage/backup penuh (Restic + Litestream + snapshot + retensi — OQ-042)? | D6 (F.4) |
+| Q7 | Berapa biaya domain + monitoring eksternal (OQ-040/OQ-045)? | D7 (F.2/F.4) |
+| Q8 | Berapa TCO penuh (3 skenario) vs cap $34,67/bln dengan angka terverifikasi — muat atau tidak (C-4)? | D8 (F.4) |
+| Q9 | Verdict gerbang biaya C-1–C-5: lolos / gagal / tidak dapat dinilai — dan paket bukti apa untuk owner (C-5)? | D10 (F.6) |
+| Q10 | Apakah komposisi kontrak 12 bulan $190,21 terverifikasi (OQ-043) + apakah KEIN/Dahono tetap BELUM DIHITUNG (OQ-044)? | D9 (F.5) + dokumen §G |
+
+## F. Perintah / metode verifikasi (TIDAK butuh SSH — panel via user + hitung lokal)
+
+**F.1 — Daftar periksa angka panel Contabo (untuk USER — siapkan dulu, minta sekali):**
+
+Minta user memeriksa panel Contabo di browsernya sendiri (atau via
+takeover browser live) dan mengirimkan angka-angka berikut — dengan
+tangkapan layar bila memungkinkan (angka saja cukup; JANGAN minta
+kredensial, JANGAN minta user memasukkan token apa pun):
+
+```
+MASTER (paket saat ini):
+[ ] Nama paket persis (mis. "Cloud VPS M / Plus 4" — catat apa adanya)
+[ ] Harga bulanan pra-pajak + incl-tax (tulis keduanya + mata uang)
+[ ] Periode billing (bulanan / 12 bulan?) + harga renewal
+[ ] Kuota trafik/bandwidth paket (GB/bulan atau "unlimited"?)
+[ ] Harga snapshot VPS (bila ada di panel)
+
+VPS 8 (paket yang akan dibeli — Core, 8 vCPU/24 GB/300 GB/600 Mbit/s):
+[ ] Harga bulanan pra-pajak + incl-tax
+[ ] Harga RENEWAL (apakah sama dengan harga bulan pertama?)
+[ ] Setup fee sekali (apakah $2,66?)
+[ ] Periode billing + kebijakan pembatalan (refund? masa minimum?)
+[ ] Kuota trafik/bandwidth paket
+[ ] Harga kontrak 12 bulan + total bayar di muka (apakah $190,21?)
+```
+
+Catat tanggal + jam user memeriksa panel (harga panel berubah; angka
+tanpa tanggal tidak dapat dibandingkan). Bila user belum sempat
+memeriksa — F.1 dicatat "MENUNGGU USER + tanggal diminta", tiket
+tetap bisa maju dengan F.2–F.5 memakai angka DF/ESTIMASI yang
+dilabeli, tetapi verdict C-1/C-2/C-4 menjadi "TIDAK DAPAT DINILAI"
+(bukan ditebak).
+
+**F.2 — Quote object storage + domain + monitoring (sumber publik, catat URL + tanggal):**
+
+- Kumpulkan harga per GB/bulan + egress + request dari halaman
+  pricing resmi kandidat object storage (minimal 2 kandidat,
+  termasuk satu opsi free tier bila ada — OQ-042). Catat URL +
+  tanggal akses tiap quote; JANGAN pakai angka dari ingatan.
+- Domain masjavastube.my.id: biaya registrasi + perpanjangan dari
+  registrar (via user bila perlu login — JANGAN minta kredensial).
+- Monitoring eksternal: tier gratis vs berbayar Healthchecks.io /
+  UptimeRobot (halaman pricing resmi).
+- Bila satu quote tidak dapat diakses (halaman berubah / butuh
+  login) — catat "TIDAK DAPAT DIAKSES + alasannya", jangan tebak.
+
+**F.3 — Hitung volume backup (lokal, dari angka yang sudah ada):**
+
+- Basis: DB live 118 MB (VERIFIED FACT, backup plan §2).
+- Tambah: file staging + salinan DR (ukuran dari V2-005/V2-006
+  bila tersedia; bila belum — catat sebagai "BELUM DIUKUR +
+  sumber yang akan mengukurnya", jangan tebak).
+- Terapkan retensi target 7 harian + 4 mingguan + bulanan
+  (PROPOSAL backup plan §3): volume tersimpan = ukuran backup
+  penuh × jumlah salinan yang dipertahankan (Restic
+  deduplikasi dicatat sebagai pengurang BILA terukur — bila
+  belum terukur, hitung tanpa deduplikasi dan labeli "konservatif").
+- Estimasi pertumbuhan/bulan (dari V2-007/V2-005 bila tersedia;
+  bila belum — catat "BELUM DIHITUNG + alasannya").
+
+**F.4 — Hitung ulang TCO penuh (lokal, aritmetika transparan):**
+
+- Ganti tiap ESTIMASI/DF di TCO model §2 dengan angka terverifikasi
+  (F.1–F.3); tiap angka yang tetap ESTIMASI/DF/BELUM DIHITUNG
+  dilabeli apa adanya — JANGAN menganggap BELUM DIHITUNG = $0.
+- Hitung 3 skenario (MINIMUM / EXPECTED / WORST) vs cap $34,67/bln
+  dengan rumus yang sama seperti TCO model §3 (tulis rumusnya).
+- Hitung varian kontrak 12 bulan (total $31,87/bln) sebagai
+  sensitivitas — BUKAN rekomendasi mengambil kontrak.
+- Keluaran: tabel per komponen (nilai + label + sumber + tanggal)
+  dan selisih vs cap per skenario.
+
+**F.5 — Verifikasi komposisi kontrak 12 bulan (OQ-043 / OQ-TCO-2):**
+
+- Minta konfirmasi dari panel (F.1): apakah $190,21 bayar di muka
+  = 12× $15,85 VPS 8 murni, atau termasuk Master / komponen lain?
+- Bila panel tidak menjelaskan komposisi — catat "TIDAK DAPAT
+  DIVERIFIKASI + alasannya"; aritmetika 12× 15,85 = 190,20
+  (selisih $0,01 dari $190,21 — catat pembulatan) BUKAN bukti
+  komposisi.
+
+**F.6 — Verdict gerbang biaya + paket bukti owner:**
+
+- Nilai C-1–C-5 (purchase gate §4.1): tiap item lolos / gagal /
+  tidak dapat dinilai, dengan bukti per item.
+- Bila total all-in ≤ $34,67/bln: gerbang biaya LOLOS (dengan
+  syarat Fase 0 + Demand/Risk + rollback + persetujuan owner
+  tetap berlaku — tiket ini TIDAK meloloskan pembelian sendirian).
+- Bila total all-in > $34,67/bln ATAU ada C-1–C-3 yang tidak dapat
+  dinilai: gerbang biaya GAGAL / TIDAK DAPAT DINILAI — eskalasi ke
+  owner dengan opsi: (a) storage $0 via free tier, (b) kontrak
+  12 bulan, (c) revisi infrastruktur, (d) naikkan cap. Pilihan
+  adalah D4 — bukan isi tiket ini.
+- Paket bukti: dokumen §G + pembaruan TCO model + cost register +
+  purchase gate §4 (status C-1–C-5) + STATUS_REGISTRY.yaml
+  (V2-009_cost_gate).
+
+**DILARANG dalam tiket ini:**
+
+- Membeli / berlangganan / top-up apa pun (VPS 8, storage, domain,
+  monitoring, KEIN, proxy) — verifikasi saja.
+- Mencoba browser task untuk panel Contabo (Turnstile terbukti
+  memblokir — 17 Nov + 22 Nov); meminta kredensial panel dari user.
+- Menganggap BELUM DIHITUNG = $0 di hitungan TCO mana pun.
+- Mengganti angka panel dengan angka listing/ESTIMASI tanpa label.
+- Menetapkan verdict "lolos" dari satu quote atau satu angka panel
+  tanpa tanggal.
+- Mengubah cap $34,67/bln (itu OWNER DECISION — hanya owner yang
+  mengubahnya, lewat D4).
+
+## G.0 — Evidence manifest (wajib diisi saat eksekusi)
+
+Setiap Q1–Q10 wajib punya satu baris manifest. Isi manifest BERSAMAAN
+dengan eksekusi, bukan di akhir — harga panel berubah.
+
+| Question ID | Command | Timestamp (WIB) | Exit code | Evidence | Finding | Confidence | Impact |
+|---|---|---|---|---|---|---|---|
+| Q1 | F.1 | | | `COST_VERIFICATION_V2-009_<tanggal>.md` | | | |
+| Q2 | F.1 | | | `COST_VERIFICATION_V2-009_<tanggal>.md` | | | |
+| Q3 | F.1 | | | `COST_VERIFICATION_V2-009_<tanggal>.md` | | | |
+| Q4 | F.2 | | | `COST_VERIFICATION_V2-009_<tanggal>.md` | | | |
+| Q5 | F.3 | | | `COST_VERIFICATION_V2-009_<tanggal>.md` | | | |
+| Q6 | F.4 | | | `COST_VERIFICATION_V2-009_<tanggal>.md` | | | |
+| Q7 | F.2 + F.4 | | | `COST_VERIFICATION_V2-009_<tanggal>.md` | | | |
+| Q8 | F.4 | | | `TCO_RECALCULATION_V2-009_<tanggal>.md` | | | |
+| Q9 | F.6 | | | `COST_VERIFICATION_V2-009_<tanggal>.md` | | | |
+| Q10 | F.5 | | | `COST_VERIFICATION_V2-009_<tanggal>.md` | | | |
+
+Aturan manifest: sama seperti V2-001 §G.0 — `Confirmed` (angka primer
+dari panel/quote resmi + tanggal), `Partial` (satu komponen belum
+dihitung / F.1 menunggu user), `Unknown` (tidak dapat diverifikasi +
+alasannya dicatat). `Unknown` yang eksplisit LEBIH BAIK daripada
+dugaan yang ditulis seolah fakta. Bukti TIDAK BOLEH berisi kredensial
+atau tangkapan layar yang memuat kredensial. **Setiap angka harga
+WAJIB mencantumkan: sumber + tanggal verifikasi + pra-pajak/incl-tax
++ mata uang — angka tanpa tanggal dan tanpa label pajak tidak
+diterima.**
+
+## G. Bukti yang harus dilampirkan (deliverable tiket)
+
+1. `COST_VERIFICATION_V2-009_<tanggal>.md` — Q1–Q7 + Q9–Q10
+   (angka panel + quote storage + volume backup + biaya domain/
+   monitoring + jawaban OQ-036–OQ-045).
+2. `TCO_RECALCULATION_V2-009_<tanggal>.md` — Q8 (3 skenario vs cap
+   dengan angka terverifikasi + rumus + selisih vs cap + varian
+   kontrak 12 bulan).
+3. `EVIDENCE_MANIFEST_V2-009.md` — manifest Q1–Q10 (bila dipisah
+   dari dokumen verifikasi; bila digabung, catat di sini).
+4. Semua file di `workspace/engineering/v2-009/` (buat foldernya saat eksekusi).
+
+## H. Acceptance criteria (lulus / gagal)
+
+**LULUS bila SEMUA terpenuhi:**
+
+- [ ] Q1–Q10 terjawab dengan bukti; yang tidak bisa dijawab dicatat
+      eksplisit sebagai "TIDAK DAPAT DIVERIFIKASI + alasannya".
+- [ ] Harga Master + VPS 8 berasal dari panel (dengan tanggal) atau
+      dicatat eksplisit "MENUNGGU USER" — bukan dari listing tanpa
+      label.
+- [ ] Biaya storage/backup dihitung penuh (Restic + Litestream +
+      snapshot + retensi) ATAU dicatat eksplisit komponen mana yang
+      masih BELUM DIHITUNG + alasannya (tiket tetap bisa lulus;
+      verdict menjadi "TIDAK DAPAT DINILAI" bila C-3 tidak tertutup).
+- [ ] TCO penuh dihitung ulang (3 skenario) dengan rumus tertulis;
+      BELUM DIHITUNG tidak pernah diperlakukan sebagai $0.
+- [ ] Verdict C-1–C-5 tercatat (lolos / gagal / tidak dapat dinilai)
+      + paket bukti owner lengkap.
+- [ ] Nol pembelian/langganan/top-up; nol percobaan browser task
+      untuk panel Contabo; nol kredensial diminta/disimpan.
+
+**GAGAL bila salah satu terjadi:**
+
+- Angka panel ditebak dari listing/ESTIMASI dan disajikan sebagai
+  terverifikasi.
+- BELUM DIHITUNG diperlakukan sebagai $0 sehingga TCO tampak muat cap.
+- Verdict "lolos" dikeluarkan padahal C-1/C-2/C-3 belum tertutup.
+- Pembelian/langganan/top-up dilakukan dalam tiket ini.
+- Browser task dicoba untuk panel Contabo (sudah terbukti gagal).
+- Cap $34,67/bln diubah tanpa keputusan owner.
+
+## I. Dampak jika gagal / jika tiket tidak dikerjakan
+
+- Gerbang biaya tetap TIDAK DAPAT DINILAI — TIDAK ADA pembelian
+  sebelum V2-009 lolos (registry V2-009_cost_gate); VPS 8 tidak
+  dapat dibeli meski Fase 0 + demand + risiko sudah lolos.
+- Skenario EXPECTED (+$1,50/bln) dan WORST (+$4,97/bln) tetap
+  berdiri tanpa jawaban: owner tidak tahu apakah pembelian muat
+  cap, atau apakah storage harus $0, kontrak 12 bulan, revisi
+  infrastruktur, atau cap dinaikkan.
+- Harga renewal yang belum terverifikasi adalah risiko tersembunyi:
+  bila $18,65/bln hanya harga bulan pertama, skenario MINIMUM pun
+  melampaui cap setelah renewal — dan itu baru ketahuan setelah
+  membeli.
+- Storage/backup tetap tanpa provider + tanpa retensi: Restic +
+  Litestream tidak dapat diadopsi (storage cost gate backup plan
+  §8), RPO ≤5 mnt / RTO ≤30 mnt tetap TARGET tanpa bukti.
+- Purchase gate §5.1 tidak dapat dievaluasi: dimensi C (verified
+  cost) kosong, sehingga keputusan BELI/TIDAK BELI tidak dapat
+  dibuat secara jujur.
+
+## J. Batas tindakan yang diizinkan
+
+- **BOLEH:** semua perintah §F.1–F.6 (verifikasi panel via user +
+  quote publik + hitung lokal); meminta angka panel dari user
+  (sekali, dengan daftar periksa F.1); membaca dokumen biaya/TCO/
+  purchase gate/backup plan; menulis dokumen bukti §G; memperbarui
+  TCO model + cost register + purchase gate §4 (status C-1–C-5)
+  dengan angka terverifikasi.
+- **TIDAK BOLEH:** membeli/berlangganan/top-up apa pun; mencoba
+  browser task untuk panel Contabo; meminta/menyimpan kredensial
+  panel; menganggap BELUM DIHITUNG = $0; mengubah cap $34,67/bln;
+  memutuskan provider storage / retensi final / kontrak 12 bulan
+  (itu keputusan owner — tiket ini hanya menyajikan angka +
+  verdict).
+- **Keputusan pembelian + revisi anggaran = keputusan terpisah**
+  (D4, memakai verdict tiket ini sebagai input, bukan isi tiket
+  ini).
+
+## K. Pihak yang menyetujui langkah berikutnya
+
+| Langkah berikut | Penyetuju |
+|---|---|
+| Memeriksa panel Contabo + mengirim angka (F.1) | User (satu-satunya yang bisa melewati Turnstile; angka panel adalah input, bukan keputusan) |
+| Pemilihan provider object storage + retensi final | User (STORAGE MENUNGGU — OWNER DECISION; tiket ini hanya menyajikan quote + hitungan) |
+| Kontrak 12 bulan VPS 8 (bila diambil) | User (KONTRAK-12 MENUNGGU — putuskan setelah model terbukti) |
+| Verdict gerbang biaya C-1–C-5 diterima sebagai dasar keputusan | User (menyetujui verdict + paket bukti; gerbang biaya lolos ⟺ C-1–C-5 tertutup) |
+| Revisi infrastruktur / naikkan cap bila total all-in > $34,67/bln | User (D4 — eskalasi, bukan isi tiket ini) |
+| Lanjut ke V2-010 (setelah V2-007 disetujui) | Tidak butuh persetujuan baru (Batch 1 audit) |
+
+## L. Estimasi & catatan eksekusi
+
+- Estimasi: ±1–1,5 jam kerja eksekutor (tidak termasuk waktu tunggu
+  user memeriksa panel — F.1 bisa menunggu berhari-hari; itu normal,
+  bukan blocker tiket).
+- Jalankan dari main/side chat (bukan proactivity handoff — konsistensi
+  dengan V2-001). **Tiket ini TIDAK butuh SSH** — satu-satunya tiket
+  Batch 1 yang eksekusinya berbasis panel user + dokumen.
+- **F.1 adalah satu-satunya ketergantungan pada user** — siapkan
+  daftar periksa dulu, minta sekali, dengan format yang persis.
+  Bila user mengirim angka tanpa tanggal, minta tanggalnya (harga
+  panel berubah).
+- **Jangan tawarkan browser task untuk panel Contabo** — sudah
+  terbukti gagal (17 Nov + 22 Nov KEIN). Bila user menawarkan
+  takeover browser live, terima — itu jalur yang sah.
+- **BELUM DIHITUNG ≠ $0** — setiap komponen tanpa angka tetap
+  dicatat sebagai utang perhitungan di TCO; total TCO yang
+  sebenarnya = total yang diketahui + semua komponen BELUM DIHITUNG.
+- Bila F.1 menunggu user lama, F.2–F.5 tetap dapat dikerjakan dulu
+  (quote storage + volume + hitung ulang dengan angka DF/ESTIMASI
+  yang dilabeli) — verdict akhir menunggu F.1.
+- Tiket ini adalah versi pertama yang berversi; verifikasi
+  berikutnya memakai nama file tanggal baru (jangan timpa file ini).
 
 ---
 
@@ -2761,7 +3218,7 @@ hasil V2-007 disetujui.
 | V2-006 | Service inventory | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 7 22 Nov 18:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
 | V2-007 | Database schema audit (GERBANG TEKNIS) | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 8 22 Nov 22:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
 | V2-008 | Resource budget benchmark | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 9 23 Nov 02:50 WIB; eksekusi menunggu sesi interaktif + SSH; uji concurrency F.6 butuh materi uji ATAU persetujuan user bila menyentuh antrean produksi) | — |
-| V2-009 | VPS 8 price + storage cost verification (GERBANG BIAYA) | P1 | NOT_STARTED (stub) | — |
+| V2-009 | VPS 8 price + storage cost verification (GERBANG BIAYA) | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 10 23 Nov 06:50 WIB; eksekusi menunggu sesi interaktif + angka panel Contabo dari user — TIDAK butuh SSH; JANGAN coba browser task untuk panel, Turnstile terbukti memblokir) | — |
 | V2-010 | Deduplication design proposal | P1 | NOT_STARTED (stub, menunggu V2-007) | — |
 
 **Urutan eksekusi yang disarankan:** V2-001 → V2-002 → V2-003/V2-004/V2-005/
