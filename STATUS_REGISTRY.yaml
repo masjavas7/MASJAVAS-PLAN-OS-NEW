@@ -14,8 +14,8 @@
 # Keterbatasan bukti dicatat di field limitation, BUKAN di nama status.
 
 version: "1.0"
-updated: "2026-11-22T22:50:00+07:00"
-updated_by: "Autonomous Readiness Cycle 8 (cron local-only)"
+updated: "2026-11-23T02:50:00+07:00"
+updated_by: "Autonomous Readiness Cycle 9 (cron local-only)"
 overall_readiness: NOT_READY
 overall_readiness_reason: "Batch 1: 1 EXECUTED (dengan keterbatasan bukti) + 2 READY_FOR_REVIEW dari 10; gerbang V2-007 + V2-009 belum lolos; harga Master + VPS 8 belum terverifikasi panel; biaya storage/backup belum dihitung; D9/D10 menunggu user."
 
@@ -89,9 +89,9 @@ tickets:
   V2-008:
     title: "Resource budget benchmark"
     priority: P1
-    ticket_status: STUB
+    ticket_status: COMPLETE
     work_status: NOT_STARTED
-    note: "Benchmark adalah prasyarat angka concurrency final (capacity model memakai PROPOSAL sampai V2-008)."
+    note: "Tiket diperluas ke format 15 elemen (Cycle 9, 23 Nov 02:50). Eksekusi QUEUED-FOR-INTERACTIVE — menunggu sesi interaktif + SSH. Benchmark pasif F.1–F.5 + uji concurrency F.6 (GERBANG PERSETUJUAN: materi uji ATAU persetujuan user bila menyentuh antrean produksi; 3–4 slot hanya bila 2 slot aman + disetujui terpisah). Angka concurrency final menggantikan PROPOSAL capacity model. OQ-029–OQ-035 baru (konsumsi aktual per worker / I/O jenuh Stage 2 / 2 reassemble bersamaan / TX-RX per workload / peak RAM / repeatability / headroom Master)."
   V2-009:
     title: "VPS 8 price + storage cost verification (GERBANG BIAYA)"
     priority: P1
@@ -135,5 +135,5 @@ counts:
   executed_with_limitation: 1
   ready_for_review: 2
   not_started: 7
-  ticket_complete: 6
-  ticket_stub: 4
+  ticket_complete: 7
+  ticket_stub: 3
