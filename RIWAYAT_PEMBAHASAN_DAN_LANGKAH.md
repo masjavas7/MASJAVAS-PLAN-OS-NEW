@@ -40,6 +40,7 @@ berjalan — entri terbaru di bawah.
 | 12:57 | Repo dijadikan **publik** (user) | Scan pra-publik bersih (tanpa kredensial); PATCH visibility public + verifikasi tanpa auth |
 | 13:02–13:10 | **Sprint audit repo** (8 item P0–P1, atas review eksternal) | F1/F2 terkonfirmasi + 1 temuan tambahan (dashboard kontradiksi internal); STATUS_REGISTRY.yaml + rekonsiliasi; capacity model (puncak ≈7,4 core, headroom ±0,6); purchase gate; API contract (TC-STALE-1); failure injection (11 skenario); rollback v1.1 (3 kategori); TCO (cap habis oleh infrastruktur); SLO (3/8 bertarget). Repo 29 file, semua ter-push |
 | 13:13 | **TCO-1 DIPUTUSKAN: cap = seluruh TCO** | User memilih "Cap untuk seluruh TCO" (widget). Konsekuensi dicatat di 8 dokumen: infrastruktur saja sudah $34,67 → storage/backup harus $0 atau infrastruktur direvisi; expected/worst TCO melebihi cap |
+| 14:47 / 15:15 | **Live MATI MASSAL — B10/R20/PR-16** | 4 stream mati 14:47:15–14:47:36 (706 exit 146; 707/698 orphan; 114 exit 0); pemulihan gagal 5 titik (DB-lock, desync status, 706 tanpa reconnect, encoder ganda 707, relay task mati); observasi 24 jam iterasi 2 GAGAL ±6,5 jam. Dicatat 15:15 atas instruksi user; perbaikan menunggu keputusan owner |
 
 ## 2. Pembahasan per topik
 
