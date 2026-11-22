@@ -36,6 +36,14 @@ TCO adalah biaya PENUH menjalankan sistem: infrastruktur + storage
 dihitung** — temuan utama model ini adalah cap sudah habis oleh
 infrastruktur saja (§4).
 
+**DIPUTUSKAN 22 Nov 13:13 WIB (OQ-TCO-1 tertutup):** cap $34,67/bln
+mencakup SELURUH TCO — infrastruktur + storage + backup + domain +
+layanan pendukung + API/provider + cadangan. Konsekuensi:
+infrastruktur saja sudah $34,67 → storage/backup harus $0 (mis.
+free tier object storage untuk DB 118 MB) atau infrastruktur
+direvisi; skenario expected + worst case (§3) MELEBIHI cap dan
+tidak dapat diterima sebagai rencana sampai ada revisi.
+
 ## 2. Komponen biaya (per bulan, kecuali dinyatakan lain)
 
 ### 2.1 Infrastruktur — Master + VPS 8
@@ -189,14 +197,16 @@ Sensitivitas ini BUKAN rekomendasi mengambil kontrak.
 6. Harga snapshot VPS Contabo.
 7. Biaya domain masjavastube.my.id (registrasi + perpanjangan).
 8. Tier monitoring eksternal (gratis cukup atau berbayar).
-9. Keputusan owner soal cakupan cap (§4 temuan #2).
+9. Keputusan owner soal cakupan cap (§4 temuan #2) — DIPUTUSKAN
+   22 Nov 13:13 WIB: cap mencakup SELURUH TCO.
 10. Keputusan owner soal cadangan 10% [PR] (terima / ubah / tolak).
 
 ## 6. Pertanyaan terbuka
 
-1. **[OQ-TCO-1]** Apakah cap $34,67/bln mencakup seluruh TCO
-   atau hanya infrastruktur? (Temuan #2 — memengaruhi apakah
-   pembelian VPS 8 bulanan muat dalam anggaran.)
+1. **[OQ-TCO-1 — DIPUTUSKAN 22 Nov 13:13 WIB]** Cap $34,67/bln
+   mencakup SELURUH TCO (infrastruktur + storage + backup +
+   domain + layanan). Infrastruktur saja sudah $34,67 →
+   storage/backup harus $0 atau infrastruktur direvisi.
 2. **[OQ-TCO-2]** Komposisi $190,21 bayar di muka kontrak 12 bulan
    — apakah itu murni 12× $15,85 VPS 8, atau termasuk komponen
    lain? (Aritmetika konsisten dengan 12× $15,85, tetapi
