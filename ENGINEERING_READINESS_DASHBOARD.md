@@ -1,6 +1,6 @@
 # ENGINEERING READINESS DASHBOARD — MASJAVAS TUBE OS
 
-**Terakhir diperbarui:** 22 Nov 2026, 22:50 WIB (Cycle 8: V2-007 diperluas ke tiket lengkap — gerbang teknis)
+**Terakhir diperbarui:** 23 Nov 2026, 02:50 WIB (Cycle 9: V2-008 diperluas ke tiket lengkap — benchmark konsumsi aktual + uji concurrency)
 **Sumber:** `AUTONOMOUS_WORK_LOG.md`, `BATCH1_EXECUTION_TICKETS_V2.md`,
 dokumen frozen V2.0, bukti audit V2-001.
 **Sumber status resmi:** `STATUS_REGISTRY.yaml` — bila ada perbedaan
@@ -12,8 +12,9 @@ ASSUMPTION / PROPOSAL / OPEN QUESTION / OWNER DECISION REQUIRED.
 
 **Alasan:** Batch 1: 1 EXECUTED (V2-001 — dengan KOREKSI: auditnya di
 host yang salah, lihat R15; bukti tidak berlaku untuk target) + 2
-READY_FOR_REVIEW (V2-002 + V2-003) dari 10; tiket lengkap ke-7 (V2-007
-schema audit — GERBANG TEKNIS) selesai diperluas Cycle 8 22:50 WIB, eksekusi menunggu
+READY_FOR_REVIEW (V2-002 + V2-003) dari 10; tiket lengkap ke-8 (V2-008
+resource budget benchmark — angka concurrency final pengganti PROPOSAL
+capacity model) selesai diperluas Cycle 9 23 Nov 02:50 WIB, eksekusi menunggu
 sesi interaktif + SSH;
 gerbang biaya V2-009 belum dibuka (harga Master/VPS8 + storage belum
 terverifikasi); keputusan provider KEIN ditutup atas asumsi owner tanpa
@@ -59,7 +60,7 @@ dan verifikasi biaya.
 
 | Item | Status |
 |---|---|
-| Batch 1 tickets completed to readiness standard | NOT READY (1 EXECUTED dengan keterbatasan bukti + 2 READY_FOR_REVIEW dari 10; V2-004 + V2-005 + V2-006 + V2-007 tiket lengkap, belum dieksekusi; lihat STATUS_REGISTRY.yaml) |
+| Batch 1 tickets completed to readiness standard | NOT READY (1 EXECUTED dengan keterbatasan bukti + 2 READY_FOR_REVIEW dari 10; V2-004 + V2-005 + V2-006 + V2-007 + V2-008 tiket lengkap, belum dieksekusi; lihat STATUS_REGISTRY.yaml) |
 | Schema audit approved before migration work | NOT READY (V2-007 belum jalan; tidak ada migration yang berjalan — aman) |
 | Deployment sequence prepared | NOT READY |
 | Canary procedure prepared | NOT READY |
@@ -91,7 +92,7 @@ dan verifikasi biaya.
 | V2-005 | Baseline snapshot | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 6 22 Nov 14:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
 | V2-006 | Service inventory | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 7 22 Nov 18:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
 | V2-007 | Database schema audit (GERBANG TEKNIS) | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 8 22 Nov 22:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
-| V2-008 | Resource budget benchmark | P1 | NOT_STARTED (stub) | — |
+| V2-008 | Resource budget benchmark | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 9 23 Nov 02:50 WIB; eksekusi menunggu sesi interaktif + SSH; uji concurrency F.6 butuh materi uji ATAU persetujuan user bila menyentuh antrean produksi) | — |
 | V2-009 | VPS 8 price + storage cost verification (GERBANG BIAYA) | P1 | NOT_STARTED (stub) | — |
 | V2-010 | Deduplication design proposal | P1 | NOT_STARTED (stub, menunggu V2-007) | — |
 
@@ -172,4 +173,5 @@ dan verifikasi biaya.
 4. Eksekusi audit V2-005 (baseline snapshot) saat sesi interaktif tersedia — tiket lengkap; snapshot adalah lantai gerbang Fase 0 (rollback satu-metrik butuh angka acuan yang sah); baca schema dulu sebelum query (OQ-016/017/018).
 5. Eksekusi audit V2-006 (service inventory) saat sesi interaktif tersedia — tiket lengkap; nama unit systemd dari V2-005 F.3 wajib diverifikasi dulu (OQ-019) agar perintah V2-005 F.3 tidak mengembalikan nol; hasil V2-006 adalah input V2-007 (penulis DB, OQ-022) + V2-008 (worker untuk benchmark) + P3.
 6. Eksekusi audit V2-007 (schema audit — GERBANG TEKNIS) saat sesi interaktif tersedia — tiket lengkap; backup konsisten DULU lalu audit dari SALINAN (OQ-024: jalur tulis-live `init_schema()` belum terbukti aman); gerbang menahan V2-010 sampai disetujui.
-7. Perluas V2-008–V2-010 berurutan (V2-008 + V2-009 paralel setelah V2-007; V2-010 setelah V2-007 disetujui) + jawab OQ-005/006 (host benar) + OQ-011/012 + OQ-013/014/015 (saat eksekusi V2-004) + OQ-016/017/018 (saat eksekusi V2-005) + OQ-019/020/021/022/023 (saat eksekusi V2-006) + OQ-024/025/026/027/028 (saat eksekusi V2-007).
+7. Eksekusi benchmark V2-008 saat sesi interaktif tersedia — tiket lengkap; ukur konsumsi aktual per worker + uji concurrency Stage 2 (1 vs 2 slot) — F.6 HANYA dengan materi uji ATAU persetujuan user bila menyentuh antrean produksi; angka concurrency final menggantikan PROPOSAL capacity model.
+8. Perluas V2-009–V2-010 berurutan (V2-009 gerbang biaya — paralel dengan V2-008; V2-010 setelah V2-007 disetujui) + jawab OQ-005/006 (host benar) + OQ-011/012 + OQ-013/014/015 (saat eksekusi V2-004) + OQ-016/017/018 (saat eksekusi V2-005) + OQ-019/020/021/022/023 (saat eksekusi V2-006) + OQ-024/025/026/027/028 (saat eksekusi V2-007) + OQ-029/030/031/032/033/034/035 (saat eksekusi V2-008).
