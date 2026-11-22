@@ -41,6 +41,9 @@ sampai semua gerbang lolos.
 - `ADDENDUM_REASSEMBLE_CPU_2026-11-22.md` — koreksi 22 Nov 12:10:
   modal CPU ingestion mencakup perakitan audio (reassemble, ±1 core
   puncak); total VPS 8 ≈7 core puncak, headroom ±1 core.
+- `KONTEKS_MASALAH_BOTTLENECK_DAN_SOLUSI.md` — konteks masalah,
+  9 bottleneck terverifikasi (B1–B9), 15 problem terstruktur
+  (PR-01–PR-15), dan solusi yang diharapkan per fase (Fase 0/1/2+).
 
 ### Register + runbook + rencana pendukung (menyusul — dalam penyusunan)
 
