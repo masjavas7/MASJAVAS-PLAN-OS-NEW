@@ -1,0 +1,255 @@
+# KONTEKS MASALAH, BOTTLENECK, PROBLEM & SOLUSI YANG DIHARAPKAN
+## MASJAVAS TUBE OS — 22 Nov 2026
+
+Dokumen kerja program readiness (turunan). Bukan dokumen beku dan bukan
+instruksi deployment. Setiap angka di bawah ini terverifikasi dari audit
+22 Nov 2026 (V2-001/V2-002/V2-003, plan VPS 8, dashboard) atau dilabeli
+sebagai asumsi/estimasi bila belum terverifikasi.
+
+---
+
+## 1. Konteks masalah
+
+**MASJAVAS TUBE OS** adalah autopilot YouTube faceless: **707 channel**
+(slot NO 1–707; **237 CONNECTED**), dijalankan operator (5 rotasi + Arief
+143 + Agus 100 + AZIZ 251 + MONA 13) di atas **satu box Master**
+(Contabo vmi3762689: 4 vCPU, 8 GB RAM, 145 GB disk, port 500 Mbit/s).
+
+Empat beban kerja berbagi satu mesin, satu database SQLite, dan satu port
+jaringan:
+
+| Beban | Isi | Sifat |
+|---|---|---|
+| PUBLISH | 1 video/channel/hari ke YouTube (206 PUBLISHED/hari) | Real-time, terikat kuota API |
+| PREPARATION | Ingestion (audio/video/thumbnail) + kurasi audio (reassemble) + LoopGen Stage 2 | Batch, CPU + I/O berat |
+| LIVE | Streaming 24/7 (limit 16 channel; 2–3 jalan) | Real-time, butuh egress stabil |
+| CONTROL | Web dashboard/API + worker daemon + governor | Harus selalu responsif |
+
+**Baseline "solid" yang harus dilindungi** (terverifikasi 21–22 Nov):
+206 PUBLISHED/hari, 0 FAILED/BLOCKED, median delay publish 11,6 mnt
+(p90 30,2 mnt), healthz ~10 ms, lock SQLite 31×/24 jam, load Master
+3,5–4,2. Aturan perubahan yang mengikat (user, 22 Nov 01:48): aplikasi
+sudah solid — setiap perubahan wajib terverifikasi agar tidak merusaknya.
+
+**Pertanyaan pemandu:** bagaimana menambah kapasitas (VPS 8) dan
+memperbaiki bottleneck tanpa merusak baseline ini, dan tanpa mengulang
+riset arsitektur saat pembelian dilakukan? Jawabannya adalah program
+readiness ini: audit dulu (Batch 1), siapkan semua artefak deployment
+(runbook, register, acceptance test, rollback), baru eksekusi setelah
+gerbang lolos + persetujuan owner.
+
+---
+
+## 2. Bottleneck saat ini (terverifikasi)
+
+### B1. Live terjepit JARINGAN, bukan CPU
+
+- **Bukti:** port Master 500 Mbit/s terukur 91–93%; 50 channel @1080p
+  butuh ±310 Mbps egress. Live hanya ±0,07 core untuk 2 stream —
+  CPU bukan masalah.
+- **Dampak:** tidak ada ruang tumbuh live di Master; setiap stream baru
+  berebut port dengan upload prep + sinkronisasi Drive.
+- **Status:** dipahami; solusinya VPS 8 (port 600 Mbit/s) — Fase 1.
+
+### B2. Ingestion macet di GATE + bot-check, bukan CPU
+
+- **Bukti:** 123 COMPLETED/7 hari vs 333 SUPERSEDED (**churn 66%**);
+  5 cap bertumpuk (shed flag, operational aktif, live aktif, gate RAM,
+  gate klaim disk/load/JIT/broadcast window) mengunci konkurensi di **1
+  permanen**; **0 stage berat selesai/24 jam**; 29 COMPLETED/24 jam
+  semuanya DRIVE_SYNC. Bot-check yt-dlp: hanya WARP (IP datacenter)
+  yang hidup; residential/bulk kosong; cookie anonim saja.
+  SKIPPED_AUDIO_MISSING melonjak 3 → 31/hari (20–21 Nov).
+- **Dampak:** backlog bahan **412 channel / ±28.461 item** (video 9.698,
+  audio 10.066, thumbnail 8.697); **195 channel kosong total**; hanya
+  284 channel lengkap 30/30/30.
+- **Status:** akar di gate (bukan CPU) terbukti; D1 (proxy residential)
+  DITUNDA user 20 Nov — jangan tanyakan ulang.
+
+### B3. Governor TIDAK BERTINDAK — atribusi CPU buta
+
+- **Bukti (V2-003):** 1.918 tick V2 dalam 17 jam → **0 aksi efektif**
+  (1.886 none, 29 shed_render yang log-only TANPA eksekutor, 0
+  shed_ingestion/pause/resume). `classify_lane` hanya mengenali cmdline
+  berisi "ingestion": daemon otonom (±18% CPU) tercatat lane `other` →
+  `ingestion_cpu_pct` selalu 0,0% → tangga selalu memilih shed_render
+  (buntu). Konfigurasi split: guard loop = V2, admission = legacy
+  (`LIVE_GUARD_V2_ENABLED=false`, hanya dibaca di `can_start`).
+  Knob bermasalah: TX 115 (stale, dari box lama), CPU 90 (inert —
+  legacy pakai hard-code 95), 720p (stale vs keputusan 1080p).
+- **Dampak:** satu-satunya pengaman beban tidak pernah bekerja; semua
+  sinyal shed-load (91×) berasal dari era legacy.
+- **Status:** audit selesai (READY_FOR_REVIEW); perbaikan menunggu D9/D10.
+
+### B4. Modal CPU ingestion SALAH HITUNG — reassemble tersembunyi
+
+- **Bukti (koreksi Bapak, 22 Nov 12:10):** perakitan audio (reassemble,
+  `core/curation/audio_reassembler.py` — crossfade 6 lagu + remaster
+  EBU R128 −14 LUFS) jalan **64×/24 jam, ±0,9 core/job, ±6 mnt/job**
+  (±1 core puncak, ±70 MB/job) sebagai anak proses web/daemon, dan
+  governor mencatatnya di bucket **render/web** — bukan ingestion.
+  Plan VPS 8 sempat menganggarkan ingestion ±0 CPU atas dasar angka
+  "0,0% di 1.510 tick" yang ternyata artefak atribusi.
+- **Dampak:** total VPS 8 terkoreksi ≈6 → **≈7 core puncak, headroom
+  hanya ±1 core**. Anggaran 1 core ingestion di V2.0 ternyata sudah
+  benar — reassemble-lah 1 core itu.
+- **Status:** plan diperbaiki (3 edit, terverifikasi) + addendum;
+  V2.0 tidak perlu diubah angkanya.
+
+### B5. LoopGen Stage 2: I/O dominan + antrean
+
+- **Bukti:** 12,8 dtk CPU vs **100,1 dtk wall/klip** (I/O dominan —
+  unduh + unggah + QA); 1.011 DONE/7 hari; antrean 50 QUEUED.
+  Driver sempat starvation (2 load gate tanpa breaker, 0 DONE ±4,5 jam
+  20 Nov) — diperbaiki, DONE naik 494 → 531; park rate turun 29% → 14%.
+- **Dampak:** Stage 2 adalah gerbang throughput, bukan generasi
+  (19 Nov: worker menghasilkan 211 video, Stage 2 hanya 20 DONE).
+- **Status:** driver diperbaiki; canary 2 slot di VPS 8 direncanakan.
+
+### B6. Live TIDAK STABIL — encoder mati berulang
+
+- **Bukti (V2-002):** encoder slot 114 mati **14×** (12× pada
+  21 Nov 14:00–22 Nov 07:00, interval menyusut ke 9–13 mnt; #13 07:17;
+  #14 08:09:50). Tanda tangan: `Error writing trailer: Connection
+  timed out` (RTMP timeout, bukan crash/OOM). Rantai kematian #14
+  terekam lengkap: feeder stall 30 dtk → watchdog fired → fallback
+  menyala → encoder mati 6 dtk kemudian (audio submit timeout).
+  Orphan slot 706 mengudara **TANPA AUDIO ±17 jam** tanpa terdeteksi
+  (bitrate video tetap HEALTHY) — pulih 08:10:28.
+- **Dampak:** downtime live berulang; reconnect cap tidak pernah
+  eskalasi (`reconnect_count` di-reset tiap sukses) sehingga tidak
+  pernah alert.
+- **Status:** perbaikan R3–R8 + iterasi 2 deployed (commit `56f7a6d` +
+  `021a9f0`, tes 20/20) — observasi 24 jam berjalan; kematian #14
+  membuktikan masalah BELUM selesai.
+
+### B7. Web adalah compute tersembunyi
+
+- **Bukti:** unit web rata-rata **1,02 core** — bukan HTTP, melainkan
+  job ffmpeg berat in-process (reassemble 64×/24 jam, thumb regen,
+  fleet run, AI video pipeline); 2 anak ffmpeg @ ±98% teramati 2×.
+- **Dampak:** dashboard/API berbagi CPU dengan job batch berat;
+  satu job audio menaikkan load server ke 4,63 (11:33).
+- **Status:** Fase 0 memindahkan reassemble keluar dari web ke worker.
+
+### B8. SQLite satu penulis + lock
+
+- **Bukti:** "database is locked" **31×/24 jam**; satu event loop
+  (G12); G10 belum ditangani. Arsitektur melarang akses SQLite lewat
+  jaringan — worker remote wajib REST API.
+- **Dampak:** claim job + tulis konkuren sesekali gagal; risiko
+  membesar saat beban naik.
+- **Status:** audit schema (V2-007) adalah gerbang teknis sebelum
+  migrasi apa pun; trigger evaluasi PostgreSQL sudah didefinisikan
+  (lock >10/hari pasca-optimasi, p95 tulis >100 ms konsisten).
+
+### B9. Kuota + dependensi eksternal rapuh
+
+- **Bukti:** 1 video = 1.650 unit; doktrin maks 5 channel/vault
+  (8.250 < guard 8.400). Insiden 18 Nov: 217 post ekstra membakar
+  358.050 dari 444.350 unit, 121 jadwal missed. Mekanisme kuota sync
+  Drive (P2) **belum terpecahkan** — 6 teori diuji dan gugur 22 Nov.
+  KEIN (OMNI 1.1) **kedaluwarsa 23 Nov 2026**; status live-nya UNKNOWN
+  (diterima owner sebagai asumsi — "ASUMSIKAN KEIN AMAN").
+  Disk 83/145 GB (58%); janitor mislabel 203 channel (R6).
+- **Dampak:** satu kesalahan penjadwalan bisa menghabiskan kuota
+  harian; satu dependensi mati bisa menghentikan suplai.
+- **Status:** doktrin kuota mengikat; audit janitor (V2-004) tiketnya
+  siap, eksekusi antre; fallback KEIN sudah dihargai (DeepInfra FLUX
+  Rp 35/gambar, Muse Image Rp 180/gambar) tapi belum diputuskan.
+
+---
+
+## 3. Problem (daftar terstruktur)
+
+| ID | Problem | Tingkat | Bukti / rujukan |
+|---|---|---|---|
+| PR-01 | Encoder live mati berulang (114: 14×) | P0 | V2-002; R2; iterasi 2 observasi |
+| PR-02 | Governor tidak pernah bertindak efektif | P0 | V2-003; R16/R17/R18; D9/D10 |
+| PR-03 | Ingestion terkunci konkurensi 1; backlog 28.461 item | P0 | §2 B2; R-gate; D1 ditunda |
+| PR-04 | KEIN kedaluwarsa 23 Nov; status live unknown | P0 | V2-001; R15 (diterima owner) |
+| PR-05 | Harga VPS 8 + storage belum terverifikasi | P1 | V2-009; R10; butuh panel user |
+| PR-06 | Atribusi CPU buta (ingestion 0,0% artefak) | P1 | V2-003; B4; V2-003-R2 |
+| PR-07 | Janitor mislabel 203 channel | P1 | R6; V2-004 tiket siap |
+| PR-08 | Konfigurasi split V2/legacy + flag misterius | P1 | V2-003; OQ-010; D10 |
+| PR-09 | Mekanisme kuota sync Drive belum terpecahkan | P1 | P2; 6 teori gugur |
+| PR-10 | Web menjalankan compute berat in-process | P1 | B7; Fase 0 |
+| PR-11 | Lock SQLite 31×/24 jam; schema belum diaudit | P1 | B8; V2-007 (gerbang teknis) |
+| PR-12 | Stage 2 adalah gerbang throughput (I/O) | P1 | B5; canary Fase 1 |
+| PR-13 | Kode web lawas (R5 belum dimuat di jalur API) | P2 | V2-002; restart web tertunda |
+| PR-14 | Orphan tanpa feeder tidak terdeteksi (±17 jam) | P2 | R19 (RESOLVED); R8 observability |
+| PR-15 | Master interim ±1 bulan (dukungan Contabo lambat) | P2 | Keputusan ~17 Des; PLAN §10 |
+
+---
+
+## 4. Solusi yang diharapkan
+
+Prinsip yang mengikat semua solusi: verifikasi independen sebelum
+memperbaiki; jangan "memperbaiki" mekanisme yang belum terpecahkan
+dengan tebakan (P2, B2-bot-check); setiap perubahan punya rencana
+verifikasi pra/pasca + rollback + jendela observasi; peluncuran
+menunggu instruksi owner.
+
+### Fase 0 — $0, Master saja (segera)
+
+| Solusi | Menyelesaikan | Status / gerbang |
+|---|---|---|
+| Kalibrasi admission TX (budget 115 → 500 Mbps) | PR-01 (sebagian: 5 penolakan reconnect 06:15) | DONE (R4, 07:24) |
+| Perbaikan encoder R3–R8 + iterasi 2 (watchdog 10 dtk, queue 4096, rw_timeout 30 dtk, log exit code, alert restart, sapu orphan) | PR-01, PR-14 | DEPLOYED; observasi 24 jam |
+| Hentikan layanan box lama (akhiri split-brain) | Risiko data ganda | DONE (R1, 07:05) |
+| Pindahkan reassemble keluar dari web ke worker | PR-10, B4 | Direncanakan Fase 0 |
+| Perbaikan Guard v2 (V2-003-R1–R9: atribusi lane, executor shed_render, kalibrasi knob, admission V2) | PR-02, PR-06, PR-08 | Menunggu **D9 + D10** (OQ-010 prasyarat R1) |
+| Audit janitor (V2-004) | PR-07 | Tiket lengkap; eksekusi antre (SSH) |
+| Audit schema (V2-007) | PR-11 | Gerbang teknis sebelum migrasi apa pun |
+| Restart web (muat R5 di jalur API) | PR-13 | Jendela maintenance berikut |
+
+### Fase 1 — VPS 8 ($18,65/bln + $2,66 setup; total $34,67/bln)
+
+| Solusi | Menyelesaikan | Status / gerbang |
+|---|---|---|
+| Topologi 2 box: Master (control + publish) + Live-01 (live + prep worker + DR) | B1, B5, B7 | Menunggu **V2-009** (harga panel) + persetujuan owner |
+| Guard lokal per box (pengganti guard saling sandera) | PR-02, G1–G12 | Desain di V2.0; implementasi pasca-Fase 0 |
+| Orkestrasi API + SQLite (Option A): register/claim/heartbeat/complete, lease + fencing token, idempotency | PR-03 (skala), B8 | Menunggu V2-007 (audit schema) |
+| Canary Stage 2 (2 slot) + prep worker di VPS 8, diuji BERSAMAAN dengan reassemble | PR-12, B4, B5 | Acceptance test plan |
+| Backup off-site independen (Restic + Litestream opsional) | Risiko kehilangan data | Tergate biaya storage |
+| Monitoring fase 1: heartbeat + watchdog eksternal + alert Telegram + health check bisnis | Deteksi (PR-14) | Rencana di V2.0 |
+
+### Fase 2+ — nanti (persetujuan anggaran terpisah)
+
+- Box ke-3 bila live mendekati batas VPS 8 (70 channel @1080p).
+- Evaluasi PostgreSQL bila trigger terpenuhi (lock >10/hari
+  pasca-optimasi atau p95 tulis >100 ms konsisten).
+- Prometheus/Grafana bila heartbeat + watchdog terbukti kurang.
+- Keputusan provider Master interim (±17 Des 2026).
+
+### Yang TIDAK menjadi solusi (ditolak dengan alasan)
+
+- Redis/Celery/Kafka/microservices prematur — V2.0 melarangnya sampai
+  metrik membuktikan kebutuhan (Option A dulu).
+- Auto-retry pada `quotaExceeded` YouTube — dilarang; permanent error
+  → DEAD_LETTER.
+- Memindahkan vault antar channel tanpa re-pair — insiden 12 Nov
+  membuktikan token patah + refresh ditolak Google.
+- Menebak penyebab P2 (kuota Drive) — 6 teori gugur; langkah
+  diagnostik saja sampai Cloud Console / audit fallback menjawab.
+
+---
+
+## 5. Peta problem → solusi → status (ringkasan)
+
+| Bottleneck | Solusi utama | Fase | Status 22 Nov 12:33 |
+|---|---|---|---|
+| B1 jaringan live | VPS 8 (600 Mbps) + admission EMA | 1 | Menunggu V2-009 + owner |
+| B2 gate ingestion | Kalibrasi gate + orkestrasi API | 0–1 | Akar terbukti; D1 ditunda |
+| B3 governor impoten | Perbaikan Guard v2 (D9) | 0 | Menunggu D9/D10 |
+| B4 reassemble tersembunyi | Anggaran ±1 core + pindah ke worker | 0–1 | Plan diperbaiki; eksekusi Fase 0 |
+| B5 Stage 2 I/O | Canary 2 slot di VPS 8 | 1 | Driver diperbaiki; canary antre |
+| B6 encoder mati | R3–R8 + iterasi 2 | 0 | Deployed; observasi 24 jam |
+| B7 web compute | Reassemble keluar dari web | 0 | Direncanakan |
+| B8 lock SQLite | Audit schema V2-007 | 0 | Gerbang teknis |
+| B9 kuota/dependensi | Doktrin 5/vault + fallback dihargai | 0–1 | Doktrin mengikat; P2 terbuka |
+
+**Definisi "siap deploy":** Batch 1 10/10 + semua artefak §9 lengkap +
+gerbang V2-007 + V2-009 lolos + D9/D10 diputuskan + observasi encoder
+24 jam bersih + persetujuan owner. Sampai saat itu, repo ini adalah
+paket persiapan — bukan instruksi eksekusi.
