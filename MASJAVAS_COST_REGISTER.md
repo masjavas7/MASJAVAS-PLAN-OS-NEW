@@ -1,6 +1,7 @@
 # MASJAVAS COST REGISTER — MASJAVAS TUBE OS V2
 
-**Versi:** 1.0 — 22 Nov 2026, 12:35 WIB.
+**Versi:** 1.1 — 22 Nov 2026, 13:05 WIB (sprint item #7: tambah
+§6 rujukan model TCO. Isi §1–§5 tidak berubah).
 **Sumber:** `PLAN_PENAMBAHAN_VPS8_2026-11-22.md` (§7),
 `docs/BIAYA_GENERATE_IMAGE_700_1000_CHANNEL.md` (riset 15 Nov 2026),
 `ENGINEERING_READINESS_DASHBOARD.md` (§ cost register awal),
@@ -97,3 +98,23 @@ Adobe Firefly ($9,99/bln, bukan untuk volume API massal).
 WAJIB SEMUA FREE; opsi berbayar DITOLAK. Semua jalur image-gen §3 adalah
 berbayar — dicatat sebagai riset harga, BUKAN rekomendasi pembelian.
 Keputusan pembelian apa pun tetap butuh persetujuan eksplisit user (Level C).
+
+## 6. Model TCO (lihat `MASJAVAS_TCO_MODEL.md` — otoritas perhitungan)
+
+Model TCO membedakan cap infrastruktur ($34,67/bln — OWNER
+DECISION, mengikat) dari total cost of ownership penuh. Ringkasan
+skenario (detail + aritmetika di model; semua angka berlabel di sana):
+
+| Skenario | Per bulan (yang diketahui) | Per tahun (yang diketahui) | vs cap $34,67/bln |
+|---|---|---|---|
+| Minimum (dua box saja) | $34,67 | $418,70 (termasuk setup $2,66) | PAS di cap — headroom $0 |
+| Expected (dua box + Offside $1,50) | $36,17 | $436,70 | LEBIH $1,50/bln — SEBELUM storage/domain |
+| Worst case (expected + cadangan 10% [PR]) | $39,64 | $478,34 | LEBIH $4,97/bln — SEBELUM yang belum diketahui |
+
+**Temuan utama model:** cap habis oleh infrastruktur saja; setiap
+biaya tambahan berada DI ATAS cap. Skenario expected sudah
+melampaui cap pada biaya yang diketahui saja. Komponen BELUM
+DIHITUNG (storage, retensi, snapshot, egress, domain, renewal,
+KEIN) tetap BELUM DIHITUNG — bukan nol, bukan tercakup cap.
+Keputusan owner yang dibutuhkan: apakah cap $34,67 mencakup
+seluruh TCO atau hanya infrastruktur (OQ-TCO-1).
