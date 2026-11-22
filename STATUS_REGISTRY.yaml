@@ -14,8 +14,8 @@
 # Keterbatasan bukti dicatat di field limitation, BUKAN di nama status.
 
 version: "1.0"
-updated: "2026-11-22T14:50:00+07:00"
-updated_by: "Autonomous Readiness Cycle 6 (cron local-only)"
+updated: "2026-11-22T18:50:00+07:00"
+updated_by: "Autonomous Readiness Cycle 7 (cron local-only)"
 overall_readiness: NOT_READY
 overall_readiness_reason: "Batch 1: 1 EXECUTED (dengan keterbatasan bukti) + 2 READY_FOR_REVIEW dari 10; gerbang V2-007 + V2-009 belum lolos; harga Master + VPS 8 belum terverifikasi panel; biaya storage/backup belum dihitung; D9/D10 menunggu user."
 
@@ -77,9 +77,9 @@ tickets:
   V2-006:
     title: "Service inventory"
     priority: P1
-    ticket_status: STUB
+    ticket_status: COMPLETE
     work_status: NOT_STARTED
-    note: "Termasuk daftar port publik Master (pertanyaan terbuka dari rencana pendukung)."
+    note: "Tiket diperluas ke format 15 elemen (Cycle 7, 22 Nov 18:50). Eksekusi QUEUED-FOR-INTERACTIVE — menunggu sesi interaktif + SSH. Termasuk daftar port publik Master (pertanyaan terbuka dari rencana pendukung). Nama unit systemd dari V2-005 F.3 kini OQ-019 (asumsi, wajib diverifikasi F.2); pemilik pemulihan guardian/sentinel kini OQ-020 (B10); 'Cron sync' kini OQ-021; penulis DB OQ-022 (handoff V2-007); parent FFmpeg OQ-023."
   V2-007:
     title: "Database schema audit (GERBANG TEKNIS)"
     priority: P1
@@ -135,5 +135,5 @@ counts:
   executed_with_limitation: 1
   ready_for_review: 2
   not_started: 7
-  ticket_complete: 4
-  ticket_stub: 6
+  ticket_complete: 5
+  ticket_stub: 5
