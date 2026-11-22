@@ -3,10 +3,22 @@
 **Status:** DRAFT — disiapkan, BELUM dieksekusi. Dokumen pendamping:
 `VPS8_DEPLOYMENT_RUNBOOK.md` (langkah) dan `VPS8_ROLLBACK_RUNBOOK.md`
 (prosedur mundur bila uji gagal).
-**Versi:** 1.0 — 22 Nov 2026, 12:35 WIB.
-**Aturan gerbang:** satu metrik scorecard memburuk = gerbang gagal =
-rollback. Setiap fase: observasi 72 jam, 0 error class baru.
-[VF — PLAN §2/§6; aturan perubahan 22 Nov 01:48]
+**Versi:** 1.1 — 22 Nov 2026, 13:05 WIB (sprint item #6: aturan
+gerbang satu-metrik diganti klasifikasi 3 kategori; lihat §1.1.
+Isi lain tidak berubah).
+**Aturan gerbang:** hasil uji diklasifikasi 3 kategori (§1.1):
+hard safety breach → rollback darurat; SLO degradation → HOLD
+rollout + investigasi + keputusan owner; transient noise →
+observasi. Setiap fase: observasi 72 jam, 0 error class baru.
+Otoritas threshold per metrik: Rollback Runbook §3.1.
+
+**SUPERSEDED — aturan lama:** "satu metrik scorecard memburuk =
+gerbang gagal = rollback" [PLAN §2/§6; aturan perubahan
+22 Nov 01:48] **tidak berlaku lagi sejak 22 Nov 2026 13:05 WIB**
+(sprint item #6; temuan review F2 TERKONFIRMASI). Alasan: aturan
+lama tidak membedakan noise sesaat dari degradasi nyata — spike
+CPU 3% selama 1 menit karena backup akan memicu rollback penuh.
+Prinsip konservatif dipertahankan (lihat Rollback Runbook §1.1).
 
 ## Legenda label klaim
 
@@ -41,9 +53,25 @@ R3–R8 (commit `56f7a6d`) + iterasi 2 (commit `021a9f0`); observasi
 24 jam pasca-iterasi-2 masih berjalan; kematian #14 tercatat
 08:09:50 (45 mnt pasca-deploy pertama). [VF]
 
+## 1.1 Klasifikasi hasil uji (ringkasan; otoritas: Rollback Runbook §1.1 + §3 + §3.1)
+
+| Kategori | Arti | Tindakan pada gerbang |
+|---|---|---|
+| **(a) Hard safety breach** | Live down, double publish, duplikat supervisor, kehilangan data, publish berhenti total, disk >90%, ≥3 error class baru/72 jam, ≥3 kematian encoder/72 jam | Gerbang GAGAL → rollback darurat (Rollback Runbook §4) |
+| **(b) SLO degradation** | Satu metrik scorecard memburuk melewati ambang kategorinya (threshold + durasi + jumlah sampel, Rollback Runbook §3.1) | Gerbang DITAHAN (HOLD) → investigasi; owner memutuskan rollback / fix-forward / terima dengan pemantauan |
+| **(c) Transient noise** | Fluktuasi singkat, kecil, pulih sendiri, di bawah ambang (b) | BUKAN kegagalan gerbang → observasi + catat; bila berulang ≥3×/72 jam → naik ke (b) |
+
+Sel-sel "Gagal bila" di bawah yang menyebut "satu baris memburuk"
+dibaca melalui klasifikasi ini: hanya (a) yang menggagalkan
+gerbang secara otomatis; (b) menahan gerbang; (c) tidak
+menggagalkan gerbang.
+
 **Cara membaca tabel uji:** kolom "Lolos bila" adalah kriteria
-keberhasilan yang terukur; "Gagal bila" adalah pemicu rollback
-(lihat Rollback Runbook). Semua pengukuran dicatat di log uji (§6).
+keberhasilan yang terukur; "Gagal bila" adalah pemicu KLASIFIKASI
+(§1.1) — bukan pemicu rollback otomatis: hasil "Gagal" dinilai
+dulu sebagai hard safety breach / SLO degradation / transient
+noise sebelum tindakan diputuskan (lihat Rollback Runbook §3).
+Semua pengukuran dicatat di log uji (§6).
 
 ---
 
@@ -57,7 +85,7 @@ keberhasilan yang terukur; "Gagal bila" adalah pemicu rollback
 | T0.4 | Sweeper batch 5 + guard lokal (0.4) | Feed ≥2 channel/menit (rata-rata 24 jam); 100% penahanan guard tercatat alasannya di log (audit sampel 50 baris) | Feed <2/mnt; ≥1 penahanan tanpa alasan | 8 |
 | T0.5 | Encoder stabil pasca-P16 (0.5) | 0 kematian tak direncanakan/72 jam; 0 orphan; watchdog R3b menyelamatkan ≥1 stall (feeder restart + encoder tetap hidup) | ≥1 kematian; ≥1 orphan; watchdog mencatat stall tapi encoder tetap mati | 3, 4 |
 | T0.6 | Janitor status-only (0.6) | 0 GB file channel CONNECTED terhapus berlabel "unpaired" dalam audit 24 jam (audit pasca-V2-004) | ≥1 file CONNECTED terhapus/terlabel salah | — (R6) |
-| T0.G | Gerbang Fase 0 | Baris 1, 2, 5, 6, 7, 8, 9, 11 membaik/tetap 72 jam; 0 error class baru | Satu baris memburuk; ≥1 error class baru | 1,2,5,6,7,8,9,11 |
+| T0.G | Gerbang Fase 0 | Baris 1, 2, 5, 6, 7, 8, 9, 11 membaik/tetap 72 jam (dinilai via klasifikasi §1.1); 0 error class baru | Satu baris memburuk melewati ambang kategori (b) (HOLD) atau (a) (rollback darurat); ≥1 error class baru | 1,2,5,6,7,8,9,11 |
 
 **Catatan T0.5:** kriteria "watchdog menyelamatkan stall" adalah
 [PR] — berasal dari temuan iterasi 2 (watchdog fired 08:09:42 tapi
@@ -90,7 +118,7 @@ bukan lolos.
 | T1.3-D | TX governor | Stream baru ditolak saat TX total + bitrate >420 Mbps (uji dengan penawaran stream tiruan/melebihi batas); penolakan tercatat alasannya | Stream diterima di atas batas; atau ditolak tanpa alasan tercatat |
 | T1.3-E | Master responsif | healthz p95 <100 ms selama canary berjalan; publish normal | healthz p95 ≥100 ms; publish terganggu |
 | T1.3-F | Failover darurat ke Master | [PR] 1 stream canary dipindahkan kembali ke Master (drain Live-01 → start Master) dalam ≤5 menit, tanpa duplikat supervisor. Kapasitas darurat "±20 stream" [DF — PLAN §8] TIDAK diuji penuh di sini (butuh 20 stream) — dicatat sebagai [OQ] | Duplikat supervisor; atau pemindahan >15 menit |
-| T1.3-G | Stabilitas 72 jam | Stream canary stabil 72 jam; 0 kematian tak direncanakan; 0 orphan; scorecard baris 3, 4, 11, 12 membaik/tetap | ≥1 kematian; ≥1 orphan; satu baris memburuk |
+| T1.3-G | Stabilitas 72 jam | Stream canary stabil 72 jam; 0 kematian tak direncanakan; 0 orphan; scorecard baris 3, 4, 11, 12 membaik/tetap (dinilai via klasifikasi §1.1) | ≥1 kematian; ≥1 orphan; satu baris memburuk melewati ambang kategori (b)/(a) |
 
 ---
 
@@ -116,7 +144,7 @@ bukan lolos.
 | T1.5-F | Worker crash | Worker prep dimatikan paksa (uji) → 0 duplikat job; job yang terinterupsi kembali ke antrean (lease habis) dan diselesaikan worker lain/Master; hasil tidak ganda | Duplikat job; hasil ganda; job hilang tanpa jejak |
 | T1.5-G | Master disconnect | Koneksi Master↔VPS 8 diputus (uji) → prep worker pause klaim baru (tanpa error berulang); stream live TETAP jalan; sambung lagi → klaim lanjut normal; heartbeat stale >90 dtk memicu alarm | Live ikut mati; klaim berulang error; alarm tidak berbunyi |
 | T1.5-H | Fencing + idempotency | Job dengan fencing token basi ditolak; submit ganda dengan idempotency key yang sama menghasilkan 1 hasil (tidak ganda) | Token basi diterima; hasil ganda |
-| T1.5-I | Observasi 72 jam canary | Scorecard membaik/tetap; 0 error class baru; 0 gangguan live | Satu baris memburuk; ≥1 error class baru |
+| T1.5-I | Observasi 72 jam canary | Scorecard membaik/tetap (dinilai via klasifikasi §1.1); 0 error class baru; 0 gangguan live | Satu baris memburuk melewati ambang kategori (b) (HOLD) atau (a) (rollback darurat); ≥1 error class baru |
 | T1.6-A | Prep penuh | Ingestion RUNNING ≥3 job saat backlog ada; Stage 2 4 slot jalan; throughput Stage 2/24 jam ≥ baseline (1.011/7 hari ≈ 144/hari) dan naik terukur; TX live tidak terganggu | Ingestion <3 saat backlog ada; throughput turun; live terganggu |
 | T1.6-B | Broadcast window | [PR] Ingestion Master jeda 17:00–22:30 WIB; ingestion VPS 8 JALAN TERUS dalam jendela itu (guard broadcast hanya di Master) | VPS 8 ikut jeda; atau Master tidak jeda |
 
@@ -151,7 +179,10 @@ jangan bebani produksi secara dadakan. [PR]
 ## 8. Gerbang Fase 1 (akhir)
 
 Scorecard SEMUA 13 baris membaik atau tetap selama 72 jam
-pasca-1.6; Master tidak lagi menjalankan live reguler; 0 error
+pasca-1.6 — dinilai via klasifikasi §1.1 (hanya kategori (a) yang
+menggagalkan gerbang otomatis; kategori (b) menahan gerbang
+sampai owner memutuskan; kategori (c) tidak menggagalkan
+gerbang); Master tidak lagi menjalankan live reguler; 0 error
 class baru. [DF — PLAN §6] Lolos → VPS 8 dinyatakan SIAP
 OPERASI PENUH (bukan sekadar "terpasang").
 
