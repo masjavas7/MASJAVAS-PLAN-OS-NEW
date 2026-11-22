@@ -2,6 +2,7 @@
 
 **Dokumen acuan (frozen):** `MASTER_ARCHITECTURE_MASJAVAS_TUBE_OS_V2.md` (Draft Baseline),
 `IMPLEMENTATION_CHECKLIST_MASJAVAS_TUBE_OS_V2.md` (v1.0)
+**Versi:** 1.8 — V2-008 diperluas Cycle 9, 23 Nov 02:50 WIB (cron local-only)
 **Versi:** 1.7 — V2-007 diperluas Cycle 8, 22 Nov 22:50 WIB (cron local-only)
 **Versi:** 1.6 — V2-006 diperluas Cycle 7, 22 Nov 18:50 WIB (cron local-only)
 **Versi:** 1.5 — V2-005 diperluas Cycle 6, 22 Nov 14:50 WIB (cron local-only)
@@ -2288,17 +2289,430 @@ backup + metode (salinan backup, bukan live).**
 
 ---
 
-# TIKET V2-008 — RESOURCE BUDGET BENCHMARK (STUB)
+# TIKET V2-008 — RESOURCE BUDGET BENCHMARK
 
-**Prioritas:** P1 | **Workstream:** P1.4 | **Status:** NOT_STARTED
-**Dependency:** V2-005 baseline
+**Judul:** Ukur konsumsi aktual per worker (publish/render, reassemble,
+LoopGen Stage 2, live encoder, web/API, ingestion) — CPU, peak RAM, disk
+staging/cache, TX/RX — + uji concurrency Stage 2 (1 vs 2 slot) dan
+reassemble (1 vs 2 job); bedakan modal vs konsumsi aktual vs ambang gate;
+hasilkan angka concurrency FINAL yang menggantikan PROPOSAL di capacity model
+**Prioritas:** P1 | **Workstream:** P1.4 | **Owner:** Muse (benchmark)
+— angka concurrency final: user
+**Status:** NOT_STARTED (tiket lengkap — eksekusi menunggu sesi interaktif + SSH)
+**Dibuat:** 22 Nov 2026 (stub) — **Diperluas:** 23 Nov 2026 02:50 WIB
+(Cycle 9, cron local-only)
+**Dependency:** V2-005 baseline (pembanding — WAJIB dibaca dulu);
+V2-006 service inventory (worker mana yang di-benchmark — input, BUKAN
+blocker); V2-007 schema audit (tabel/metrik — input, BUKAN blocker;
+metode tiket ini TIDAK boleh hardcode nama tabel sebelum V2-007);
+capacity model `VPS8_RESOURCE_CAPACITY_MODEL.md` (PROPOSAL yang diuji)
+**Diblokir oleh:** tidak ada — membutuhkan akses baca VPS (SSH Tailscale,
+host BENAR `masjavas-vps-baru` — pelajaran F-E V2-002) + jendela observasi
+tanpa restart/deploy bersamaan
 
-**Scope:** ukur konsumsi aktual per worker (ingestion, Stage 2, live,
-publish, web/API) — CPU, peak RAM, disk staging/cache, TX; uji Stage 2
-concurrency 1 lalu 2 (3–4 hanya bila aman); bedakan modal vs konsumsi
-aktual vs ambang gate.
-**Batas:** benchmark ringan yang tidak mengganggu publish/live; uji
-concurrency Stage 2 butuh persetujuan bila menyentuh antrean produksi.
+## A. Masalah
+
+Angka concurrency yang menentukan apakah VPS 8 muat — dan berapa slot
+Stage 2 / job reassemble / stream live yang aman bersamaan — masih
+PROPOSAL, bukan pengukuran. Capacity model menyatakan sendiri:
+"Benchmark adalah prasyarat angka concurrency final (capacity model
+memakai PROPOSAL sampai V2-008)" (STATUS_REGISTRY.yaml, catatan V2-008).
+Tanpa benchmark ini:
+
+1. **Puncak ≈7 core dari 8 vCPU (headroom ±1 core) belum teruji:**
+   capacity model menghitung puncak VPS 8 ≈7 core dengan cap §5, dan
+   ≈8–9 core TANPA cap — melebihi 8 vCPU. Bila konsumsi aktual per
+   worker lebih besar dari modal PLAN §4, headroom ±1 core itu hilang
+   dan pembelian VPS 8 bertumpu pada angka yang salah.
+2. **Modal vs aktual sudah terbukti menyimpang sekali:** atribusi
+   governor mencatat ingestion CPU 0,0% — ternyata reassemble audio
+   (64×/24 jam, ±0,9 core/job, ±6 mnt) tercatat di bucket render/web,
+   bukan ingestion (koreksi 22 Nov 12:14, addendum reassemble). Modal
+   PLAN §4 kini menyatakan reassemble ±1 core puncak — tetapi angka
+   itu koreksi hitungan (64×6 mnt×0,9 = 5,8 core-jam/hari ≈ 0,25 core
+   rata-rata), BUKAN pengukuran per-job. Benchmark harus mengukur
+   CPU/wall/RAM per job reassemble secara langsung.
+3. **Stage 2 I/O-bound (R9) — concurrency belum teruji:** 12,8 dtk CPU
+   vs 100,1 dtk wall per klip (±13% satu core) berarti yang membatasi
+   Stage 2 kemungkinan I/O disk, bukan CPU. Menambah slot dari 2 ke 4
+   bisa jadi TIDAK menambah throughput sama sekali bila disk jenuh
+   duluan — atau malah memperlambat semua slot. Canary 2 slot → penuh
+   4 slot (PLAN §6) tidak boleh diputuskan tanpa uji 1 vs 2 slot.
+4. **Ingestion concurrency 1 permanen (V2-003):** 5 cap bertumpuk
+   mencekik ingestion sahih; 0 stage berat selesai/24 jam (hanya
+   DRIVE_SYNC: 29 completed). Benchmark harus mengukur konsumsi aktual
+   ingestion + gate mana yang benar-benar membatasi — agar concurrency
+   final bukan sekadar menaikkan angka buta.
+5. **Live per stream belum diukur pada 1080p:** doktrin 1080p semua
+   channel (keputusan user) + anggaran live ±2 core untuk 50 stream
+   di VPS 8 adalah model. CPU/RAM/TX per stream @1080p harus diukur
+   dari encoder yang sedang berjalan — bukan dari spesifikasi.
+6. **Baseline V2-005 adalah pembanding, bukan hasil:** render median
+   463 dtk / p90 1.396 dtk, delay median 11,6 mnt / p90 30,2 mnt, load
+   3,6–5,5 — semua DOCUMENTED NOT YET REVALIDATED. Benchmark ini
+   memakai baseline itu sebagai pembanding dan melaporkan bila angka
+   terukur menyimpang jauh (penyimpangan itu sendiri temuan).
+
+**Fakta terverifikasi (bukan asumsi):**
+
+| Fakta | Nilai | Sumber |
+|---|---|---|
+| Host benar | `masjavas-vps-baru` (Contabo vmi3762689, disk 145G); DB live ±118 MB | V2-002 F-E (Cycle 3) |
+| Baseline V2-005 (pembanding) | Publish 21 Nov 206/0/0; render median 463 dtk / p90 1.396 dtk; delay median 11,6 mnt / p90 30,2 mnt; load 3,6–5,5; DB-lock 31×/24 jam; disk 72%; worker satu proses PID 778998; 2 stream ±4,2 Mbps; churn 66% | V2-005 (DOCUMENTED NOT YET REVALIDATED — wajib dibandingkan ulang saat eksekusi) |
+| Capacity model — puncak VPS 8 | ≈7 core dari 8 vCPU, headroom ±1 core (BERSYARAT cap §5); tanpa cap ≈8–9 core > 8 vCPU; total rata-rata ±2,5 core (50 stream + prep penuh) | `VPS8_RESOURCE_CAPACITY_MODEL.md` (sprint 22 Nov 13:08) |
+| Capacity model — Stage 2 | ±0,13 core/slot (12,8 dtk CPU / 100,1 dtk wall); cgroup max 4 core; canary 2 slot → penuh 4 slot; 4 slot × ±0,13 = ±0,5 core rata-rata | Capacity model §3 + PLAN §6 |
+| Capacity model — reassemble | Maks 2 job bersamaan; 1 job saat live ≥30 stream atau CPU pressure tinggi; 64 job × 6 mnt = 6,4 jam CPU/hari; 2 job = 1,8 core puncak | Capacity model §5 (PROPOSAL — diuji tiket ini) |
+| Modal PLAN §4 per worker | Publish 2–3 core / 4 GB / 60 GB; Ingestion ±0 CPU (terukur 0,0% — KOREKSI: reassemble ±1 core puncak, 0,25 rata-rata, RAM ±0,1 GB/job); Stage 2 1 core/render, cgroup max 4 core, 4 GB, 50 GB; Live ±2 core (50 stream); VPS 8 total puncak ≈7 core, RAM ±6 GB, disk ±155 GB | `PLAN_PENAMBAHAN_VPS8_2026-11-22.md` §4 (+ addendum reassemble 12:14) |
+| Stage 2 throughput terukur | 1.011 DONE/7 hari; wall 100,1 dtk/klip; I/O dominan (R9) | RENCANA_ORCHESTRATOR §4; EVALUASI |
+| Ingestion (V2-003) | Konkurensi 1 permanen (5 cap bertumpuk); 0 stage berat selesai/24 jam (hanya DRIVE_SYNC 29 completed); CPU 0,0% = artefak atribusi; daemon otonom 18% CPU | V2-003 (audit 22 Nov 07:15–07:40) |
+| Live | 1080p semua channel (keputusan user); VPS 8 menampung 70 stream @1080p vs 134 @720p (model); 4 stream 15:29 TX ±29 Mbps | ALIGNMENT_SYNTHESIS; PLAN §4 |
+| Governor | 1.918 tick V2 → 0 aksi efektif; shed_render 29× log-only; atribusi lane ingestion buta (daemon → lane `other`) | V2-003 |
+| Baseline lantai (mengikat) | 206 PUBLISHED/hari, 0 FAILED/BLOCKED, delay p90 30,2 mnt — setiap perubahan/uji wajib membuktikan baseline tidak memburuk | User 22 Nov 12:40 (OPTIMASI, BUKAN PENGGANTIAN) |
+
+**Fakta yang BELUM terverifikasi (jangan diperlakukan sebagai fakta):**
+konsumsi aktual per worker (CPU rata-rata/puncak, peak RAM, wall/job);
+apakah 2 reassemble bersamaan saling memperlambat; pada concurrency
+Stage 2 berapa disk/I/O jenuh duluan; TX/RX aktual per workload vs
+model 70% port; peak RAM aktual Stage 2 (4 GB?) / ingestion (gate
+4 GB?) / reassemble (0,1 GB/job?); headroom nyata Master saat ini;
+apakah angka concurrency final muat dalam anggaran prep 5,5 core.
+
+**OPEN QUESTION (ditemukan saat perluasan tiket — wajib dijawab saat eksekusi):**
+OQ-029 — berapa konsumsi aktual per worker vs modal PLAN §4 (khususnya
+render publish, reassemble, Stage 2, live per stream, web/API)? OQ-030 —
+pada concurrency Stage 2 berapa I/O disk jenuh duluan (vs CPU) — dan
+apakah throughput/klip naik dari 1 ke 2 slot, atau datar? OQ-031 —
+apakah 2 job reassemble bersamaan saling memperlambat (wall time/job
+naik vs 1 job)? OQ-032 — berapa TX/RX aktual per workload (live per
+stream, upload YouTube, unduh Drive) vs model port? OQ-033 — berapa
+peak RAM aktual per worker vs modal (Stage 2 4 GB? ingestion gate
+4 GB? reassemble 0,1 GB/job?)? OQ-034 — apakah benchmark ringan ini
+dapat diulang dengan metode identik (baseline V2-005 sebagai
+pembanding)? OQ-035 — berapa headroom nyata Master saat ini (load
+3,6–5,5 pada 4 vCPU) — dan apakah angka concurrency final muat dalam
+anggaran prep 5,5 core + live ±2 core?
+
+**Dua pekerjaan berbeda (jangan dicampur):**
+
+1. **Benchmark pasif + uji ringan (tiket ini)** — ukur konsumsi aktual
+   dari pekerjaan yang SUDAH berjalan + uji concurrency terbatas
+   (F.6) dengan pengaman eksplisit; JANGAN ubah limit, config, atau
+   antrean produksi.
+2. **Penetapan concurrency final + perubahan cap/gate (keputusan
+   terpisah)** — memakai hasil benchmark ini; perubahan cap Stage 2 /
+   reassemble / ingestion adalah L2/L3 dan butuh persetujuan user.
+
+## B. Target
+
+1. Tabel modal vs aktual vs ambang gate per worker: publish/render,
+   reassemble, Stage 2, live encoder+feeder, web/API, ingestion —
+   masing-masing CPU (rata-rata + puncak), peak RAM, wall/job, disk
+   staging/cache, TX/RX (bila terukur).
+2. Render publish: median/p90 wall + CPU per job dibandingkan dengan
+   baseline V2-005 (463/1.396 dtk) — cocok atau menyimpang, dengan
+   alasan bila menyimpang.
+3. Reassemble: CPU/wall/RAM per job terukur langsung (bukan hitungan
+   64×6 mnt×0,9) + jawaban OQ-031 (1 vs 2 job bersamaan).
+4. Stage 2: throughput/klip + CPU/wall/RAM + iowait pada 1 slot vs
+   2 slot; jawaban OQ-030 (I/O jenuh duluan atau tidak).
+5. Live: CPU/RAM/TX per stream @1080p terukur dari encoder berjalan;
+   proyeksi jumlah stream dalam anggaran ±2 core.
+6. Web/API + daemon otonom: konsumsi + anak ffmpeg; jawaban apakah
+   atribusi ingestion masih buta (V2-003) saat benchmark.
+7. Ingestion: konsumsi aktual + gate mana yang benar-benar membatasi
+   konkurensi (bukan sekadar "1 permanen").
+8. Disk + jaringan: pertumbuhan staging/cache selama benchmark,
+   iowait, TX/RX per workload vs model port.
+9. Angka concurrency FINAL per worker (Stage 2 slot, reassemble job,
+   ingestion) — menggantikan PROPOSAL capacity model, atau tercatat
+   eksplisit "tetap PROPOSAL + alasannya" bila bukti tidak cukup.
+10. OQ-029–OQ-035 terjawab dengan bukti; yang tidak bisa dijawab
+    dicatat eksplisit sebagai "TIDAK DAPAT DIVERIFIKASI + alasannya";
+    handoff ke capacity model / purchase gate / P3 tercatat eksplisit.
+
+## C. Prasyarat
+
+- [ ] Akses SSH baca ke `masjavas-vps-baru` (host BENAR — verifikasi
+      hostname `vmi3762689` + disk 145G sebelum benchmark, pelajaran F-E).
+- [ ] V2-005 baseline + V2-006 service inventory + capacity model
+      dibaca sebagai pembanding — BUKAN pengganti pengukuran langsung.
+- [ ] **Jendela observasi bersih:** tidak ada restart/deploy/
+      benchmark/audit bersamaan selama pengukuran (koordinasi dengan
+      lane lain; PID/parent/load berubah tiap menit — catat jeda antar
+      cuplikan).
+- [ ] **F.6 (uji concurrency) TIDAK jalan tanpa salah satu:**
+      (a) materi uji/sintetik di luar antrean produksi, ATAU
+      (b) persetujuan eksplisit user bila menyentuh antrean produksi.
+      Bila tidak ada keduanya — F.6 dicatat "TIDAK DIJALANKAN +
+      alasannya", tiket tetap bisa lulus dengan F.1–F.5.
+- [ ] Kriteria berhenti (stop criteria) F.6 disepakati sebelum uji:
+      load, delay publish, FAILED/BLOCKED — lihat §H.
+- [ ] Baseline lantai dicatat sebelum mulai (206/hari, 0 FAILED/
+      BLOCKED, p90 30,2 mnt) — pembanding pasca-uji.
+
+## D. Scope pemeriksaan (worker/metrik)
+
+| # | Area | Lokasi / cara periksa |
+|---|---|---|
+| D1 | Input pembanding | Baseline V2-005 + inventaris V2-006 (PID/unit tiap worker — JANGAN hardcode dari V2-005 F.3, verifikasi dulu) + modal PLAN §4 + PROPOSAL capacity model |
+| D2 | Publish (scheduler + render + upload) | CPU/wall/RAM per job render; slot render bersamaan; median/p90 wall vs baseline V2-005; TX upload |
+| D3 | Reassemble audio | CPU/wall/RAM per job (`process_and_reassemble_ingestion_audio`); 1 job vs 2 job bersamaan (OQ-031); RAM ±0,1 GB/job |
+| D4 | LoopGen Stage 2 | CPU/wall/RAM per klip; throughput/klip pada 1 vs 2 slot; iowait + cgroup `cpu.stat`/`cpu.max`; 3–4 slot HANYA bila F.6 aman + disetujui |
+| D5 | Live encoder + feeder | CPU/RAM/TX per stream @1080p (encoder + feeder per task); jumlah stream vs anggaran ±2 core |
+| D6 | Web/API + daemon otonom | CPU/RAM web uvicorn + daemon; anak ffmpeg per proses; atribusi lane (apakah ingestion masih buta — V2-003) |
+| D7 | Ingestion (download/sync/drive) | CPU/RAM/disk staging; gate mana yang membatasi (disk 40 GB? load1>2,8? RAM? broadcast window?); konkurensi aktual yang terjadi |
+| D8 | Disk + jaringan | `df`/`du` staging + cache + pool audio 20,5 GB sebelum/sesudah; iowait; TX/RX per workload (`/proc/net/dev` delta) |
+| D9 | Load + guard selama benchmark | load1/5/15 + tick governor + shed event selama F.1–F.6; bandingkan dengan baseline load 3,6–5,5 |
+| D10 | Rekonsiliasi + handoff | Rangkai D1–D9: tabel modal vs aktual vs ambang gate + angka concurrency final + handoff capacity model / purchase gate (V2-009) / P3 |
+
+## E. Pertanyaan teknis yang harus dijawab
+
+| # | Pertanyaan | Bukti yang menjawab |
+|---|---|---|
+| Q1 | Berapa konsumsi aktual per worker (CPU rata-rata/puncak, peak RAM, wall/job) vs modal PLAN §4 (OQ-029)? | D1–D7 (F.2/F.3) |
+| Q2 | Render publish: median/p90 wall + CPU per job — cocok dengan baseline V2-005 (463/1.396 dtk) atau menyimpang? | D2 (F.3) |
+| Q3 | Reassemble: CPU/wall/RAM per job terukur; apakah 2 job bersamaan saling memperlambat (OQ-031)? | D3 (F.3/F.6) |
+| Q4 | Stage 2: throughput/klip pada 1 vs 2 slot; I/O jenuh duluan (OQ-030)? | D4 (F.3/F.6) |
+| Q5 | Live: CPU/RAM/TX per stream @1080p; berapa stream muat dalam anggaran ±2 core? | D5 (F.2/F.4) |
+| Q6 | Web/API + daemon: konsumsi + anak ffmpeg; apakah atribusi ingestion masih buta (V2-003)? | D6 (F.2/F.5) |
+| Q7 | Ingestion: konsumsi aktual + gate mana yang benar-benar membatasi konkurensi? | D7 (F.2/F.3) |
+| Q8 | Disk + TX/RX: staging/cache, iowait, TX per workload vs model port (OQ-032/OQ-033)? | D8 (F.4/F.5) |
+| Q9 | Berapa angka concurrency FINAL per worker (Stage 2 slot, reassemble job, ingestion) — menggantikan PROPOSAL capacity model? | D10 (F.6 + D1–D9) |
+| Q10 | Apakah benchmark ini dapat diulang + apakah handoff ke capacity model / purchase gate / P3 tercatat? | D10 + dokumen §G |
+
+## F. Perintah / metode benchmark (host `masjavas-vps-baru`)
+
+**F.1 — Verifikasi host + cuplikan pasif awal (satu panggilan):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'hostname; uptime; df -h /opt/masjavas-os 2>/dev/null | tail -1; free -m | head -2; ps aux --sort=-%cpu | head -20'
+```
+
+Catat hostname `vmi3762689` + disk 145G (bila tidak cocok — STOP, host
+salah). Cuplikan ini adalah titik awal (t0) — ulangi perintah yang sama
+sebagai t1 di akhir sesi dan catat delta load/disk/RAM.
+
+**F.2 — Konsumsi per proses (pasif, berurutan dalam satu sesi):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'ps -eo pid,ppid,pcpu,pmem,rss,etime,comm,args --sort=-pcpu | head -40; echo ---CGROUP---; ls /sys/fs/cgroup/ 2>/dev/null | head; echo ---FFMPEG---; ps -eo pid,ppid,pcpu,etime,args | grep -E "ffmpeg" | grep -v grep | head -30'
+```
+
+Petakan tiap PID ke worker (V2-006) + parent + stream/job (OQ-023
+V2-006). **JANGAN hardcode nama unit/PID dari V2-005 F.3** — verifikasi
+dulu; bila berbeda, koreksi eksplisit di dokumen bukti. Ulangi F.2
+minimal 3× selama sesi (awal/tengah/akhir) — satu cuplikan tidak cukup
+untuk puncak.
+
+**F.3 — Waktu per job dari log + agregat DB read-only (baca schema dulu):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'sqlite3 "file:<DB>?mode=ro" "SELECT status, count(*) FROM operational_tasks GROUP BY status;" 2>&1 | head; echo ---; grep -h "reassemble\|Stage 2\|render" /opt/masjavas-os/logs/*.log 2>/dev/null | tail -5'
+```
+
+Sesuaikan `<DB>` dengan discovery (V2-001 F.2 / V2-007 F.1 — JANGAN
+tebak path) dan nama tabel/kolom dengan schema dump V2-007 (bila sudah
+ada) — nama kolom sudah terbukti menyesatkan (`schedule_time` tidak
+ada). Agregat + hitung saja; **TANPA data sensitif** (jangan tampilkan
+token/kunci). Bila tabel belum diketahui (V2-007 belum jalan), ukur
+dari log + `ps etime` saja dan catat keterbatasannya.
+
+**F.4 — TX/RX per workload (pasif, delta dua cuplikan):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'cat /proc/net/dev | grep -E "eth|ens|enp|tailscale|tun" ; echo ---; ss -tunp 2>/dev/null | grep -E "ESTAB" | head -20'
+```
+
+Ambil dua cuplikan berjarak ≥10 menit selama pekerjaan berjalan;
+hitung delta byte → Mbps per interface. Pisahkan bila mungkin: live
+(RTMP), upload YouTube, unduh Drive — bila tidak dapat dipisah, catat
+sebagai angka gabungan + alasannya (OQ-032 tetap Partial, bukan ditebak).
+
+**F.5 — Disk + iowait (pasif):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'df -h; echo ---; du -sh /opt/masjavas-os/* 2>/dev/null | sort -rh | head -15; echo ---; vmstat 1 5 2>/dev/null | tail -5; iostat -x 1 3 2>/dev/null | tail -20'
+```
+
+Bila `iostat` tidak tersedia, pakai `vmstat` (kolom `wa`) + `cat
+/proc/diskstats` delta. Catat metode yang dipakai. Bandingkan disk
+sebelum/sesudah sesi (staging + cache + pool audio 20,5 GB).
+
+**F.6 — Uji concurrency terbatas (AKTIF — GERBANG PERSETUJUAN):**
+
+- **Hanya jalan bila prasyarat C terpenuhi:** (a) materi uji/sintetik
+  di luar antrean produksi, ATAU (b) persetujuan eksplisit user bila
+  menyentuh antrean produksi. Bila tidak ada keduanya — LEWATI F.6
+  dan catat "TIDAK DIJALANKAN + alasannya".
+- **Urutan:** Stage 2 pada 1 slot (ukur throughput/klip + wall +
+  iowait) → 2 slot (ukur yang sama) → bandingkan. Reassemble 1 job
+  → 2 job bersamaan (ukur wall/job). **3–4 slot Stage 2 HANYA bila
+  2 slot aman + disetujui terpisah.**
+- **Stop criteria (hentikan uji segera bila salah satu terjadi):**
+  load1 > 6,0 (Master 4 vCPU — skala dari ambang prep pause load15
+  6,0/8 vCPU capacity model); delay publish memburuk vs baseline
+  p90 30,2 mnt; FAILED/BLOCKED > 0; disk bebas < 40 GB (gate
+  ingestion); stream live mati/terganggu. Setiap penghentian dicatat
+  dengan metrik saat berhenti.
+- Uji dilakukan pada jendela beban rendah bila memungkinkan; durasi
+  tiap tahap dicatat; JANGAN ubah limit/cgroup/config apa pun selama uji.
+
+**DILARANG dalam tiket ini:**
+
+- Benchmark yang mengganggu publish/live (baseline lantai 206/hari,
+  0 FAILED/BLOCKED, p90 30,2 mnt — bila uji memburukkan salah satunya,
+  hentikan dan laporkan sebagai temuan, bukan keberhasilan).
+- Uji concurrency pada antrean produksi tanpa persetujuan eksplisit
+  user (prasyarat C).
+- Uji 3–4 slot Stage 2 tanpa bukti 2 slot aman + persetujuan terpisah.
+- Mengubah limit, cgroup, config, `.env`, systemd, atau antrean job
+  dalam bentuk apa pun (itu keputusan L2/L3 terpisah).
+- Membunuh / me-restart proses apa pun; menulis ke DB live; menampilkan
+  nilai token/kunci.
+- Mengambil benchmark di `masjavas-vps` (box lama) — host salah membuat
+  seluruh benchmark salah alamat (pelajaran F-E V2-002).
+
+## G.0 — Evidence manifest (wajib diisi saat eksekusi)
+
+Setiap Q1–Q10 wajib punya satu baris manifest. Isi manifest BERSAMAAN
+dengan eksekusi, bukan di akhir — PID/load berubah tiap menit.
+
+| Question ID | Command | Timestamp (WIB) | Exit code | Evidence | Finding | Confidence | Impact |
+|---|---|---|---|---|---|---|---|
+| Q1 | F.2 + F.3 | | | `RESOURCE_BUDGET_BENCHMARK_V2_<tanggal>.md` | | | |
+| Q2 | F.3 | | | `RESOURCE_BUDGET_BENCHMARK_V2_<tanggal>.md` | | | |
+| Q3 | F.3 + F.6 | | | `RESOURCE_BUDGET_BENCHMARK_V2_<tanggal>.md` | | | |
+| Q4 | F.3 + F.6 | | | `STAGE2_CONCURRENCY_TEST_V2_<tanggal>.md` | | | |
+| Q5 | F.2 + F.4 | | | `RESOURCE_BUDGET_BENCHMARK_V2_<tanggal>.md` | | | |
+| Q6 | F.2 + F.5 | | | `RESOURCE_BUDGET_BENCHMARK_V2_<tanggal>.md` | | | |
+| Q7 | F.2 + F.3 | | | `RESOURCE_BUDGET_BENCHMARK_V2_<tanggal>.md` | | | |
+| Q8 | F.4 + F.5 | | | `RESOURCE_BUDGET_BENCHMARK_V2_<tanggal>.md` | | | |
+| Q9 | F.6 + D10 | | | `RESOURCE_BUDGET_BENCHMARK_V2_<tanggal>.md` | | | |
+| Q10 | D10 + dokumen §G | | | `RESOURCE_BUDGET_BENCHMARK_V2_<tanggal>.md` | | | |
+
+Aturan manifest: sama seperti V2-001 §G.0 — `Confirmed` (bukti langsung
+dari pengukuran berulang + log + agregat), `Partial` (satu cuplikan saja
+/ tidak dapat dipisah per workload / F.6 tidak dijalankan), `Unknown`
+(tidak dapat diverifikasi + alasannya dicatat). `Unknown` yang eksplisit
+LEBIH BAIK daripada dugaan yang ditulis seolah fakta. Bukti TIDAK BOLEH
+berisi nilai kredensial. **Setiap entri pengukuran WAJIB mencantumkan:
+waktu cuplikan + metode + beban yang sedang berjalan saat itu (jumlah
+stream live, job render/Stage 2 aktif) — angka tanpa konteks beban
+tidak dapat dibandingkan.**
+
+## G. Bukti yang harus dilampirkan (deliverable tiket)
+
+1. `RESOURCE_BUDGET_BENCHMARK_V2_<tanggal>.md` — Q1–Q3 + Q5–Q10
+   (tabel modal vs aktual vs ambang gate per worker + jawaban
+   OQ-029/OQ-031–OQ-035 + angka concurrency final).
+2. `STAGE2_CONCURRENCY_TEST_V2_<tanggal>.md` — Q4 (uji 1 vs 2 slot:
+   throughput/klip, wall, CPU, iowait, stop criteria bila terpicu;
+   3–4 slot hanya bila dijalankan + disetujui).
+3. `EVIDENCE_MANIFEST_V2-008.md` — manifest Q1–Q10 (bila dipisah dari
+   dokumen benchmark; bila digabung, catat di sini).
+4. Semua file di `workspace/engineering/v2-008/` (buat foldernya saat eksekusi).
+
+## H. Acceptance criteria (lulus / gagal)
+
+**LULUS bila SEMUA terpenuhi:**
+
+- [ ] Q1–Q10 terjawab dengan bukti; yang tidak bisa dijawab dicatat
+      eksplisit sebagai "TIDAK DAPAT DIVERIFIKASI + alasannya".
+- [ ] Tabel modal vs aktual vs ambang gate per worker ada, dengan
+      waktu cuplikan + konteks beban tiap angka (tanpa konteks beban,
+      angka tidak diterima).
+- [ ] Render publish dibandingkan dengan baseline V2-005 (cocok atau
+      menyimpang + alasan).
+- [ ] F.6 dijalankan dengan prasyarat C terpenuhi, ATAU dicatat
+      eksplisit "TIDAK DIJALANKAN + alasannya" (tiket tetap bisa lulus;
+      Q3/Q4/Q9 menjadi Partial dengan alasan, bukan ditebak).
+- [ ] Angka concurrency final tercatat — menggantikan PROPOSAL capacity
+      model, atau "tetap PROPOSAL + alasannya" bila bukti tidak cukup.
+- [ ] Baseline lantai TIDAK memburuk selama benchmark (206/hari,
+      0 FAILED/BLOCKED, p90 30,2 mnt — bila memburuk, hentikan uji +
+      laporkan sebagai temuan).
+- [ ] Nol perubahan limit/config/systemd/antrean; nol kill/restart
+      proses; nol tulis ke DB live.
+
+**GAGAL bila salah satu terjadi:**
+
+- Benchmark diambil di host yang salah (verifikasi host dulu —
+  pelajaran F-E).
+- Uji concurrency menyentuh antrean produksi tanpa persetujuan
+  eksplisit user.
+- Angka concurrency final ditetapkan dari SATU cuplikan atau tanpa
+  konteks beban.
+- Baseline lantai memburuk selama uji dan uji diteruskan (bukan
+  dihentikan + dilaporkan).
+- Modal PLAN §4 disalin sebagai "aktual" tanpa pengukuran.
+- Limit/config/cgroup diubah selama benchmark.
+
+## I. Dampak jika gagal / jika tiket tidak dikerjakan
+
+- Capacity model tetap PROPOSAL — angka concurrency final tidak ada;
+  purchase gate (V2-009) tidak dapat memverifikasi apakah VPS 8 muat.
+- Canary Stage 2 (2 slot → 4 slot, PLAN §6) diputuskan dari tebakan:
+  bila I/O jenuh duluan (R9), slot tambahan tidak menambah throughput
+  dan hanya menambah antrean + beban disk.
+- Reassemble 2 job bersamaan tidak teruji — aturan "maks 2 job"
+  capacity model tetap asumsi; antrean terburuk 6,4 jam (1 slot) vs
+  3,2 jam (2 slot) tidak dapat diputuskan.
+- P3 (pembagian 3 bagian) salah ukuran: worker yang tidak terukur
+  tidak dapat dibagi ke box yang benar.
+- Headroom ±1 core VPS 8 tetap klaim model — pembelian $34,67/bln
+  bertumpu pada angka yang belum pernah diukur.
+
+## J. Batas tindakan yang diizinkan
+
+- **BOLEH:** semua perintah §F.1–F.5 (pasif, read-only terhadap live);
+  F.6 HANYA dengan prasyarat C terpenuhi (materi uji ATAU persetujuan
+  user); membaca kode/config/journal/log/DB read-only (`mode=ro`);
+  menulis dokumen bukti §G.
+- **TIDAK BOLEH:** uji concurrency pada antrean produksi tanpa
+  persetujuan; uji 3–4 slot tanpa bukti 2 slot aman + persetujuan
+  terpisah; mengubah limit/cgroup/config/`.env`/systemd/antrean;
+  membunuh/me-restart proses; menulis ke DB live; menampilkan nilai
+  token/kunci; benchmark di `masjavas-vps` (box lama).
+- **Penetapan concurrency final + perubahan cap/gate = keputusan
+  terpisah** (memakai hasil benchmark ini sebagai input, bukan isi
+  tiket ini).
+
+## K. Pihak yang menyetujui langkah berikutnya
+
+| Langkah berikut | Penyetuju |
+|---|---|
+| Uji concurrency F.6 pada antrean produksi | User (menyetujui materi/jendela uji; tiket ini hanya menyajikan metode + pengaman) |
+| Uji 3–4 slot Stage 2 | User (terpisah — setelah bukti 2 slot aman) |
+| Penetapan angka concurrency final sebagai pengganti PROPOSAL capacity model | User (menyetujui angka + tabel modal vs aktual; benchmark ini hanya menyajikan bukti) |
+| Perubahan cap/gate (Stage 2 slot, reassemble job, ingestion concurrency) | User (L2/L3 sesuai perubahan — lihat tiket perubahannya) |
+| Benchmark ulang (versi baru) | Tidak butuh persetujuan baru bila metode sama; bila metode berubah, catat sebagai versi baru + beri tahu user |
+| Lanjut ke V2-009 | Tidak butuh persetujuan baru (Batch 1 audit) |
+
+## L. Estimasi & catatan eksekusi
+
+- Estimasi: ±1,5–2 jam (termasuk tunggu SSH + 3× cuplikan F.2 + jendela
+  observasi F.4 ≥10 menit + uji F.6 bila dijalankan).
+- Jalankan dari main/side chat (bukan proactivity handoff — konsistensi
+  dengan V2-001).
+- **Ulangi F.2 minimal 3× (awal/tengah/akhir)** — satu cuplikan tidak
+  cukup untuk puncak; tiap cuplikan WAJIB mencatat beban yang sedang
+  berjalan (stream live, job render/Stage 2 aktif).
+- **Baca schema dulu sebelum query (F.3):** nama kolom sudah terbukti
+  menyesatkan (`schedule_time` tidak ada — AGENTS.md 12 Nov). Bila
+  V2-007 belum jalan, ukur dari log + `ps etime` dan catat
+  keterbatasannya — JANGAN menebak nama tabel/kolom.
+- **F.6 adalah satu-satunya bagian aktif** — bila prasyarat C tidak
+  terpenuhi, lewati dengan catatan eksplisit; JANGAN memaksakan uji
+  pada antrean produksi.
+- Koordinasi dengan lane lain: jangan benchmark bersamaan dengan
+  restart supervisor / deployment / audit — beri tahu sebelum mulai.
+- Benchmark ini adalah versi pertama yang berversi; benchmark
+  berikutnya memakai nama file tanggal baru (jangan timpa file ini).
 
 ---
 
@@ -2346,7 +2760,7 @@ hasil V2-007 disetujui.
 | V2-005 | Baseline snapshot | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 6 22 Nov 14:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
 | V2-006 | Service inventory | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 7 22 Nov 18:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
 | V2-007 | Database schema audit (GERBANG TEKNIS) | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 8 22 Nov 22:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
-| V2-008 | Resource budget benchmark | P1 | NOT_STARTED (stub) | — |
+| V2-008 | Resource budget benchmark | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 9 23 Nov 02:50 WIB; eksekusi menunggu sesi interaktif + SSH; uji concurrency F.6 butuh materi uji ATAU persetujuan user bila menyentuh antrean produksi) | — |
 | V2-009 | VPS 8 price + storage cost verification (GERBANG BIAYA) | P1 | NOT_STARTED (stub) | — |
 | V2-010 | Deduplication design proposal | P1 | NOT_STARTED (stub, menunggu V2-007) | — |
 
