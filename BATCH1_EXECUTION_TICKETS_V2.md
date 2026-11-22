@@ -2,6 +2,7 @@
 
 **Dokumen acuan (frozen):** `MASTER_ARCHITECTURE_MASJAVAS_TUBE_OS_V2.md` (Draft Baseline),
 `IMPLEMENTATION_CHECKLIST_MASJAVAS_TUBE_OS_V2.md` (v1.0)
+**Versi:** 1.6 — V2-006 diperluas Cycle 7, 22 Nov 18:50 WIB (cron local-only)
 **Versi:** 1.5 — V2-005 diperluas Cycle 6, 22 Nov 14:50 WIB (cron local-only)
 **Versi:** 1.4 — status memakai kosakata direktif (QUEUED → NOT_STARTED); sumber status resmi: STATUS_REGISTRY.yaml
 **Versi:** 1.3 — V2-001 + V2-002 + V2-003 + V2-004 lengkap; V2-005–V2-010 stub antrean
@@ -1503,18 +1504,384 @@ mencantumkan: nilai + jendela waktu + metode/query + sumber.**
 
 ---
 
-# TIKET V2-006 — SERVICE INVENTORY (STUB)
+# TIKET V2-006 — SERVICE INVENTORY (AUDIT)
 
-**Prioritas:** P1 — CRITICAL | **Workstream:** P1.2 | **Status:** NOT_STARTED
-**Dependency:** akses server (SSH)
+**Judul:** Inventaris lengkap layanan sistem — systemd service + timer +
+cron + proses Python + FFmpeg + background task FastAPI + scheduler +
+sweeper + Fleet Runner + Resource Guard + janitor + upload/Drive sync —
+dengan peta dependency antar-service dan daftar port publik Master
+**Prioritas:** P1 — CRITICAL | **Workstream:** P1.2 | **Owner:** Muse (audit)
+**Status:** NOT_STARTED (tiket lengkap — eksekusi menunggu sesi interaktif + SSH)
+**Dibuat:** 22 Nov 2026 (stub) — **Diperluas:** 22 Nov 2026 18:50 WIB
+(Cycle 7, cron local-only)
+**Dependency:** akses baca VPS (SSH Tailscale, host BENAR `masjavas-vps-baru`
+— pelajaran F-E V2-002); V2-005 membantu interpretasi beban per unit,
+BUKAN blocker (inventaris ini memakai perintah baca langsung, bukan angka
+baseline); hasil tiket ini adalah INPUT wajib V2-007 (peta penulis DB),
+V2-008 (benchmark per worker), dan rencana pembagian 3 bagian P3
+**Diblokir oleh:** tidak ada — membutuhkan akses baca VPS + baca file unit
+systemd + baca journal + baca kode (lokasi proses)
 
-**Scope:** inventarisasi systemd service + timer + cron + proses Python +
-pemanggilan FFmpeg + background task FastAPI + scheduler + sweeper +
-Fleet Runner + Resource Guard + janitor + upload/Drive sync; petakan
-dependency antar-service; identifikasi proses berbagi event loop
-(`worker.autonomous_daemon`).
-**Deliverable:** `SERVICE_INVENTORY_V2.md`.
-**Batas:** read-only (`systemctl status/list-units`, `ps`, baca file unit).
+## A. Masalah
+
+Tidak ada satu pun dokumen yang memuat daftar lengkap apa saja yang
+berjalan di Master live — dan setiap kali ada insiden, tim menemukan
+proses yang tidak ada di peta:
+
+1. **Peta proses tidak lengkap:** yang diketahui hanya "SATU proses
+   worker + SATU event loop" (EVALUASI P3) dan "live supervisor proses
+   terpisah" (V2-003 G12). Nama unit systemd yang sebenarnya, timer,
+   cron, background task FastAPI, dan proses pendukung (tunnel, relay,
+   guardian, sentinel) belum pernah dicatat dalam satu inventaris.
+2. **Tiga proses pemulihan berpacu tanpa pemilik tunggal (B10, 22 Nov
+   15:30):** supervisor systemd + proses manual 650871 + daemon
+   sama-sama mencoba memulihkan stream 14:47 — sentinel ghost-kill
+   114 2×, encoder ganda 114, feeder orphan purba. Tanpa inventaris
+   yang memetakan SIAPA pemilik pemulihan tiap stream, perbaikan
+   struktural "SATU pemilik pemulihan" (menunggu keputusan owner)
+   tidak dapat dirancang.
+3. **Nama unit systemd belum terverifikasi:** V2-005 F.3 memakai nama
+   `masjavas-live.service`, `masjavas-os-worker.service`,
+   `masjavas-web.service` — nama-nama itu ASUMSI (tiket menulis
+   "sesuaikan nama unit dengan hasil F.2"). Bila nama itu salah,
+   perintah audit V2-005 F.3 mengembalikan nol dan lock 24 jam
+   terhitung salah.
+4. **Jalur hapus / tulis DB tidak terpetakan ke proses:** V2-007 (peta
+   penulis DB) dan V2-004 (janitor) sama-sama butuh jawaban "proses
+   mana yang menulis/menghapus apa" — jawaban itu hanya bisa datang
+   dari inventaris ini.
+5. **Port publik Master belum didaftar:** pertanyaan terbuka dari
+   rencana pendukung (STATUS_REGISTRY.yaml V2-006 note) — port apa
+   saja yang terbuka ke publik di Master, dan layanan apa yang
+   mendengarkannya, belum pernah dicatat.
+
+Tanpa inventaris ini, V2-007 tidak tahu proses mana yang diaudit,
+V2-008 tidak tahu worker mana yang di-benchmark, dan rencana
+pembagian 3 bagian (P3, keputusan user 22 Nov 02:50) tidak punya
+daftar unit yang harus dipisah.
+
+**Fakta terverifikasi (bukan asumsi):**
+
+| Fakta | Nilai | Sumber |
+|---|---|---|
+| Worker | SATU proses Python + SATU event loop (`masjavas-os-worker`, PID 778998); modul `worker.autonomous_daemon` | EVALUASI l.103–108; V2-003 G12 map |
+| Lane tick worker | ingestion 10 dtk, loopgen 30 dtk, janitor 1800 dtk, dst. | EVALUASI l.107 |
+| Live supervisor | Proses TERPISAH `python -m worker.live_supervisor`, PID 2052794, sejak 14:42 21 Nov | V2-003 G12 map |
+| Web/API | uvicorn; port 8080 (terverifikasi TERTUTUP di box lama saat R1) | V2-002 fix plan R1 (07:05) |
+| Governor | Modul `core/resource_governor` (arbiter/policy/measurement); guard loop = V2, admission = legacy | V2-003 (Cycle 4) |
+| Janitor | Interval 30 menit; TTL normal 12 jam (4 jam bila disk >75%); jalur unpaired 1 jam; proteksi lease | V2-004 (Cycle 5) |
+| FFmpeg per stream | 1 encoder + 1 feeder (+ relay audio) per stream; supervisor kini tepat 2 anak ffmpeg per stream (pasca-deploy R3–R8) | V2-002 fix report (Cycle 4) |
+| Pemulihan berpacu (B10) | 3 proses: supervisor systemd + manual 650871 + daemon; guardian hanya di daemon; sentinel ghost-kill 114 2× (15:24:43 + 15:27:31) | Addendum 22 Nov 15:30 |
+| Rencana pembagian 3 bagian | PUBLISH (scheduler+unduh+render+upload) / ISI BAHAN (ingestion+LoopGen+branding) / LIVE (supervisor+encoder+relay+governor); web/API + DB + tunnel = layanan bersama | EVALUASI P3 (keputusan user 02:50) |
+| DB | WAL + busy_timeout 30 dtk | EVALUASI l.118 |
+| Cron aplikasi box lama | TIDAK ADA cron aplikasi (terverifikasi saat R1) | V2-002 fix plan R1 (07:05) |
+| Tunnel | Tunnel lama mati, tunnel baru aktif (pasca-R1) | V2-002 fix plan R1 (07:05) |
+| Cron KEIN 5-menit | DISABLED sampai top-up + 1 live test | MEMORY.md / V2-001 |
+
+**Fakta yang BELUM terverifikasi (jangan diperlakukan sebagai fakta):**
+nama unit systemd sebenarnya (`masjavas-live.service` dsb. adalah asumsi
+V2-005 F.3 — wajib diverifikasi F.2 tiket ini); apakah ada timer/cron di
+host live selain tick in-process janitor; proses apa yang menjalankan
+guardian dan sentinel (unit systemd / thread daemon / proses mandiri);
+daftar port publik Master; proses mana saja yang menulis DB (→ V2-007).
+
+**OPEN QUESTION (ditemukan saat perluasan tiket — wajib dijawab saat eksekusi):**
+OQ-019 — apa nama unit systemd SEBENARNYA di host live (apakah
+`masjavas-live.service` / `masjavas-os-worker.service` /
+`masjavas-web.service` dari V2-005 F.3 benar, atau nama lain)? OQ-020 —
+proses apa yang menjalankan guardian dan sentinel — unit systemd, thread
+di dalam daemon, atau proses mandiri — dan siapa pemilik pemulihan tiap
+stream (B10: tiga pemulih berpacu)? OQ-021 — apakah ada cron / systemd
+timer di host live selain tick in-process (EVALUASI l.292 menyebut "Cron
+sync" — apa itu, dan apakah masih berjalan)? OQ-022 — proses mana saja
+yang membuka file DB untuk tulis (input peta penulis V2-007) — dan apakah
+ada penulis DB di luar worker + live supervisor + web? OQ-023 — setiap
+proses FFmpeg yang berjalan: encoder / feeder / relay / orphan — siapa
+parent-nya (supervisor / daemon / yatim) dan stream mana yang dilayaninya?
+
+**Dua pekerjaan berbeda (jangan dicampur):**
+
+1. **Inventaris (tiket ini)** — catat APA yang berjalan, SIAPA parent-nya,
+   APA dependency-nya, dan PORT apa yang didengarkan; JANGAN mengubah
+   apa pun.
+2. **Pemisahan / perbaikan struktur** — rencana pembagian 3 bagian P3,
+   SATU pemilik pemulihan (B10), dan perubahan unit systemd adalah
+   pekerjaan terpisah yang MEMAKAI inventaris ini sebagai input.
+
+## B. Target
+
+1. Daftar lengkap unit systemd aplikasi di host live: nama unit, status
+   (active/enabled/failed), uptime, perintah start (ExecStart), dan
+   Restart-policy masing-masing — dengan nama unit TERVERIFIKASI
+   (OQ-019 terjawab, asumsi V2-005 F.3 dikoreksi atau dikonfirmasi).
+2. Daftar lengkap timer systemd + cron (system + user) di host live —
+   termasuk jawaban OQ-021 ("Cron sync" itu apa).
+3. Daftar lengkap proses Python aplikasi yang berjalan: PID, PPID,
+   cmdline lengkap, uptime, %CPU/%MEM saat cuplikan — dipetakan ke
+   unit/lane (worker daemon, live supervisor, web, guardian, sentinel,
+   dan proses lain yang ditemukan).
+4. Daftar lengkap proses FFmpeg: PID, PPID, cmdline (stream/slot yang
+   dilayani), peran (encoder/feeder/relay), dan status orphan vs
+   terkelola — OQ-023 terjawab; bandingkan dengan temuan V2-002
+   (orphan 706, feeder yatim).
+5. Peta dependency antar-service: siapa memanggil/membutuhkan siapa
+   (worker → DB; live supervisor → DB + ffmpeg + relay; web → DB;
+   governor → lane; janitor → Drive/DB; guardian/sentinel →
+   supervisor/daemon) — sebagai diagram + tabel.
+6. Daftar port yang didengarkan (TCP/UDP) + proses pemiliknya, dengan
+   penanda mana yang publik vs localhost-only (OQ port publik dari
+   rencana pendukung terjawab).
+7. Identifikasi proses yang berbagi SATU event loop (`worker.autonomous_daemon`)
+   vs proses yang sudah terpisah (live supervisor) — titik kontensi
+   tunggal tersisa dicatat eksplisit untuk rencana P3.
+8. Identifikasi pemilik pemulihan tiap stream (OQ-020): supervisor
+   systemd / daemon / guardian / sentinel / manual — dan konflik
+   kepemilikan yang ditemukan (B10).
+9. Inventaris tersimpan sebagai dokumen BERVERSI
+   (`SERVICE_INVENTORY_V2_<tanggal>.md`) + perintah yang dipakai,
+   sehingga inventaris BERIKUTNYA dapat diulang dengan metode identik.
+10. Input untuk V2-007 (daftar penulis DB potensial — OQ-022) dan V2-008
+    (daftar worker yang akan di-benchmark) tercatat eksplisit sebagai
+    handoff di akhir dokumen bukti.
+
+## C. Prasyarat
+
+- [ ] Akses SSH baca ke `masjavas-vps-baru` (host BENAR — verifikasi
+      hostname `vmi3762689` + disk 145G sebelum inventaris, pelajaran F-E).
+- [ ] Tidak ada restart/deploy/benchmark bersamaan selama inventaris
+      (koordinasi: inventaris read-only, tapi restart mengubah PID,
+      parent, dan uptime).
+- [ ] Temuan V2-002 (encoder/feeder/relay/orphan) dan V2-003 (daemon vs
+      supervisor) dibaca sebagai pembanding — BUKAN sebagai pengganti
+      pencatatan langsung.
+- [ ] Cuplikan diambil dalam SATU sesi berurutan (PID dan parent
+      berubah tiap menit; jeda antar perintah dicatat).
+
+## D. Scope pemeriksaan (file/module)
+
+| # | Area | Lokasi / cara periksa |
+|---|---|---|
+| D1 | Unit systemd | `systemctl list-units --type=service` + `list-timers --all` + `systemctl status` per unit aplikasi + `cat` file unit (`/etc/systemd/system/masjavas*` — path diverifikasi dulu, jangan ditebak) |
+| D2 | Cron | `crontab -l` (root + ubuntu) + `ls /etc/cron*` + `systemctl list-timers` — jawab OQ-021 |
+| D3 | Proses Python | `ps -ef` + `ps aux --sort=-%cpu` — PID/PPID/cmdline/uptime per proses aplikasi; petakan ke unit (D1) dan lane |
+| D4 | Proses FFmpeg | `ps -ef \| grep ffmpeg` — PID/PPID/cmdline per proses; peran encoder/feeder/relay/orphan; bandingkan V2-002 |
+| D5 | Event loop bersama | Cmdline `worker.autonomous_daemon` vs `worker.live_supervisor` — lane apa saja di dalam daemon (ingestion/loopgen/janitor/Stage 2/publish) dari journal + cmdline |
+| D6 | Pemulihan (guardian/sentinel) | Cari proses/thread guardian + sentinel: `ps` + grep kode (`grep -rn "guardian\|sentinel" /opt/masjavas-os --include="*.py"`) + journal — OQ-020 |
+| D7 | Port | `ss -tlnp` + `ss -ulnp` — port + proses pemilik + alamat bind (publik vs localhost) |
+| D8 | Penulis DB | `lsof` / `/proc/<pid>/fd` untuk file DB — proses mana membuka DB tulis (OQ-022, handoff V2-007); catat bila `lsof` tidak tersedia + alternatif yang dipakai |
+| D9 | File unit + config start | Isi file unit (ExecStart, Restart, WorkingDirectory, EnvironmentFile) + perintah start manual yang masih dipakai (proses 650871 B10 — bagaimana ia di-start?) |
+| D10 | Dependency map | Rangkai D1–D9 menjadi diagram (mermaid) + tabel dependency; tandai titik kontensi tunggal + konflik kepemilikan pemulihan |
+
+## E. Pertanyaan teknis yang harus dijawab
+
+| # | Pertanyaan | Bukti yang menjawab |
+|---|---|---|
+| Q1 | Apa nama unit systemd aplikasi SEBENARNYA + status/uptime/Restart-policy masing-masing? | D1 (OQ-019) |
+| Q2 | Timer systemd + cron apa saja yang ada di host live (termasuk "Cron sync")? | D2 (OQ-021) |
+| Q3 | Proses Python aplikasi apa saja yang berjalan (PID/PPID/cmdline/uptime/CPU/MEM) dan ke unit/lane mana masing-masing dipetakan? | D3 |
+| Q4 | Proses FFmpeg apa saja yang berjalan — peran, parent, stream yang dilayani, orphan vs terkelola? | D4 (OQ-023) |
+| Q5 | Lane apa saja yang masih berbagi SATU event loop daemon vs sudah proses terpisah? | D5 |
+| Q6 | Siapa menjalankan guardian + sentinel, dan siapa pemilik pemulihan tiap stream (apakah ada konflik kepemilikan)? | D6 (OQ-020) |
+| Q7 | Port apa saja yang didengarkan, oleh proses apa, dan mana yang publik? | D7 |
+| Q8 | Proses mana saja yang membuka file DB untuk tulis? | D8 (OQ-022) |
+| Q9 | Bagaimana tiap unit di-start (file unit vs manual) — dan proses manual 650871 (B10) di-start dari mana? | D9 |
+| Q10 | Apakah inventaris ini dapat diulang + apakah handoff ke V2-007/V2-008/P3 tercatat? | D10 + dokumen §G |
+
+## F. Perintah / metode audit (executable, read-only, host `masjavas-vps-baru`)
+
+**F.1 — Verifikasi host + cuplikan proses (satu panggilan):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'hostname; uptime; ps aux --sort=-%cpu | head -30'
+```
+
+Catat hostname `vmi3762689` + disk 145G (bila tidak cocok — STOP, host salah).
+
+**F.2 — Unit systemd + timer (baca-saja):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'systemctl list-units --type=service --all | grep -i -E "masjavas|live|worker|web|janitor|guardian|sentinel"; echo ---TIMERS---; systemctl list-timers --all | grep -i -E "masjavas|janitor|sync"'
+```
+
+JANGAN mengasumsikan nama unit dari V2-005 F.3 — catat nama SEBENARNYA
+apa adanya (OQ-019). Bila tidak ada unit bernama `masjavas*`, perluas
+grep ke semua unit `active` dan saring manual.
+
+**F.3 — Proses lengkap + FFmpeg + port (baca-saja):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'ps -ef | grep -i -E "python|ffmpeg|uvicorn|node" | grep -v grep; echo ---PORTS---; ss -tlnp 2>/dev/null; ss -ulnp 2>/dev/null'
+```
+
+Simpan output lengkap — ini tulang punggung inventaris (Q3/Q4/Q7).
+
+**F.4 — File unit + cron (baca-saja):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'ls /etc/systemd/system/ | grep -i -E "masjavas|live|worker|web|janitor"; echo ---CRON---; crontab -l 2>&1; sudo crontab -l 2>&1 | head -20; ls /etc/cron.d/ 2>/dev/null'
+```
+
+Baca isi tiap file unit yang ditemukan (`cat`) — ExecStart + Restart +
+WorkingDirectory dicatat verbatim. `sudo` hanya bila perlu dan hanya
+untuk baca.
+
+**F.5 — Guardian/sentinel + penulis DB (baca-saja):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'grep -rn -i "guardian\|sentinel" /opt/masjavas-os --include="*.py" -l | head; echo ---DB-FD---; ls -l /proc/*/fd 2>/dev/null | grep -i "\.db" | head -20'
+```
+
+Sesuaikan path kode/DB dengan hasil discovery (V2-001 F.2 / V2-007).
+Bila `ls /proc/*/fd` tidak memberi hasil, pakai `lsof` bila tersedia —
+catat metode yang dipakai.
+
+**F.6 — Status per unit + journal ringkas (baca-saja):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'for u in $(systemctl list-units --type=service --state=running --no-legend | awk "{print \$1}" | grep -i -E "masjavas|live|worker|web"); do echo "== $u"; systemctl status $u --no-pager | head -12; done'
+```
+
+Sesuaikan daftar unit dengan hasil F.2 — JANGAN hardcode nama unit dari
+V2-005.
+
+**DILARANG dalam tiket ini:**
+
+- Mengubah / me-restart / me-stop service, timer, atau proses apa pun
+  ("inventaris tidak mengubah sistem").
+- Menjalankan benchmark / load test / uji concurrency (itu V2-008).
+- Membunuh proses orphan / feeder yatim yang ditemukan (itu perbaikan
+  terpisah — catat saja).
+- Menyimpulkan dependency dari DOKUMEN LAMA saja tanpa verifikasi
+  `ps`/`systemctl`/`ss` live (dokumen lama = pembanding, bukan pengganti).
+- Mengasumsikan nama unit dari tiket lain (V2-005 F.3) tanpa verifikasi
+  F.2 — nama unit yang salah membuat seluruh inventaris salah alamat
+  (pelajaran F-E V2-002).
+
+## G.0 — Evidence manifest (wajib diisi saat eksekusi)
+
+Setiap Q1–Q10 wajib punya satu baris manifest. Isi manifest BERSAMAAN
+dengan eksekusi, bukan di akhir — PID dan parent berubah tiap menit.
+
+| Question ID | Command | Timestamp (WIB) | Exit code | Evidence | Finding | Confidence | Impact |
+|---|---|---|---|---|---|---|---|
+| Q1 | F.2 + F.6 | | | `SERVICE_INVENTORY_V2_<tanggal>.md` | | | |
+| Q2 | F.2 + F.4 | | | `SERVICE_INVENTORY_V2_<tanggal>.md` | | | |
+| Q3 | F.1 + F.3 | | | `SERVICE_INVENTORY_V2_<tanggal>.md` | | | |
+| Q4 | F.3 | | | `SERVICE_INVENTORY_V2_<tanggal>.md` | | | |
+| Q5 | F.3 + F.5 | | | `SERVICE_INVENTORY_V2_<tanggal>.md` | | | |
+| Q6 | F.5 + F.6 | | | `SERVICE_INVENTORY_V2_<tanggal>.md` | | | |
+| Q7 | F.3 | | | `SERVICE_INVENTORY_V2_<tanggal>.md` | | | |
+| Q8 | F.5 | | | `SERVICE_INVENTORY_V2_<tanggal>.md` | | | |
+| Q9 | F.4 + F.6 | | | `SERVICE_INVENTORY_V2_<tanggal>.md` | | | |
+| Q10 | D10 + dokumen §G | | | `SERVICE_INVENTORY_V2_<tanggal>.md` | | | |
+
+Aturan manifest: sama seperti V2-001 §G.0 — `Confirmed` (bukti langsung
+dari `systemctl`/`ps`/`ss`/file unit), `Partial` (bukti tidak lengkap /
+hanya satu sumber), `Unknown` (tidak dapat diverifikasi + alasannya
+dicatat). `Unknown` yang eksplisit LEBIH BAIK daripada dugaan yang
+ditulis seolah fakta. Bukti TIDAK BOLEH berisi nilai kredensial.
+**Setiap entri inventaris WAJIB mencantumkan: nama + PID/unit +
+timestamp cuplikan + metode.**
+
+## G. Bukti yang harus dilampirkan (deliverable tiket)
+
+1. `SERVICE_INVENTORY_V2_<tanggal>.md` — Q1–Q10 (inventaris berversi:
+   unit + timer/cron + proses Python + FFmpeg + event loop + guardian/
+   sentinel + port + penulis DB + file unit + diagram dependency
+   mermaid + handoff V2-007/V2-008/P3).
+2. `SERVICE_DEPENDENCY_MAP_V2.md` — diagram + tabel dependency
+   antar-service (bila dipisah dari dokumen inventaris; bila digabung,
+   catat di sini).
+3. `EVIDENCE_MANIFEST_V2-006.md` — manifest Q1–Q10 (bila dipisah dari
+   dokumen inventaris; bila digabung, catat di sini).
+4. Semua file di `workspace/engineering/v2-006/` (buat foldernya saat eksekusi).
+
+## H. Acceptance criteria (lulus / gagal)
+
+**LULUS bila SEMUA terpenuhi:**
+
+- [ ] Q1–Q10 terjawab dengan bukti; yang tidak bisa dijawab dicatat
+      eksplisit sebagai "TIDAK DAPAT DIVERIFIKASI + alasannya".
+- [ ] Nama unit systemd TERVERIFIKASI dari `systemctl` live (OQ-019) —
+      asumsi V2-005 F.3 dikonfirmasi atau dikoreksi secara eksplisit.
+- [ ] Setiap proses tercatat dengan PID + PPID + cmdline + timestamp
+      cuplikan (dapat diulang).
+- [ ] Peta dependency antar-service ada (diagram + tabel) dan mencakup
+      guardian/sentinel + pemilik pemulihan (OQ-020).
+- [ ] Daftar port + proses pemilik + status publik/localhost tercatat (Q7).
+- [ ] Handoff ke V2-007 (penulis DB), V2-008 (worker untuk benchmark),
+      dan P3 (unit untuk pembagian 3 bagian) tercatat eksplisit.
+- [ ] Nol perubahan sistem selama inventaris.
+
+**GAGAL bila salah satu terjadi:**
+
+- Inventaris ditulis dari dokumen lama tanpa verifikasi `ps`/`systemctl`/
+  `ss` live.
+- Nama unit diambil dari asumsi tiket lain tanpa verifikasi F.2.
+- Proses FFmpeg orphan / feeder yatim tidak dicatat (temuan V2-002
+  terlewat).
+- Pemilik pemulihan (guardian/sentinel/supervisor/daemon) tidak
+  dipetakan — B10 tidak bisa diperbaiki dari inventaris ini.
+- Inventaris diambil di host yang salah (verifikasi host dulu —
+  pelajaran F-E).
+- Perubahan sistem terjadi selama inventaris tanpa dicatat.
+
+## I. Dampak jika gagal / jika tiket tidak dikerjakan
+
+- V2-007 (audit schema) tidak tahu proses mana yang menulis DB — peta
+  penulis DB ditebak dari kode, bukan dari proses live.
+- V2-008 (benchmark) tidak tahu worker mana yang diukur — modal vs
+  konsumsi aktual tidak dapat dipetakan ke unit.
+- Rencana pembagian 3 bagian (P3) tidak punya daftar unit yang harus
+  dipisah — pemisahan dirancang dari ingatan, bukan inventaris.
+- Perbaikan struktural B10 (SATU pemilik pemulihan) tidak dapat
+  dirancang — konflik kepemilikan guardian/sentinel/supervisor/daemon
+  tetap tersembunyi.
+- V2-005 F.3 (lock per service) memakai nama unit yang mungkin salah —
+  angka lock per service tidak sah.
+
+## J. Batas tindakan yang diizinkan
+
+- **BOLEH:** semua perintah §F (read-only); membaca kode/config/file
+  unit/journal/DB (baca file descriptor saja, bukan isi data);
+  `systemctl status/list-units`; `ss`; menulis dokumen bukti §G.
+- **TIDAK BOLEH:** mengubah/me-restart/me-stop service/timer/proses;
+  membunuh orphan/feeder yatim; mengubah config/cron; benchmark/load
+  test; mengambil inventaris di `masjavas-vps` (box lama).
+- **Perbaikan struktur (P3, B10) = pekerjaan terpisah** (memakai
+  inventaris ini sebagai input, bukan isi tiket ini).
+
+## K. Pihak yang menyetujui langkah berikutnya
+
+| Langkah berikut | Penyetuju |
+|---|---|
+| Penetapan inventaris ini sebagai peta layanan resmi (acuan V2-007/V2-008/P3) | User (menyetujui daftar + peta; inventaris ini hanya menyajikan bukti) |
+| Perubahan unit systemd / pemisahan proses (P3) / SATU pemilik pemulihan (B10) | User (L2/L3 sesuai perubahan — lihat tiket perubahannya) |
+| Inventaris ulang (versi baru) | Tidak butuh persetujuan baru bila metode sama; bila metode berubah, catat sebagai versi baru + beri tahu user |
+| Lanjut ke V2-007 dst. | Tidak butuh persetujuan baru (Batch 1 audit) |
+
+## L. Estimasi & catatan eksekusi
+
+- Estimasi: ±1–1,5 jam (termasuk tunggu SSH + baca file unit + petakan parent).
+- Jalankan dari main/side chat (bukan proactivity handoff — konsistensi
+  dengan V2-001).
+- **Tangkap cuplikan proses (F.1/F.3) dalam SATU sesi berurutan** —
+  PID/parent berubah tiap menit; jeda antar perintah dicatat.
+- **JANGAN hardcode nama unit dari V2-005 F.3** — verifikasi dulu lewat
+  F.2; bila nama berbeda, koreksi eksplisit di dokumen bukti + beri tahu
+  agar V2-005 F.3 diperbarui.
+- Bila `lsof` tidak tersedia saat F.5, pakai `/proc/<pid>/fd` (sudah di
+  perintah) — catat metode yang dipakai.
+- Koordinasi dengan lane lain: jangan inventaris bersamaan dengan restart
+  supervisor / deployment / benchmark — beri tahu sebelum mulai.
+- Inventaris ini adalah versi pertama yang berversi; inventaris berikutnya
+  memakai nama file tanggal baru (jangan timpa file ini).
 
 ---
 
@@ -1595,7 +1962,7 @@ hasil V2-007 disetujui.
 | V2-003 | Resource Guard v2 audit | P0 | READY_FOR_REVIEW (audit 22 Nov 07:15–07:40; governor 0 aksi efektif, Q6 solved) | `workspace/engineering/v2-003/` (6 dokumen + manifest) |
 | V2-004 | Janitor safety audit | P0 | NOT_STARTED (tiket lengkap, diperluas Cycle 5 22 Nov 10:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
 | V2-005 | Baseline snapshot | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 6 22 Nov 14:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
-| V2-006 | Service inventory | P1 | NOT_STARTED (stub) | — |
+| V2-006 | Service inventory | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 7 22 Nov 18:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
 | V2-007 | Database schema audit (GERBANG TEKNIS) | P1 | NOT_STARTED (stub) | — |
 | V2-008 | Resource budget benchmark | P1 | NOT_STARTED (stub) | — |
 | V2-009 | VPS 8 price + storage cost verification (GERBANG BIAYA) | P1 | NOT_STARTED (stub) | — |
