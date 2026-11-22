@@ -1,6 +1,6 @@
 # ENGINEERING READINESS DASHBOARD — MASJAVAS TUBE OS
 
-**Terakhir diperbarui:** 22 Nov 2026, 14:50 WIB (Cycle 6 — V2-005 diperluas)
+**Terakhir diperbarui:** 22 Nov 2026, 15:15 WIB (insiden live mati massal 14:47 — B10/R20; Cycle 6 14:50: V2-005 diperluas)
 **Sumber:** `AUTONOMOUS_WORK_LOG.md`, `BATCH1_EXECUTION_TICKETS_V2.md`,
 dokumen frozen V2.0, bukti audit V2-001.
 **Sumber status resmi:** `STATUS_REGISTRY.yaml` — bila ada perbedaan
@@ -100,7 +100,7 @@ dan verifikasi biaya.
 | # | Risiko | Severity | Status |
 |---|---|---|---|
 | R1 | KEIN expiry 23 Nov tanpa fallback teruji | P0 | ACCEPTED BY OWNER (asumsi "KEIN aman", 22 Nov 06:55; Q5/Q6 tidak terverifikasi — risiko diterima user) |
-| R2 | Encoder slot 114 mati 12×/17 jam (bukan 706 — P16 salah alamat) + orphan 706 | P0 | FIX DEPLOYED + ITERASI 2 (56f7a6d 07:24 + 021a9f0 ~08:20: watchdog 10 dtk, queue 4096, rw_timeout 30 dtk; terverifikasi kedua encoder; observasi 24 jam) — kematian #13 ~07:17, #14 08:09:50 (watchdog fired tapi terlalu lambat; queue 1024 masih blocking) |
+| R2 | Encoder slot 114 mati 12×/17 jam (bukan 706 — P16 salah alamat) + orphan 706 | P0 | FIX DEPLOYED + ITERASI 2 — TIDAK MENAHAN: observasi 24 jam GAGAL 14:47 (B10/R20: 4 stream mati serentak; watchdog fired 14:47:11, encoder 706 tetap mati 14:47:15) |
 | R3 | D1 proxy residential 407 (bot-check yt-dlp) | P1 | OPEN (keputusan user ditunda 20 Nov) |
 | R4 | P2 kuota Drive — mekanisme belum diketahui | P1 | OPEN (6 teori tereliminasi) |
 | R5 | SQLite lock 31×/24 jam | P1 | OPEN (V2-007 + guard audit) |
@@ -118,6 +118,7 @@ dan verifikasi biaya.
 | R17 | Konfigurasi split guard V2/admission legacy + flag menyesatkan; alasan flag `false` tidak diketahui (OQ-010) | P1 | OPEN (V2-003-R1/R5) |
 | R18 | Atribusi lane ingestion buta (daemon → lane `other`; governor tidak bisa melihat ingestion) | P1 | OPEN (V2-003-R3) |
 | R19 | Orphan 706 mengudara TANPA AUDIO ±17 jam (pipe tanpa feeder sejak restart 14:42; bitrate tetap HEALTHY sehingga tak terdeteksi) | P1 | RESOLVED (restart manual 08:10:28 — audio mengalir, feeder 19,4 MB) |
+| R20 | Live MATI MASSAL 22 Nov 14:47 (4 stream/21 dtk) + pemulihan tidak andal (reconnect gagal DB-lock; status desync; 706 tanpa reconnect; encoder ganda 707; relay task mati; supervisor "hard exiting") | P0 | OPEN (dicatat 15:15 atas instruksi owner; investigasi + perbaikan menunggu keputusan owner; lihat B10/PR-16) |
 
 ## Owner decision register (awal)
 
