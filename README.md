@@ -57,15 +57,30 @@ sampai semua gerbang lolos.
 - `VPS8_ROLLBACK_RUNBOOK.md` — pemicu + prosedur rollback per fase,
   RPO/RTO sebagai target, otoritas keputusan owner.
 
-### Register + rencana pendukung (menyusul — dalam penyusunan)
+### Register
 
-- `MASJAVAS_RISK_REGISTER.md`, `MASJAVAS_OWNER_DECISION_REGISTER.md`,
-  `MASJAVAS_COST_REGISTER.md`, `MASJAVAS_DEPENDENCY_GRAPH.md`
-- `MASJAVAS_BACKUP_RECOVERY_PLAN.md`,
-  `MASJAVAS_RELEASE_MANAGEMENT_PLAN.md`,
-  `MASJAVAS_SECURITY_HARDENING_PLAN.md`,
-  `MASJAVAS_OPERATIONAL_RUNBOOK.md`,
-  `MASJAVAS_PRODUCTION_ACCEPTANCE_CRITERIA.md`
+- `MASJAVAS_RISK_REGISTER.md` — risiko R1–R19 + P1–P16, dampak dan
+  mitigasi, status per risiko.
+- `MASJAVAS_OWNER_DECISION_REGISTER.md` — keputusan owner D1–D11 +
+  item terbuka dari plan §10.
+- `MASJAVAS_COST_REGISTER.md` — semua angka biaya dengan label
+  TERVERIFIKASI / ESTIMASI / BELUM DIHITUNG; total $34,67/bln
+  sebagai batas mengikat.
+
+### Rencana pendukung
+
+- `MASJAVAS_BACKUP_RECOVERY_PLAN.md` — backup off-site, retensi,
+  restore drill, RPO/RTO sebagai target.
+- `MASJAVAS_RELEASE_MANAGEMENT_PLAN.md` — release manifest, versi,
+  canary, rollback release.
+- `MASJAVAS_SECURITY_HARDENING_PLAN.md` — akses, kredensial, firewall,
+  audit.
+- `MASJAVAS_OPERATIONAL_RUNBOOK.md` — operasi harian, eskalasi,
+  prosedur insiden.
+- `MASJAVAS_PRODUCTION_ACCEPTANCE_CRITERIA.md` — kriteria penerimaan
+  produksi per fase.
+- `MASJAVAS_DEPENDENCY_GRAPH.md` — diagram dependensi (mermaid) +
+  propagasi kegagalan.
 
 ## Ringkasan arsitektur target
 
