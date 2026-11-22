@@ -43,7 +43,7 @@ tickets:
     target_host: "live-master"
     evidence_valid_for_target: true
     limitation: null
-    related_work: "Perbaikan R3-R8 deployed 07:24 (commit 56f7a6d) + iterasi 2 ~08:20 (021a9f0); observasi 24 jam berjalan. Kematian #14 (08:09:50, exit 146) membuktikan masalah BELUM selesai — jangan klaim encoder sudah diperbaiki."
+    related_work: "Perbaikan R3-R8 deployed 07:24 (commit 56f7a6d) + iterasi 2 ~08:20 (021a9f0); observasi 24 jam GAGAL 14:47 (B10/R20: 4 stream mati serentak 14:47:15-14:47:36; watchdog fired 14:47:11 tapi encoder 706 tetap mati 14:47:15). Jangan klaim encoder sudah diperbaiki."
     evidence: "workspace/engineering/v2-002/ (6 dokumen audit + fix plan + fix report)"
   V2-003:
     title: "Resource Guard v2 audit"
