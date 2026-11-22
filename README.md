@@ -9,8 +9,10 @@ dan Stage 2 tidak lagi saling berebut sumber daya di satu mesin.
 **DRAFT — belum siap deploy.** Kesiapan keseluruhan: **NOT READY**
 (lihat `ENGINEERING_READINESS_DASHBOARD.md`). Gerbang yang belum lolos:
 harga Master + VPS 8 belum terverifikasi di panel Contabo (V2-009),
-biaya storage/backup belum dihitung, Batch 1 baru 3/10, dan persetujuan
-owner belum ada. Anggaran mengikat: total **$34,67/bln**
+biaya storage/backup belum dihitung, Batch 1: 1 EXECUTED (dengan
+keterbatasan bukti) + 2 READY_FOR_REVIEW dari 10 (sumber status resmi:
+`STATUS_REGISTRY.yaml`), dan persetujuan owner belum ada.
+Anggaran mengikat: total **$34,67/bln**
 (Master ±$16,02 + VPS 8 $18,65).
 
 Repo ini dibangun berkelanjutan sampai siap deploy: setiap dokumen di
@@ -34,7 +36,14 @@ sampai semua gerbang lolos.
   eksekusi V2.0 (beku): track P0–P10, dependency order, template
   tiket V2-XXX, Batch 1 V2-001–V2-010.
 - `BATCH1_EXECUTION_TICKETS_V2.md` — tiket eksekusi Batch 1
-  (V2-001–V2-010, format 15 elemen; V2-001–V2-004 lengkap).
+  (V2-001–V2-010, format 15 elemen; tiket V2-001–V2-004 lengkap —
+  status eksekusi di `STATUS_REGISTRY.yaml`).
+- `STATUS_REGISTRY.yaml` — SATU-SATUNYA sumber status resmi tiket +
+  gerbang. `ticket_status` (tiket lengkap/stub) dipisah dari
+  `work_status` (pekerjaan sebenarnya); keterbatasan bukti dicatat
+  di field `limitation`, bukan di nama status.
+- `REPOSITORY_ENGINEERING_AUDIT_SPRINT.md` — sprint audit + perbaikan
+  repo (8 item P0–P1, dimulai 22 Nov 13:02 atas review repo).
 - `ENGINEERING_READINESS_DASHBOARD.md` — dashboard kesiapan: tracker
   Batch 1, checklist gerbang, register risiko + keputusan, register
   biaya, 5 aksi berikut.
