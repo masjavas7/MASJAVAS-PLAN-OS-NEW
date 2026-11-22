@@ -281,6 +281,47 @@ gerbang lolos + persetujuan owner.
   (d) pertimbangkan matikan ghost-kill sementara sampai probe
   diperbaiki. Lihat PR-17 + R21.
 
+### B12. Kuota YouTube API habis dibakar lingkaran kill-relink — keempat live GELAP di YouTube sejak ±21:30 (22 Nov)
+
+- **Gejala (23 Nov 03:28):** klik relink RIFFORA gagal
+  `quotaExceeded` di `liveStreams.list` (screenshot user).
+- **Fakta tayang (jaringan bersih, halaman publik YouTube):**
+  keempat broadcast berakhir/offline — 707 YFmbo1wSusM tayang
+  21:28:11–21:37:11, 706 uPu8qlfw_x0 21:25:37–21:42:48, 114
+  IAEHam3JAiM + 698 tKHCQQBwm7U `LIVE_STREAM_OFFLINE`.
+  **Keempat channel GELAP sejak ±21:30 (6+ jam)** sementara
+  dashboard menampilkan 4/4 STREAMING (hanya memeriksa PID
+  encoder hidup — tidak ada verifikasi status YouTube).
+- **Mekanisme bakar (terverifikasi):** tiap siklus kill →
+  transition complete (50 unit) + unlist replay (50) + ensurer
+  detect (3) + relink (±200–350: insert 50 + bind 50 + delete
+  50×N + videos.update 50 + list) ≈ **300–450 unit/siklus**.
+  618 kill sejak 19:08 menghabiskan 10.000 unit/hari ketiga vault
+  live (±21:23–21:25: quotaExceeded pertama 21:23:37 metrics,
+  21:25:05 live journal; 5.913 error quotaExceeded sejak 19:00 —
+  web 1.897 + live 4.016).
+- **Ledger kuota BUTA terhadap panggilan live:** vault 707
+  tercatat `daily_quota_used` 28/10.000 — `vault_quota_ledger`
+  hanya mencatat VIDEO_INSERT, VIDEO_SET_THUMBNAIL,
+  VIDEO_LIST_CCV. Seluruh panggilan liveBroadcasts/liveStreams/
+  transition/videos.update TIDAK dicatat dan TIDAK masuk guard
+  kuota — guard tidak bisa memperingatkan atau menahan.
+- **Reset kuota 15:00 WIB 23 Nov** (tengah malam PT). Tanpa
+  menghentikan lingkaran kill, kuota segar habis lagi ±2 jam.
+- **Temuan samping:** encoder ganda (707: ≥3–4 bersamaan; 114:
+  ≥2 — orphan tak-terpanen tiap restart); ±9 feeder yatim
+  (tertua 1,7 hari); zombie ffmpeg tak-terpanen; daemon kedua
+  sempat muncul 03:33:32 lalu hilang ±03:37 (aktor tak dikenal).
+- **Rem darurat SIAP (menunggu persetujuan deploy):** patch
+  tri-state `live_health_sentinel.py` — hasil probe tak-pasti
+  (bot-check/galat/tanpa penanda) menjadi UNVERIFIED, TIDAK
+  membunuh dan TIDAK menambah hitungan offline; sinyal offline
+  positif tetap membunuh pada kegagalan ke-2. Tes terisolasi
+  10/10 hijau (`v2-002/test_sentinel_brake.py`). Deploy = backup
+  + patch + restart `masjavas-live.service` saja (daemon lama
+  sentinel-nya buta-rusak; web tidak menjalankan watchdog).
+  Lihat PR-18 + R22.
+
 ---
 
 ## 3. Problem (daftar terstruktur)
@@ -304,6 +345,7 @@ gerbang lolos + persetujuan owner.
 | PR-15 | Master interim ±1 bulan (dukungan Contabo lambat) | P2 | Keputusan ~17 Des; PLAN §10 |
 | PR-16 | Live mati massal 14:47 (4 stream/21 dtk) + pemulihan tidak andal (DB lock gagalkan reconnect; status desync; 706 tanpa reconnect; encoder ganda; relay task mati) | P0 | B10; R20; diagnosis 15:09–15:15 |
 | PR-17 | Relink publik gagal di UI ("Failed to fetch") + sentinel buta (bot-check) membunuh siaran sehat tiap ±4 mnt; tidak ada relink otonom | P0 | B11; R21; diagnosis 19:01–19:08 |
+| PR-18 | Kuota YouTube API 3 vault live habis (±21:25) dibakar lingkaran kill-relink; keempat live gelap di YouTube sejak ±21:30 meski dashboard STREAMING; panggilan live tidak terlacak di ledger/guard kuota | P0 | B12; R22; diagnosis 03:28–03:45 23 Nov |
 
 ---
 
@@ -323,6 +365,7 @@ menunggu instruksi owner.
 | Perbaikan encoder R3–R8 + iterasi 2 (watchdog 10 dtk, queue 4096, rw_timeout 30 dtk, log exit code, alert restart, sapu orphan) | PR-01, PR-14 | DEPLOYED; observasi 24 jam GAGAL 14:47 (B10) |
 | Investigasi + perbaikan jalur pemulihan live: selidiki penyebab bersama kematian massal; reconnect tahan DB-lock (retry + antrean); status STREAMING atomik dengan start encoder; satu jalur pemulihan (hapus race web vs supervisor); teardown relay saat task berhenti; selidiki sinyal supervisor | PR-16 | Investigasi antre; eksekusi menunggu **keputusan owner** |
 | Perbaikan sentinel + relink: probe via YouTube Data API (atau UNVERIFIED saat bot-check — jangan bunuh); panggilan YouTube ke `to_thread` / relink async (job + polling); relink otonom saat broadcast terbukti berakhir; opsi matikan ghost-kill sementara | PR-17 | Diagnosis selesai 19:08; eksekusi menunggu **keputusan owner** |
+| Hentikan bakar kuota live: deploy rem darurat sentinel (UNVERIFIED jangan bunuh) + restart supervisor; verifikasi 0 kill + PID stabil; tunggu reset kuota 15:00 WIB (ensurer relink otomatis); catat panggilan live di ledger/guard (tindak lanjut); rapikan encoder/feeders ganda | PR-18 | Patch + tes 10/10 SIAP; deploy menunggu **persetujuan owner** |
 | Hentikan layanan box lama (akhiri split-brain) | Risiko data ganda | DONE (R1, 07:05) |
 | Pindahkan reassemble keluar dari web ke worker | PR-10, B4 | Direncanakan Fase 0 |
 | Perbaikan Guard v2 (V2-003-R1–R9: atribusi lane, executor shed_render, kalibrasi knob, admission V2) | PR-02, PR-06, PR-08 | Menunggu **D9 + D10** (OQ-010 prasyarat R1) |
@@ -377,6 +420,7 @@ menunggu instruksi owner.
 | B9 kuota/dependensi | Doktrin 5/vault + fallback dihargai | 0–1 | Doktrin mengikat; P2 terbuka |
 | B10 mati massal + pemulihan | Investigasi + perbaikan jalur pemulihan | 0 | Dicatat 15:15; menunggu keputusan owner |
 | B11 relink beku + sentinel buta | Probe API + relink async + relink otonom | 0 | Diagnosis selesai 19:08; menunggu keputusan owner |
+| B12 kuota habis + live gelap | Rem sentinel + reset kuota 15:00 + lacak panggilan live | 0 | Diagnosis selesai 03:45 23 Nov; deploy rem menunggu persetujuan owner |
 
 **Definisi "siap deploy":** Batch 1 10/10 + semua artefak §9 lengkap +
 gerbang V2-007 + V2-009 lolos + D9/D10 diputuskan + observasi encoder
