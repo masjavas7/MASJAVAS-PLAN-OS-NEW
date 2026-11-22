@@ -1,6 +1,6 @@
 # ENGINEERING READINESS DASHBOARD — MASJAVAS TUBE OS
 
-**Terakhir diperbarui:** 23 Nov 2026, 02:50 WIB (Cycle 9: V2-008 diperluas ke tiket lengkap — benchmark konsumsi aktual + uji concurrency)
+**Terakhir diperbarui:** 23 Nov 2026, 03:45 WIB (B12/R22: kuota YouTube 3 vault live habis ±21:25, keempat live gelap sejak ±21:30; rem darurat sentinel + tes 10/10 SIAP, deploy menunggu persetujuan owner)
 **Sumber:** `AUTONOMOUS_WORK_LOG.md`, `BATCH1_EXECUTION_TICKETS_V2.md`,
 dokumen frozen V2.0, bukti audit V2-001.
 **Sumber status resmi:** `STATUS_REGISTRY.yaml` — bila ada perbedaan
@@ -121,6 +121,7 @@ dan verifikasi biaya.
 | R19 | Orphan 706 mengudara TANPA AUDIO ±17 jam (pipe tanpa feeder sejak restart 14:42; bitrate tetap HEALTHY sehingga tak terdeteksi) | P1 | RESOLVED (restart manual 08:10:28 — audio mengalir, feeder 19,4 MB) |
 | R20 | Live MATI MASSAL 22 Nov 14:47 (4 stream/21 dtk) + pemulihan tidak andal (reconnect gagal DB-lock; status desync; 706 tanpa reconnect; encoder ganda 707; relay task mati; supervisor "hard exiting") | P0 | OPEN — mekanisme TERBUKTI 15:30 (overwrite stale-`now` daemon vs supervisor; health check STREAMING-only); live PULIH 15:16 (4/4 STREAMING, audio terverifikasi 15:29) tapi TIDAK STABIL (sentinel ghost-kill 114 2×; 3 proses pemulihan berpacu; encoder ganda 114; fix sentinel belum ter-deploy) |
 | R21 | Relink publik gagal di UI ("Failed to fetch") + sentinel BUTA (bot-check) membunuh siaran sehat tiap ±4 mnt (RIFFORA tayang 19:00:32–19:04:40 lalu dibunuh sentinel) | P0 | OPEN — diagnosis SELESAI 19:08 (panggilan YouTube sinkron membekukan worker 60–120 dtk; probe kena LOGIN_REQUIRED; relink tanpa pemanggil otonom); perbaikan menunggu keputusan owner |
+| R22 | Kuota YouTube API 3 vault live HABIS (±21:25 22 Nov) dibakar lingkaran kill-relink; keempat live GELAP di YouTube sejak ±21:30 meski dashboard STREAMING | P0 | OPEN — diagnosis SELESAI 03:45 23 Nov (transition+unlist 100 + relink ±200–350 per siklus; ledger buta panggilan live — vault 707 tercatat 28/10.000); rem darurat sentinel + tes 10/10 SIAP, deploy menunggu persetujuan owner; reset kuota 15:00 WIB |
 
 ## Owner decision register (awal)
 
