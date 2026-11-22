@@ -59,9 +59,11 @@ terpenuhi:
   dibenarkan atas dasar risiko operasional — bukan atas dasar
   jumlah stream.
 
-**Cap biaya tetap mengikat:** total Master + VPS 8 ≤ **$34,67/bln**
-[OD — OWNER DECISION]. Cap TIDAK otomatis mencakup biaya yang
-belum dihitung (storage/backup) — lihat §4.3.
+**Cap biaya tetap mengikat:** total TCO (infrastruktur + storage +
+backup + domain + layanan) ≤ **$34,67/bln** [OD — OWNER DECISION;
+cakupan DIPUTUSKAN 22 Nov 13:13 WIB: cap mencakup seluruh TCO].
+Konsekuensi: infrastruktur saja sudah $34,67 → storage/backup
+harus $0 atau infrastruktur direvisi — lihat §4.3.
 
 ---
 
@@ -182,29 +184,30 @@ NOT_STARTED).
 | C-1 | Harga Master terverifikasi di panel Contabo | BELUM — ±$16,02/bln (±$14,43 pra-pajak) adalah ESTIMASI [DF — cost register] | User memeriksa panel Contabo (Turnstile memblokir browser cloud — butuh user) |
 | C-2 | Harga VPS 8 terverifikasi di panel/listing | BELUM — $18,65/bln + $2,66 setup adalah DOCUMENTED NOT YET REVALIDATED [DF — cost register] | Panel Contabo / halaman pricing |
 | C-3 | Biaya storage/backup off-site dihitung | BELUM DIHITUNG [VF — cost register] | Pilih provider + retensi (STORAGE MENUNGGU — OWNER DECISION), hitung bulanan |
-| C-4 | Total Master + VPS 8 ≤ $34,67/bln | BELUM DAPAT DINILAI — harga belum terverifikasi | Hitung ulang setelah C-1 + C-2 |
+| C-4 | Total TCO (infra + storage + backup + domain + layanan) ≤ $34,67/bln | BELUM DAPAT DINILAI — harga belum terverifikasi + storage BELUM DIHITUNG | Hitung ulang setelah C-1 + C-2 + C-3 |
 | C-5 | Total ALL-IN (termasuk storage/backup) diketahui + diterima owner | BELUM — lihat §4.3 | Owner memutuskan setelah C-3 |
 
 ### 4.2 Cap $34,67/bln (mengikat)
 
-Cap total infrastruktur Master + VPS 8 = **$34,67/bln** [OD —
-OWNER DECISION, ditetapkan user 21–22 Nov 2026]. Bila total riil
-> $34,67: eskalasi ke owner, jangan lanjut diam-diam [DF — PLAN
-§7]. Kontrak 12 bulan (total $31,87/bln, bayar di muka $190,21)
-adalah opsi hemat [DF — ESTIMASI] — diputuskan SETELAH model
-terbukti (bulanan dulu); bukan bagian gerbang ini.
+Cap total TCO (infrastruktur + storage + backup + domain +
+layanan) = **$34,67/bln** [OD — OWNER DECISION, ditetapkan user
+21–22 Nov 2026; cakupan DIPUTUSKAN 22 Nov 13:13 WIB: cap mencakup
+seluruh TCO]. Bila total riil > $34,67: eskalasi ke owner, jangan
+lanjut diam-diam [DF — PLAN §7]. Kontrak 12 bulan (total
+$31,87/bln, bayar di muka $190,21) adalah opsi hemat [DF —
+ESTIMASI] — diputuskan SETELAH model terbukti (bulanan dulu);
+bukan bagian gerbang ini.
 
-### 4.3 Storage/backup TIDAK tercakup cap secara otomatis
+### 4.3 Storage/backup tercakup cap (DIPUTUSKAN 22 Nov 13:13)
 
-Biaya object storage off-site (Restic) + Litestream adalah
-BELUM DIHITUNG [VF — cost register §2]. Cap $34,67/bln ditetapkan
-untuk Master + VPS 8 — jangan mengasumsikan cap itu otomatis
-mencakup storage/backup (sprint item P1 #7: biaya yang belum
-dihitung tetap BELUM DIHITUNG, bukan diasumsikan nol atau tercakup
-cap). Bila total all-in (Master + VPS 8 + storage/backup) >
-$34,67/bln, owner harus secara eksplisit menerima total baru atau
-memutuskan cakupan backup yang lebih kecil — cap tidak diperluas
-secara diam-diam.
+Cap $34,67/bln mencakup SELURUH TCO. Biaya object storage
+off-site (Restic) + Litestream masih BELUM DIHITUNG [VF — cost
+register §2]. Karena infrastruktur saja sudah $34,67,
+storage/backup harus $0 (mis. free tier object storage untuk
+DB 118 MB) atau infrastruktur direvisi (opsi hemat: kontrak
+12 bulan → $31,87/bln, membebaskan ±$2,80/bln). Bila total
+all-in > $34,67/bln, pembelian TIDAK lolos gerbang — eskalasi
+ke owner, jangan lanjut diam-diam.
 
 ---
 
