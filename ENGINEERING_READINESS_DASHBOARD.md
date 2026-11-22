@@ -142,6 +142,7 @@ dan verifikasi biaya.
 | Master Contabo Plus 4 | ±$16,02/bln (pre-tax ±$14,43) | ESTIMATED (belum verifikasi panel) | Plan VPS8 |
 | VPS 8 Contabo Core | $18,65/bln + $2,66 setup | DOCUMENTED NOT YET REVALIDATED | Plan VPS8 (listing) |
 | Total cap | $34,67/bln | OWNER DECISION (mengikat) | User 21–22 Nov |
+| TCO vs cap (sprint 13:08) | Minimum PAS di cap ($0 headroom); expected +$1,50/bln; worst case +$4,97/bln — SEBELUM storage/domain | Model TCO: cap habis oleh infrastruktur saja; OQ-TCO-1 (apakah cap mencakup seluruh TCO?) menunggu keputusan owner |
 | DeepInfra FLUX | Rp 35,44/gambar | HISTORICAL (18 Nov) | Riset 18 Nov |
 | Muse Image | Rp 180/gambar | HISTORICAL (18 Nov) | Riset 18 Nov |
 | Kie.ai Seedream 5.5 | ±Rp 7,8 jt/700 ch | HISTORICAL (18 Nov) | Riset 18 Nov |
