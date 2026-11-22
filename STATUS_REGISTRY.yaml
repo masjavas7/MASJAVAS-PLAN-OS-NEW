@@ -1,0 +1,139 @@
+# STATUS_REGISTRY.yaml — SATU-SATUNYA sumber status resmi program readiness
+# MASJAVAS TUBE OS V2. README, dashboard, dan tracker tiket menampilkan
+# ringkasan file ini, bukan status manual. Bila ada perbedaan, file ini
+# yang benar.
+#
+# Kosakata status (dari Master Autonomous Engineering Directive — JANGAN
+# membuat status baru): NOT_STARTED / IN_PROGRESS / BLOCKED /
+# READY_FOR_REVIEW / APPROVED / EXECUTED / VERIFIED / ROLLED_BACK /
+# CANCELLED. Status READY_FOR_EXECUTION tidak pernah dipakai.
+#
+# Dua dimensi yang DIPISAH agar "lengkap" tidak lagi ambigu:
+# - ticket_status: COMPLETE (format 15 elemen) / STUB (kerangka saja)
+# - work_status: status pekerjaan sebenarnya (kosakata direktif)
+# Keterbatasan bukti dicatat di field limitation, BUKAN di nama status.
+
+version: "1.0"
+updated: "2026-11-22T13:05:00+07:00"
+updated_by: "Repository Engineering Audit Sprint (item P0 #1)"
+overall_readiness: NOT_READY
+overall_readiness_reason: "Batch 1: 1 EXECUTED (dengan keterbatasan bukti) + 2 READY_FOR_REVIEW dari 10; gerbang V2-007 + V2-009 belum lolos; harga Master + VPS 8 belum terverifikasi panel; biaya storage/backup belum dihitung; D9/D10 menunggu user."
+
+tickets:
+  V2-001:
+    title: "KEIN dependency/fallback decision (audit)"
+    priority: P0
+    ticket_status: COMPLETE
+    work_status: EXECUTED
+    executed_at: "2026-11-22T05:12-05:20+07:00"
+    execution_host: "legacy-host (Tencent, masjavas-vps)"
+    target_host: "live-master (Contabo vmi3762689, masjavas-vps-baru)"
+    evidence_valid_for_target: false
+    limitation: "Audit dikumpulkan di host SALAH (Tencent, bukan Master live). Kesimpulan 'KEIN idle' TIDAK BERLAKU untuk sistem live. Status KEIN live UNKNOWN. Q5/Q6 ditutup atas asumsi owner 'KEIN aman' (22 Nov 06:55), bukan bukti."
+    owner_decision_required: false
+    reopen_condition: "live_host_audit — DITOLAK user 22 Nov 06:55 + 07:03 (R2). Jangan tawarkan ulang."
+    evidence: "workspace/engineering/v2-001/ (6 dokumen + CORRECTION_WRONG_HOST_V2-001.md)"
+  V2-002:
+    title: "Encoder 706 root-cause investigation (audit)"
+    priority: P0
+    ticket_status: COMPLETE
+    work_status: READY_FOR_REVIEW
+    executed_at: "2026-11-22T06:58-07:10+07:00"
+    execution_host: "live-master"
+    target_host: "live-master"
+    evidence_valid_for_target: true
+    limitation: null
+    related_work: "Perbaikan R3-R8 deployed 07:24 (commit 56f7a6d) + iterasi 2 ~08:20 (021a9f0); observasi 24 jam berjalan. Kematian #14 (08:09:50, exit 146) membuktikan masalah BELUM selesai — jangan klaim encoder sudah diperbaiki."
+    evidence: "workspace/engineering/v2-002/ (6 dokumen audit + fix plan + fix report)"
+  V2-003:
+    title: "Resource Guard v2 audit"
+    priority: P0
+    ticket_status: COMPLETE
+    work_status: READY_FOR_REVIEW
+    executed_at: "2026-11-22T07:15-07:40+07:00"
+    execution_host: "live-master"
+    target_host: "live-master"
+    evidence_valid_for_target: true
+    limitation: null
+    related_work: "9 rekomendasi (V2-003-R1-R9) menunggu D9; OQ-010 menunggu D10 (prasyarat R1)."
+    evidence: "workspace/engineering/v2-003/ (6 dokumen + manifest)"
+  V2-004:
+    title: "Janitor safety audit"
+    priority: P0
+    ticket_status: COMPLETE
+    work_status: NOT_STARTED
+    execution_host: null
+    target_host: "live-master"
+    evidence_valid_for_target: null
+    limitation: null
+    note: "Tiket diperluas ke format 15 elemen (Cycle 5, 22 Nov 10:50). Eksekusi QUEUED-FOR-INTERACTIVE — menunggu sesi interaktif + SSH. Status lama 'QUEUED' dipetakan ke NOT_STARTED per kosakata direktif."
+    evidence: null
+  V2-005:
+    title: "Baseline snapshot"
+    priority: P1
+    ticket_status: STUB
+    work_status: NOT_STARTED
+    note: "Perlu rekonsiliasi baseline kematian encoder (5x/24 jam di scorecard vs 12x/17 jam V2-002) + konfirmasi sumber median delay 11,6 mnt."
+  V2-006:
+    title: "Service inventory"
+    priority: P1
+    ticket_status: STUB
+    work_status: NOT_STARTED
+    note: "Termasuk daftar port publik Master (pertanyaan terbuka dari rencana pendukung)."
+  V2-007:
+    title: "Database schema audit (GERBANG TEKNIS)"
+    priority: P1
+    ticket_status: STUB
+    work_status: NOT_STARTED
+    note: "Gerbang teknis: TIDAK ADA migrasi schema sebelum V2-007 disetujui."
+  V2-008:
+    title: "Resource budget benchmark"
+    priority: P1
+    ticket_status: STUB
+    work_status: NOT_STARTED
+    note: "Benchmark adalah prasyarat angka concurrency final (capacity model memakai PROPOSAL sampai V2-008)."
+  V2-009:
+    title: "VPS 8 price + storage cost verification (GERBANG BIAYA)"
+    priority: P1
+    ticket_status: STUB
+    work_status: NOT_STARTED
+    note: "Gerbang biaya: TIDAK ADA pembelian sebelum V2-009 lolos. Butuh user di panel Contabo (Turnstile memblokir browser cloud)."
+  V2-010:
+    title: "Dedup design"
+    priority: P1
+    ticket_status: STUB
+    work_status: NOT_STARTED
+
+gates:
+  V2-007_technical_gate:
+    status: NOT_STARTED
+    blocks: "Migrasi schema apa pun; pembuatan tabel jobs baru."
+  V2-009_cost_gate:
+    status: NOT_STARTED
+    blocks: "Pembelian infrastruktur (VPS 8, storage, backup)."
+    note: "Harga Master + VPS 8 belum terverifikasi panel; biaya storage/backup belum dihitung."
+  purchase_gate:
+    status: NOT_READY
+    blocks: "Pembelian VPS 8."
+    conditions:
+      - "Fase 0 lolos (semua metrik kritis tidak memburuk, 72 jam observasi)"
+      - "Demand mendekati 12-16 stream ATAU 6 stream key terisi + antrean siap-live >= 10 (kriteria diperkuat di VPS8_PURCHASE_GATE.md — demand + operational risk + verified cost)"
+      - "Harga Master terverifikasi di panel + total <= $34,67/bln"
+      - "Biaya storage/backup dihitung"
+      - "Rencana rollback ada + persetujuan owner"
+  D9_guard_v2_fixes:
+    status: AWAITING_OWNER
+    blocks: "Perbaikan Guard v2 (V2-003-R1-R9)."
+  D10_OQ010:
+    status: AWAITING_OWNER
+    blocks: "V2-003-R1 (mengaktifkan admission governor) — prasyarat: siapa men-set flag false + CPU 90 di .env dan mengapa."
+
+counts:
+  # Angka "3/10" yang lama mencampur EXECUTED + READY_FOR_REVIEW.
+  # Hitung per status agar tidak menyesatkan:
+  executed: 1
+  executed_with_limitation: 1
+  ready_for_review: 2
+  not_started: 7
+  ticket_complete: 4
+  ticket_stub: 6
