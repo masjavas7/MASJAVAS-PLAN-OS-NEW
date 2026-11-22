@@ -1,6 +1,6 @@
 # ENGINEERING READINESS DASHBOARD — MASJAVAS TUBE OS
 
-**Terakhir diperbarui:** 22 Nov 2026, 19:08 WIB (diagnosis B11/R21 selesai — relink beku + sentinel buta; RIFFORA dibunuh sentinel saat tayang sehat; Cycle 7 18:50: V2-006 diperluas)
+**Terakhir diperbarui:** 22 Nov 2026, 22:50 WIB (Cycle 8: V2-007 diperluas ke tiket lengkap — gerbang teknis)
 **Sumber:** `AUTONOMOUS_WORK_LOG.md`, `BATCH1_EXECUTION_TICKETS_V2.md`,
 dokumen frozen V2.0, bukti audit V2-001.
 **Sumber status resmi:** `STATUS_REGISTRY.yaml` — bila ada perbedaan
@@ -12,8 +12,8 @@ ASSUMPTION / PROPOSAL / OPEN QUESTION / OWNER DECISION REQUIRED.
 
 **Alasan:** Batch 1: 1 EXECUTED (V2-001 — dengan KOREKSI: auditnya di
 host yang salah, lihat R15; bukti tidak berlaku untuk target) + 2
-READY_FOR_REVIEW (V2-002 + V2-003) dari 10; tiket lengkap ke-6 (V2-006
-service inventory) selesai diperluas Cycle 7 18:50 WIB, eksekusi menunggu
+READY_FOR_REVIEW (V2-002 + V2-003) dari 10; tiket lengkap ke-7 (V2-007
+schema audit — GERBANG TEKNIS) selesai diperluas Cycle 8 22:50 WIB, eksekusi menunggu
 sesi interaktif + SSH;
 gerbang biaya V2-009 belum dibuka (harga Master/VPS8 + storage belum
 terverifikasi); keputusan provider KEIN ditutup atas asumsi owner tanpa
@@ -59,7 +59,7 @@ dan verifikasi biaya.
 
 | Item | Status |
 |---|---|
-| Batch 1 tickets completed to readiness standard | NOT READY (1 EXECUTED dengan keterbatasan bukti + 2 READY_FOR_REVIEW dari 10; V2-004 + V2-005 + V2-006 tiket lengkap, belum dieksekusi; lihat STATUS_REGISTRY.yaml) |
+| Batch 1 tickets completed to readiness standard | NOT READY (1 EXECUTED dengan keterbatasan bukti + 2 READY_FOR_REVIEW dari 10; V2-004 + V2-005 + V2-006 + V2-007 tiket lengkap, belum dieksekusi; lihat STATUS_REGISTRY.yaml) |
 | Schema audit approved before migration work | NOT READY (V2-007 belum jalan; tidak ada migration yang berjalan — aman) |
 | Deployment sequence prepared | NOT READY |
 | Canary procedure prepared | NOT READY |
@@ -90,7 +90,7 @@ dan verifikasi biaya.
 | V2-004 | Janitor safety audit | P0 | QUEUED (tiket lengkap, diperluas Cycle 5 22 Nov 10:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
 | V2-005 | Baseline snapshot | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 6 22 Nov 14:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
 | V2-006 | Service inventory | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 7 22 Nov 18:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
-| V2-007 | Database schema audit (GERBANG TEKNIS) | P1 | NOT_STARTED (stub) | — |
+| V2-007 | Database schema audit (GERBANG TEKNIS) | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 8 22 Nov 22:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
 | V2-008 | Resource budget benchmark | P1 | NOT_STARTED (stub) | — |
 | V2-009 | VPS 8 price + storage cost verification (GERBANG BIAYA) | P1 | NOT_STARTED (stub) | — |
 | V2-010 | Deduplication design proposal | P1 | NOT_STARTED (stub, menunggu V2-007) | — |
@@ -171,4 +171,5 @@ dan verifikasi biaya.
 3. Eksekusi audit V2-004 (janitor) saat sesi interaktif tersedia — tiket lengkap; tangkap `deletion_audit` SEGERA (retensi belum diketahui, OQ-014).
 4. Eksekusi audit V2-005 (baseline snapshot) saat sesi interaktif tersedia — tiket lengkap; snapshot adalah lantai gerbang Fase 0 (rollback satu-metrik butuh angka acuan yang sah); baca schema dulu sebelum query (OQ-016/017/018).
 5. Eksekusi audit V2-006 (service inventory) saat sesi interaktif tersedia — tiket lengkap; nama unit systemd dari V2-005 F.3 wajib diverifikasi dulu (OQ-019) agar perintah V2-005 F.3 tidak mengembalikan nol; hasil V2-006 adalah input V2-007 (penulis DB, OQ-022) + V2-008 (worker untuk benchmark) + P3.
-6. Perluas V2-007–V2-010 berurutan + jawab OQ-005/006 (host benar) + OQ-011/012 + OQ-013/014/015 (saat eksekusi V2-004) + OQ-016/017/018 (saat eksekusi V2-005) + OQ-019/020/021/022/023 (saat eksekusi V2-006).
+6. Eksekusi audit V2-007 (schema audit — GERBANG TEKNIS) saat sesi interaktif tersedia — tiket lengkap; backup konsisten DULU lalu audit dari SALINAN (OQ-024: jalur tulis-live `init_schema()` belum terbukti aman); gerbang menahan V2-010 sampai disetujui.
+7. Perluas V2-008–V2-010 berurutan (V2-008 + V2-009 paralel setelah V2-007; V2-010 setelah V2-007 disetujui) + jawab OQ-005/006 (host benar) + OQ-011/012 + OQ-013/014/015 (saat eksekusi V2-004) + OQ-016/017/018 (saat eksekusi V2-005) + OQ-019/020/021/022/023 (saat eksekusi V2-006) + OQ-024/025/026/027/028 (saat eksekusi V2-007).
