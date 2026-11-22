@@ -44,13 +44,23 @@ sampai semua gerbang lolos.
 - `KONTEKS_MASALAH_BOTTLENECK_DAN_SOLUSI.md` — konteks masalah,
   9 bottleneck terverifikasi (B1–B9), 15 problem terstruktur
   (PR-01–PR-15), dan solusi yang diharapkan per fase (Fase 0/1/2+).
+- `RIWAYAT_PEMBAHASAN_DAN_LANGKAH.md` — riwayat pembahasan program
+  readiness 22 Nov 2026: timeline, pembahasan per topik, keputusan
+  owner D1–D11, langkah berikut, dan yang ditolak (agar tak diulang).
 
-### Register + runbook + rencana pendukung (menyusul — dalam penyusunan)
+### Runbook VPS 8
+
+- `VPS8_DEPLOYMENT_RUNBOOK.md` — langkah deployment Fase 0 → 1 → 2
+  dengan verifikasi tiap langkah + rujukan rollback (DRAFT).
+- `VPS8_ACCEPTANCE_TEST_PLAN.md` — 30+ kasus uji dengan kriteria
+  lolos/gagal terukur, dikaitkan ke scorecard 13 metrik.
+- `VPS8_ROLLBACK_RUNBOOK.md` — pemicu + prosedur rollback per fase,
+  RPO/RTO sebagai target, otoritas keputusan owner.
+
+### Register + rencana pendukung (menyusul — dalam penyusunan)
 
 - `MASJAVAS_RISK_REGISTER.md`, `MASJAVAS_OWNER_DECISION_REGISTER.md`,
   `MASJAVAS_COST_REGISTER.md`, `MASJAVAS_DEPENDENCY_GRAPH.md`
-- `VPS8_DEPLOYMENT_RUNBOOK.md`, `VPS8_ACCEPTANCE_TEST_PLAN.md`,
-  `VPS8_ROLLBACK_RUNBOOK.md`
 - `MASJAVAS_BACKUP_RECOVERY_PLAN.md`,
   `MASJAVAS_RELEASE_MANAGEMENT_PLAN.md`,
   `MASJAVAS_SECURITY_HARDENING_PLAN.md`,
