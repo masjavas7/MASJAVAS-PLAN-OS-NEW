@@ -38,6 +38,7 @@ berjalan — entri terbaru di bawah.
 | 12:38 | User setuju tambah push ke cron | Body cron diperbarui + terverifikasi; run berikut ~14:50 WIB |
 | 12:40 | **Prinsip pengoptimalan** (user): yang sudah solid dipertahankan; tugas = mengoptimalkan yang solid; jangan korbankan yang solid (naif) | Dicatat di MEMORY, AGENTS, work log, aturan cron, dan §2.9 dokumen ini |
 | 12:57 | Repo dijadikan **publik** (user) | Scan pra-publik bersih (tanpa kredensial); PATCH visibility public + verifikasi tanpa auth |
+| 13:02–13:10 | **Sprint audit repo** (8 item P0–P1, atas review eksternal) | F1/F2 terkonfirmasi + 1 temuan tambahan (dashboard kontradiksi internal); STATUS_REGISTRY.yaml + rekonsiliasi; capacity model (puncak ≈7,4 core, headroom ±0,6); purchase gate; API contract (TC-STALE-1); failure injection (11 skenario); rollback v1.1 (3 kategori); TCO (cap habis oleh infrastruktur); SLO (3/8 bertarget). Repo 29 file, semua ter-push |
 
 ## 2. Pembahasan per topik
 
