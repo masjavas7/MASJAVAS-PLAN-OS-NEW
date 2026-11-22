@@ -62,11 +62,14 @@ sampai semua gerbang lolos.
 - `VPS8_DEPLOYMENT_RUNBOOK.md` — langkah deployment Fase 0 → 1 → 2
   dengan verifikasi tiap langkah + rujukan rollback (DRAFT).
 - `VPS8_ACCEPTANCE_TEST_PLAN.md` — 30+ kasus uji dengan kriteria
-  lolos/gagal terukur, dikaitkan ke scorecard 13 metrik.
+  lolos/gagal terukur, dikaitkan ke scorecard 13 metrik (v1.1:
+  gerbang memakai klasifikasi rollback 3 kategori).
 - `VPS8_ROLLBACK_RUNBOOK.md` — pemicu + prosedur rollback per fase,
-  RPO/RTO sebagai target, otoritas keputusan owner.
+  RPO/RTO sebagai target, otoritas keputusan owner (v1.1: aturan
+  satu-metrik SUPERSEDED — diganti hard breach / SLO degradation /
+  transient noise + tabel ambang 13 metrik).
 
-### Sprint audit repo (P0)
+### Sprint audit repo
 
 - `VPS8_RESOURCE_CAPACITY_MODEL.md` — model kapasitas CPU VPS 8:
   budget per workload, reserve Live 2 core + OS/daemon 0,5 core,
@@ -76,6 +79,12 @@ sampai semua gerbang lolos.
   BELI ⟺ Fase 0 lolos AND (Demand OR Risk) AND V2-009 lolos AND
   rollback ada AND persetujuan owner; 9 sinyal risiko dengan
   threshold + sumber data.
+- `MASJAVAS_TCO_MODEL.md` — model total cost of ownership:
+  3 skenario vs cap $34,67/bln; temuan utama: cap habis oleh
+  infrastruktur saja (minimum PAS di cap, expected +$1,50/bln,
+  worst case +$4,97/bln — sebelum storage/domain).
+- `MASJAVAS_SLO_ERROR_BUDGET.md` — 8 SLO + error budget; hanya
+  3 punya target angka dari baseline, 4 masih OPEN QUESTION.
 
 ### Register
 
