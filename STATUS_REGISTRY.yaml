@@ -43,7 +43,7 @@ tickets:
     target_host: "live-master"
     evidence_valid_for_target: true
     limitation: null
-    related_work: "Perbaikan R3-R8 deployed 07:24 (commit 56f7a6d) + iterasi 2 ~08:20 (021a9f0); observasi 24 jam GAGAL 14:47 (B10/R20: 4 stream mati serentak 14:47:15-14:47:36; watchdog fired 14:47:11 tapi encoder 706 tetap mati 14:47:15). Jangan klaim encoder sudah diperbaiki."
+    related_work: "Perbaikan R3-R8 deployed 07:24 (commit 56f7a6d) + iterasi 2 ~08:20 (021a9f0); observasi 24 jam GAGAL 14:47 (B10/R20: 4 stream mati serentak; watchdog fired 14:47:11 tapi encoder 706 tetap mati 14:47:15). Investigasi 15:30: mekanisme TERBUKTI (overwrite stale-now daemon vs supervisor; health check STREAMING-only). Live pulih 15:16 via restart + guardian lane lain (terverifikasi 15:29) tapi tidak stabil (sentinel ghost-kill 114 2x; 3 proses pemulihan berpacu). Jangan klaim encoder sudah diperbaiki."
     evidence: "workspace/engineering/v2-002/ (6 dokumen audit + fix plan + fix report)"
   V2-003:
     title: "Resource Guard v2 audit"
