@@ -66,6 +66,17 @@ sampai semua gerbang lolos.
 - `VPS8_ROLLBACK_RUNBOOK.md` — pemicu + prosedur rollback per fase,
   RPO/RTO sebagai target, otoritas keputusan owner.
 
+### Sprint audit repo (P0)
+
+- `VPS8_RESOURCE_CAPACITY_MODEL.md` — model kapasitas CPU VPS 8:
+  budget per workload, reserve Live 2 core + OS/daemon 0,5 core,
+  batas konkurensi, admission control berbasis CPU pressure;
+  puncak dihitung ulang ≈7,4 core, headroom ±0,6 core.
+- `VPS8_PURCHASE_GATE.md` — gerbang pembelian yang diperkuat:
+  BELI ⟺ Fase 0 lolos AND (Demand OR Risk) AND V2-009 lolos AND
+  rollback ada AND persetujuan owner; 9 sinyal risiko dengan
+  threshold + sumber data.
+
 ### Register
 
 - `MASJAVAS_RISK_REGISTER.md` — risiko R1–R19 + P1–P16, dampak dan
