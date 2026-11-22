@@ -2,6 +2,7 @@
 
 **Dokumen acuan (frozen):** `MASTER_ARCHITECTURE_MASJAVAS_TUBE_OS_V2.md` (Draft Baseline),
 `IMPLEMENTATION_CHECKLIST_MASJAVAS_TUBE_OS_V2.md` (v1.0)
+**Versi:** 1.4 — status memakai kosakata direktif (QUEUED → NOT_STARTED); sumber status resmi: STATUS_REGISTRY.yaml
 **Versi:** 1.3 — V2-001 + V2-002 + V2-003 + V2-004 lengkap; V2-005–V2-010 stub antrean
 **Tanggal:** 22 November 2026 (v1.1: V2-002 diperluas Cycle 2, 06:50 WIB; v1.3: V2-004 diperluas Cycle 5, 10:50 WIB)
 **Status:** Batch 1 = AUDIT / READ-ONLY. Tiket-tiket ini adalah artefak TURUNAN —
@@ -795,7 +796,7 @@ host dulu — pelajaran F-E).
 klasifikasi unpaired, dan proteksi file channel CONNECTED
 **Prioritas:** P0 — CRITICAL | **Workstream:** P0.4 (Track A — Stabilization)
 **Owner:** Muse (audit) — perbaikan: user (L2/L3, tergantung temuan)
-**Status:** QUEUED (tiket lengkap — eksekusi menunggu sesi interaktif + SSH)
+**Status:** NOT_STARTED (tiket lengkap — eksekusi menunggu sesi interaktif + SSH)
 **Dibuat:** 22 Nov 2026 (stub) — **Diperluas:** 22 Nov 2026 10:50 WIB
 (Cycle 5, cron local-only)
 **Dependency:** backup DB konsisten membantu verifikasi (V2-005/V2-007
@@ -1168,7 +1169,7 @@ TIDAK BOLEH berisi nilai kredensial.
 
 # TIKET V2-005 — BASELINE SNAPSHOT (STUB)
 
-**Prioritas:** P1 — CRITICAL | **Workstream:** P1.1 | **Status:** QUEUED
+**Prioritas:** P1 — CRITICAL | **Workstream:** P1.1 | **Status:** NOT_STARTED
 **Dependency:** akses metrics VPS
 
 **Scope:** snapshot CPU/RAM/disk/IO/TX/load per proses + systemd unit;
@@ -1181,7 +1182,7 @@ delay median/p90, encoder death + orphan, stream aktif.
 
 # TIKET V2-006 — SERVICE INVENTORY (STUB)
 
-**Prioritas:** P1 — CRITICAL | **Workstream:** P1.2 | **Status:** QUEUED
+**Prioritas:** P1 — CRITICAL | **Workstream:** P1.2 | **Status:** NOT_STARTED
 **Dependency:** akses server (SSH)
 
 **Scope:** inventarisasi systemd service + timer + cron + proses Python +
@@ -1196,7 +1197,7 @@ dependency antar-service; identifikasi proses berbagi event loop
 
 # TIKET V2-007 — DATABASE SCHEMA AUDIT (STUB — GERBANG TEKNIS)
 
-**Prioritas:** P1 — CRITICAL | **Workstream:** P1.3 | **Status:** QUEUED
+**Prioritas:** P1 — CRITICAL | **Workstream:** P1.3 | **Status:** NOT_STARTED
 **Dependency:** backup SQLite konsisten (prasyarat — JANGAN audit tanpa backup)
 
 **Scope:** dump schema (tanpa data sensitif); audit `operational_tasks`,
@@ -1217,7 +1218,7 @@ persetujuan hasil tiket ini).
 
 # TIKET V2-008 — RESOURCE BUDGET BENCHMARK (STUB)
 
-**Prioritas:** P1 | **Workstream:** P1.4 | **Status:** QUEUED
+**Prioritas:** P1 | **Workstream:** P1.4 | **Status:** NOT_STARTED
 **Dependency:** V2-005 baseline
 
 **Scope:** ukur konsumsi aktual per worker (ingestion, Stage 2, live,
@@ -1231,7 +1232,7 @@ concurrency Stage 2 butuh persetujuan bila menyentuh antrean produksi.
 
 # TIKET V2-009 — VPS 8 PRICE + STORAGE COST VERIFICATION (STUB — GERBANG BIAYA)
 
-**Prioritas:** P1 | **Workstream:** P6.1 + P6.2 | **Status:** QUEUED
+**Prioritas:** P1 | **Workstream:** P6.1 + P6.2 | **Status:** NOT_STARTED
 **Dependency:** panel Contabo + quote object storage
 
 **Scope:** verifikasi harga Master aktual + VPS 8 aktual + pajak + setup fee
@@ -1247,7 +1248,7 @@ browsernya atau ambil alih browser live.
 
 # TIKET V2-010 — DEDUPLICATION DESIGN PROPOSAL (STUB)
 
-**Prioritas:** P1 | **Workstream:** P3.2 (desain saja) | **Status:** QUEUED
+**Prioritas:** P1 | **Workstream:** P3.2 (desain saja) | **Status:** NOT_STARTED
 **Dependency:** V2-007 DISETUJUI (keras — tidak bisa mulai teknis sebelumnya)
 
 **Scope:** rancang `deduplication_key` (`channel_id + job_kind + generation`)
@@ -1262,18 +1263,20 @@ hasil V2-007 disetujui.
 
 # BATCH 1 TRACKER
 
+> Sumber status resmi: `STATUS_REGISTRY.yaml`. Tabel ini ringkasan registry.
+
 | ID | Tiket | Prioritas | Status | Bukti |
 |---|---|---|---|---|
-| V2-001 | KEIN dependency/fallback decision (audit) | P0 | EXECUTED (audit 22 Nov 05:12–05:20; Q5/Q6 ditutup atas asumsi owner "KEIN aman", 06:55 WIB) | `workspace/engineering/v2-001/` (6 dokumen) |
+| V2-001 | KEIN dependency/fallback decision (audit) | P0 | EXECUTED (audit 22 Nov 05:12–05:20 DI HOST SALAH — bukti tidak berlaku untuk target; Q5/Q6 ditutup atas asumsi owner "KEIN aman", 06:55 WIB) | `workspace/engineering/v2-001/` (6 dokumen) |
 | V2-002 | Encoder 706 root-cause investigation | P0 | READY_FOR_REVIEW (audit 22 Nov 06:58–07:10; 12 kematian slot 114, RTMP timeout) | `workspace/engineering/v2-002/` (5 dokumen + manifest) |
 | V2-003 | Resource Guard v2 audit | P0 | READY_FOR_REVIEW (audit 22 Nov 07:15–07:40; governor 0 aksi efektif, Q6 solved) | `workspace/engineering/v2-003/` (6 dokumen + manifest) |
-| V2-004 | Janitor safety audit | P0 | QUEUED (tiket lengkap, diperluas Cycle 5 22 Nov 10:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
-| V2-005 | Baseline snapshot | P1 | QUEUED (stub) | — |
-| V2-006 | Service inventory | P1 | QUEUED (stub) | — |
-| V2-007 | Database schema audit (GERBANG TEKNIS) | P1 | QUEUED (stub) | — |
-| V2-008 | Resource budget benchmark | P1 | QUEUED (stub) | — |
-| V2-009 | VPS 8 price + storage cost verification (GERBANG BIAYA) | P1 | QUEUED (stub) | — |
-| V2-010 | Deduplication design proposal | P1 | QUEUED (stub, menunggu V2-007) | — |
+| V2-004 | Janitor safety audit | P0 | NOT_STARTED (tiket lengkap, diperluas Cycle 5 22 Nov 10:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
+| V2-005 | Baseline snapshot | P1 | NOT_STARTED (stub) | — |
+| V2-006 | Service inventory | P1 | NOT_STARTED (stub) | — |
+| V2-007 | Database schema audit (GERBANG TEKNIS) | P1 | NOT_STARTED (stub) | — |
+| V2-008 | Resource budget benchmark | P1 | NOT_STARTED (stub) | — |
+| V2-009 | VPS 8 price + storage cost verification (GERBANG BIAYA) | P1 | NOT_STARTED (stub) | — |
+| V2-010 | Deduplication design proposal | P1 | NOT_STARTED (stub, menunggu V2-007) | — |
 
 **Urutan eksekusi yang disarankan:** V2-001 → V2-002 → V2-003/V2-004/V2-005/
 V2-006 paralel (jalur audit teknis + operasional) → V2-007 → V2-008 + V2-009
