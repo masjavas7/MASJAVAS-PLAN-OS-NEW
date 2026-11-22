@@ -1,17 +1,20 @@
 # ENGINEERING READINESS DASHBOARD — MASJAVAS TUBE OS
 
-**Terakhir diperbarui:** 22 Nov 2026, 10:50 WIB (Cycle 5, cron local-only)
+**Terakhir diperbarui:** 22 Nov 2026, 13:05 WIB (sprint audit P0 #1)
 **Sumber:** `AUTONOMOUS_WORK_LOG.md`, `BATCH1_EXECUTION_TICKETS_V2.md`,
 dokumen frozen V2.0, bukti audit V2-001.
+**Sumber status resmi:** `STATUS_REGISTRY.yaml` — bila ada perbedaan
+antara dashboard ini dan registry, registry yang benar.
 **Label bukti:** VERIFIED FACT / DOCUMENTED FACT NOT YET REVALIDATED /
 ASSUMPTION / PROPOSAL / OPEN QUESTION / OWNER DECISION REQUIRED.
 
 ## Overall readiness: NOT READY
 
-**Alasan:** Batch 1 baru 3/10 tiket selesai dieksekusi (V2-001 EXECUTED — dengan
-KOREKSI: auditnya di host yang salah, lihat R15; V2-002 + V2-003
-READY_FOR_REVIEW); tiket lengkap ke-4 (V2-004 janitor) selesai diperluas
-Cycle 5 10:50 WIB, eksekusi menunggu sesi interaktif + SSH;
+**Alasan:** Batch 1: 1 EXECUTED (V2-001 — dengan KOREKSI: auditnya di
+host yang salah, lihat R15; bukti tidak berlaku untuk target) + 2
+READY_FOR_REVIEW (V2-002 + V2-003) dari 10; tiket lengkap ke-4 (V2-004
+janitor) selesai diperluas Cycle 5 10:50 WIB, eksekusi menunggu sesi
+interaktif + SSH;
 gerbang biaya V2-009 belum dibuka (harga Master/VPS8 + storage belum
 terverifikasi); keputusan provider KEIN ditutup atas asumsi owner tanpa
 bukti live; runbook VPS8 + acceptance + rollback belum ada; risiko
@@ -56,7 +59,7 @@ dan verifikasi biaya.
 
 | Item | Status |
 |---|---|
-| Batch 1 tickets completed to readiness standard | NOT READY (3/10 selesai dieksekusi: V2-001 EXECUTED + V2-002 + V2-003 READY_FOR_REVIEW; V2-004 tiket lengkap, belum dieksekusi) |
+| Batch 1 tickets completed to readiness standard | NOT READY (1 EXECUTED dengan keterbatasan bukti + 2 READY_FOR_REVIEW dari 10; V2-004 tiket lengkap, belum dieksekusi; lihat STATUS_REGISTRY.yaml) |
 | Schema audit approved before migration work | NOT READY (V2-007 belum jalan; tidak ada migration yang berjalan — aman) |
 | Deployment sequence prepared | NOT READY |
 | Canary procedure prepared | NOT READY |
@@ -69,13 +72,13 @@ dan verifikasi biaya.
 | WS | Nama | Status | Catatan |
 |---|---|---|---|
 | A | Production stabilization | IN_PROGRESS | V2-002 + V2-003 READY_FOR_REVIEW; V2-004 tiket lengkap (Cycle 5), menunggu eksekusi; P1–P16 terdokumentasi |
-| B | KEIN fallback readiness | IN_PROGRESS | V2-001 READY_FOR_REVIEW; keputusan user menunggu Q5 |
+| B | KEIN fallback readiness | IN_PROGRESS | V2-001 EXECUTED dengan keterbatasan bukti (audit di host salah; Q5/Q6 ditutup atas asumsi owner 06:55 — bukan bukti live) |
 | C | Orchestrator & job lifecycle | NOT_STARTED | Desain di V2.0 + orchestrator doc; kontrak API detail belum ditulis |
 | D | VPS8 infrastructure readiness | NOT_STARTED | Plan VPS8 + rancangan 2 VPS ada; runbook belum ada |
 | E | Backup, monitoring, recovery | NOT_STARTED | Arah di V2.0 §12–§13; rencana detail belum ada |
 | F | Deployment & release mgmt | NOT_STARTED | Manifest rilis di V2.0; rencana detail belum ada |
 | G | Security & access control | NOT_STARTED | — |
-| H | Documentation & execution readiness | IN_PROGRESS | Log + dashboard ini; 12 artefak §9 lain belum ada |
+| H | Documentation & execution readiness | IN_PROGRESS | 14/14 artefak §9 ada (12 selesai + di-push ke repo 22 Nov 12:37); repo MASJAVAS-PLAN-OS-NEW 21 file |
 
 ## Batch 1 tracker (§7–§8)
 
@@ -152,7 +155,7 @@ dan verifikasi biaya.
   RENCANA_ORCHESTRATOR (G1–G12), PLAN_PENAMBAHAN_VPS8, RANCANGAN_2_VPS,
   EVALUASI_SEBELUM_PERBAIKAN (P1–P16), rantai bukti bottleneck (4 dokumen),
   50 repo GitHub terverifikasi, audit ingestion/disk/thumbnail, dll.
-- 14 artefak §9: 2 dibuat siklus ini (log + dashboard ini); 12 masih MISSING.
+- 14 artefak §9: 14/14 selesai 22 Nov 12:37 (12 draft paralel + review + push ke repo MASJAVAS-PLAN-OS-NEW; 21/21 file OK via konektor vault custom.github).
 - Ekuivalen parsial (periksa sebelum membuat duplikat): risk register ←
   EVALUASI_SEBELUM_PERBAIKAN (P1–P16); cost ← PLAN_PENAMBAHAN_VPS8 §7 +
   docs/BIAYA_*; VPS8 runbook ← PLAN_PENAMBAHAN_VPS8 §6 + migrasi/;
