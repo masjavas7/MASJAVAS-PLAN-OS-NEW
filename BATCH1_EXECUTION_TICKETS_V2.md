@@ -2,6 +2,7 @@
 
 **Dokumen acuan (frozen):** `MASTER_ARCHITECTURE_MASJAVAS_TUBE_OS_V2.md` (Draft Baseline),
 `IMPLEMENTATION_CHECKLIST_MASJAVAS_TUBE_OS_V2.md` (v1.0)
+**Versi:** 1.7 — V2-007 diperluas Cycle 8, 22 Nov 22:50 WIB (cron local-only)
 **Versi:** 1.6 — V2-006 diperluas Cycle 7, 22 Nov 18:50 WIB (cron local-only)
 **Versi:** 1.5 — V2-005 diperluas Cycle 6, 22 Nov 14:50 WIB (cron local-only)
 **Versi:** 1.4 — status memakai kosakata direktif (QUEUED → NOT_STARTED); sumber status resmi: STATUS_REGISTRY.yaml
@@ -1885,24 +1886,405 @@ timestamp cuplikan + metode.**
 
 ---
 
-# TIKET V2-007 — DATABASE SCHEMA AUDIT (STUB — GERBANG TEKNIS)
+# TIKET V2-007 — DATABASE SCHEMA AUDIT (GERBANG TEKNIS)
 
-**Prioritas:** P1 — CRITICAL | **Workstream:** P1.3 | **Status:** NOT_STARTED
-**Dependency:** backup SQLite konsisten (prasyarat — JANGAN audit tanpa backup)
+**Judul:** Audit schema database aktual — dump schema lengkap + audit
+`operational_tasks`/`channels`/`auth_tokens`/publish/live/LoopGen + indeks
++ constraint + status/transisi job + fungsi pembuat/pengubah status +
+peta penulis DB + query penyebab lock + keputusan perluas-vs-tabel-baru
+untuk dedup key
+**Prioritas:** P1 — CRITICAL | **Workstream:** P1.3 | **Owner:** Muse (audit)
+— keputusan schema/migration: user
+**Status:** NOT_STARTED (tiket lengkap — eksekusi menunggu sesi interaktif + SSH)
+**Dibuat:** 22 Nov 2026 (stub) — **Diperluas:** 22 Nov 2026 22:50 WIB
+(Cycle 8, cron local-only)
+**Dependency:** backup SQLite konsisten (prasyarat KERAS — JANGAN audit
+tanpa backup); input V2-006 (peta penulis DB, OQ-022) membantu, BUKAN
+blocker; V2-005 membantu interpretasi status job, BUKAN blocker
+**Diblokir oleh:** tidak ada — membutuhkan akses baca VPS (SSH Tailscale,
+host BENAR `masjavas-vps-baru` — pelajaran F-E V2-002) + baca kode
+(lokasi schema + fungsi job)
 
-**Scope:** dump schema (tanpa data sensitif); audit `operational_tasks`,
-`channels`, `auth_tokens`, tabel publish/live/LoopGen, `ingestion_jobs`,
-`loopgen_jobs`, `loopgen_stage2_runs`, `loopgen_distribution`,
-`loopgen_agent_tasks`, `background_jobs`, `audit_logs`; indeks + constraint;
-status + transisi job; semua fungsi pembuat/pengubah status job; penulis DB;
-query penyebab lock; kemungkinan dedup key; apakah `operational_tasks`
-dapat diperluas (vs tabel baru).
-**Catatan awal:** `operational_tasks` tanpa `slot_number` (pakai `channel_id`);
-tanpa tabel `fleet_runs`/`job_queues`; tanpa kolom `audio_progress`.
-**Deliverables:** `DATABASE_SCHEMA_AUDIT_V2.md`, `DATABASE_WRITER_MAP_V2.md`,
-`DATABASE_MIGRATION_PLAN_V2.md`.
-**Batas:** read-only + backup; JANGAN migration apa pun (V2-010 menunggu
-persetujuan hasil tiket ini).
+## A. Masalah
+
+Tidak ada migration/schema baru yang boleh jalan sebelum audit ini selesai
+dan disetujui (checklist P1.3 + §14 — GERBANG TEKNIS) — tetapi schema
+aktual belum pernah di-dump, sehingga gerbang ini menahan dua keputusan
+berikutnya tanpa dasar bukti:
+
+1. **Keputusan dedup (V2-010) tidak bisa diambil tanpa audit:** V2.0
+   §9.3 menyatakan "jika `operational_tasks` sudah menjadi tabel utama,
+   tambahkan atribut yang diperlukan ke tabel itu secara inkremental" —
+   tetapi apakah `operational_tasks` memang dapat diperluas (kolom
+   dedup key + generation + lease + fencing token) atau justru perlu
+   tabel baru, hanya bisa dijawab dari schema + indeks + constraint
+   aktual, bukan dari ingatan.
+2. **Nama kolom sudah terbukti menyesatkan:** `operational_tasks` TIDAK
+   punya `schedule_time` — yang benar `schedule_time_epoch` (INTEGER
+   epoch UTC) + `target_date_wib` (TEXT 'YYYY-MM-DD'); `updated_at`
+   epoch INTEGER, bukan string datetime (AGENTS.md 12 Nov). Query yang
+   menebak nama kolom menghasilkan angka salah — audit WAJIB membaca
+   schema dulu sebelum query apa pun.
+3. **`loopgen_agent_tasks` KOSONG padahal worker Opsi 3 produktif
+   19–21 Nov (OQ-001):** rekaman tugas agent tidak terlacak di DB ini —
+   tidak diketahui apakah tugas agent dicatat di tabel lain, jalur
+   tulisnya mati, atau tabel ini memang tidak pernah dipakai. Tanpa
+   audit, V2-010 bisa merancang dedup di atas tabel yang tidak terisi.
+4. **`operational_tasks` MAX(`updated_at`) 20 Nov ~09:05 (OQ-002):**
+   jalur publish mungkin tidak menyentuh `updated_at` — artinya status
+   dan transisi job tidak dapat dipercaya sebagai cerminan pekerjaan
+   nyata sampai fungsi pembuat/pengubah status diaudit dari kode +
+   data.
+5. **Lock SQLite 31×/24 jam (R5) + 8 lock tanpa korelasi waktu
+   (V2-002):** query penyebab lock belum diidentifikasi. Audit indeks +
+   pola tulis adalah prasyarat diagnosis lock — dan lock adalah risiko
+   langsung bagi migrasi apa pun (V2-010) yang menambah tulis.
+
+Tanpa audit ini, V2-010 merancang dedup di atas asumsi, V2-008 tidak
+punya peta tabel/metrik untuk benchmark, dan rencana pembagian 3 bagian
+(P3) tidak tahu tabel mana yang dimiliki tiap bagian.
+
+**Fakta terverifikasi (bukan asumsi):**
+
+| Fakta | Nilai | Sumber |
+|---|---|---|
+| Host benar | `masjavas-vps-baru` (Contabo vmi3762689, disk 145G); DB live ±118 MB vs box lama 55 MB | V2-002 F-E (Cycle 3) |
+| `operational_tasks` — kolom waktu | `schedule_time_epoch` INTEGER epoch detik UTC; `target_date_wib` TEXT 'YYYY-MM-DD'; `updated_at` epoch detik INTEGER | AGENTS.md 12 Nov (pola query andal) |
+| `operational_tasks` — catatan awal | Tanpa `slot_number` (pakai `channel_id`); tanpa tabel `fleet_runs`/`job_queues`; tanpa kolom `audio_progress` | Stub V2-007 (DOCUMENTED NOT YET REVALIDATED — wajib diverifikasi F.3) |
+| DB mode | WAL + busy_timeout 30 dtk | EVALUASI l.118 |
+| Dedup key (frozen) | `channel_id + job_kind + generation`; satu job aktif per key; retry ≠ generation baru | V2.0 §8.2 |
+| `channels` | 707 slot (237 CONNECTED / 470 UNPAIRED); 673 STAGING-SLOT-*; 203 CONNECTED ber-ID STAGING | V2-004 baseline (DOCUMENTED NOT YET REVALIDATED) |
+| `auth_tokens` — ikatan vault | Token terenkripsi AES-256-GCM, AAD `CHANNEL=<id>::VAULT=<master_vault_id>`; `master_vault_id` ada di `channels` DAN `auth_tokens` | Insiden vault 12 Nov (AGENTS.md) |
+| `deletion_audit` | Ada (bukti reklasifikasi janitor) — retensi belum diketahui | V2-004 Q2 / OQ-014 |
+| Lock | 31×/24 jam (R5); V2-002: 8 lock, nol korelasi waktu dengan kematian encoder | EVALUASI; V2-002 |
+| LoopGen live | Distribusi Stage 2 live sejak 19 Nov 11:08 — final langsung ke folder 01_VIDEOS channel | ALIGNMENT_SYNTHESIS |
+| Isolasi tes | Jalur tulis-live `init_schema()` BELUM diperbaiki/dibuktikan — klaim isolasi tes tidak boleh bersandar pada niat saja | ALIGNMENT_SYNTHESIS (boundary repair) |
+
+**Fakta yang BELUM terverifikasi (jangan diperlakukan sebagai fakta):**
+daftar tabel lengkap + kolom/tipe/default tiap tabel; indeks + unique
+constraint aktual; nilai status yang benar-benar ada di data (vs yang
+didefinisikan kode); fungsi pembuat/pengubah status job; peta penulis DB
+lengkap (handoff V2-006 OQ-022); query penyebab lock; apakah
+`operational_tasks` dapat diperluas untuk dedup key + generation + lease
++ fencing token; apakah ada tabel `schema_version`/riwayat migrasi.
+
+**OPEN QUESTION (ditemukan saat perluasan tiket — wajib dijawab saat eksekusi):**
+OQ-024 — apakah koneksi aplikasi (`init_schema()` atau sejenisnya)
+menulis ke DB saat audit membaca — dan apakah dump dari SALINAN backup
+aman dari tulis itu? OQ-025 — tabel + kolom apa saja yang BENAR-BENAR
+ada di DB live (daftar lengkap vs daftar stub — termasuk tabel yang
+tidak disebut di stub)? OQ-026 — indeks apa yang hilang di jalur query
+panas, dan apakah itu penyebab lock R5? OQ-027 — dapatkah
+`operational_tasks` menampung dedup key + generation + lease + fencing
+token (kolom apa yang kurang), atau perlu tabel baru? OQ-028 — nilai
+status + transisi apa yang BENAR-BENAR terjadi di data (distinct status
+per tabel + contoh transisi), vs yang didefinisikan kode?
+
+**Dua pekerjaan berbeda (jangan dicampur):**
+
+1. **Audit (tiket ini)** — catat schema + penulis + lock + jawaban
+   perluas-vs-tabel-baru; JANGAN migration apa pun.
+2. **Desain dedup + migration (V2-010)** — memakai hasil audit ini
+   sebagai input; baru boleh mulai TEKNIS setelah hasil V2-007
+   disetujui (aturan checklist §14).
+
+## B. Target
+
+1. Schema dump LENGKAP dari salinan backup DB live: semua tabel +
+   kolom + tipe + default + PK/FK/unique/index — tersimpan sebagai
+   dokumen BERVERSI (dapat diulang dengan metode identik).
+2. Audit `operational_tasks`: kolom aktual (koreksi/konfirmasi catatan
+   awal stub), nilai status yang ada di data, transisi yang terjadi,
+   dan jawaban apakah tabel ini dapat diperluas untuk dedup (OQ-027).
+3. Audit `channels` + `auth_tokens`: kolom kunci, ikatan vault ganda,
+   dan konsistensi ID (STAGING vs CONNECTED — bandingkan V2-004).
+4. Audit tabel publish/live/LoopGen: `ingestion_jobs`,
+   `loopgen_jobs`, `loopgen_stage2_runs`, `loopgen_distribution`,
+   `loopgen_agent_tasks` (OQ-001), `background_jobs`, `audit_logs`,
+   `deletion_audit`.
+5. Audit indeks + unique constraint: celah yang relevan dengan lock
+   (OQ-026) dan dengan dedup key (OQ-027).
+6. Inventaris fungsi pembuat job + pengubah status (grep kode) +
+   peta transisi status per tabel (kode vs data — OQ-028, OQ-002).
+7. Peta penulis DB: proses mana menulis tabel apa (dari V2-006
+   OQ-022 + verifikasi kode) — termasuk penulis di luar worker +
+   live supervisor + web bila ada.
+8. Identifikasi query penyebab lock (pola indeks hilang + journal
+   lock + transaksi panjang di kode) — R5.
+9. OQ-001/OQ-002/OQ-024–OQ-028 terjawab dengan bukti; yang tidak
+   bisa dijawab dicatat eksplisit sebagai "TIDAK DAPAT DIVERIFIKASI
+   + alasannya".
+10. Handoff ke V2-010 (keputusan perluas-vs-tabel-baru + kolom yang
+    dibutuhkan dedup key/generation/lease/fencing) dan ke V2-008
+    (tabel + metrik untuk benchmark) tercatat eksplisit di akhir
+    dokumen bukti.
+
+## C. Prasyarat
+
+- [ ] Akses SSH baca ke `masjavas-vps-baru` (host BENAR — verifikasi
+      hostname `vmi3762689` + disk 145G sebelum audit, pelajaran F-E).
+- [ ] **Backup konsisten DULU (F.2) — JANGAN audit tanpa backup.**
+      Audit membaca SALINAN backup, bukan file DB live (jalur tulis
+      `init_schema()` belum terbukti aman — OQ-024).
+- [ ] Temuan V2-002 (F-E host salah), V2-004 (janitor/`deletion_audit`),
+      V2-006 (peta penulis DB, OQ-022) dibaca sebagai pembanding —
+      BUKAN pengganti dump langsung.
+- [ ] V2.0 §8.2 (dedup key + generation) + §9.3 (perluas-vs-tabel-baru)
+      dibaca sebelum menilai OQ-027.
+- [ ] Tidak ada restart/deploy/benchmark/migration bersamaan selama
+      audit (koordinasi: tidak ada migration yang berjalan — aman —
+      tapi restart mengubah mtime/ukuran DB dan merusak perbandingan
+      backup).
+
+## D. Scope pemeriksaan (file/module)
+
+| # | Area | Lokasi / cara periksa |
+|---|---|---|
+| D1 | Backup + discovery DB | Lokasi file DB (hasil discovery V2-001 F.2 — JANGAN tebak path); ukuran + mtime + journal mode (`PRAGMA journal_mode`); backup konsisten (F.2) |
+| D2 | Schema dump | `.schema` + `sqlite_master` dari SALINAN (F.3) — semua tabel + kolom + tipe + default + PK/FK/unique/index |
+| D3 | `operational_tasks` | Kolom aktual; `COUNT` per status + `DISTINCT job_kind`; `MAX(updated_at)` + distribusi `target_date_wib`; contoh agregat (TANPA data sensitif) — OQ-002/OQ-027/OQ-028 |
+| D4 | `channels` + `auth_tokens` | Kolom kunci; hitung STAGING vs CONNECTED; `master_vault_id` di kedua tabel; JANGAN tampilkan nilai token (hitung/skema saja) |
+| D5 | Tabel publish/live | Skema + status distinct + baris per status (agregat saja) |
+| D6 | Tabel LoopGen | `ingestion_jobs`, `loopgen_jobs`, `loopgen_stage2_runs`, `loopgen_distribution`, `loopgen_agent_tasks` (OQ-001: kosong atau tidak, dan sejak kapan), `background_jobs` |
+| D7 | Tabel audit | `audit_logs`, `deletion_audit` (retensi — OQ-014 V2-004; hitung baris tertua/terbaru) |
+| D8 | Indeks + constraint | `PRAGMA index_list`/`index_info` per tabel + unique constraint di dump; bandingkan dengan kolom yang dipakai di `WHERE`/`JOIN` query panas (OQ-026) |
+| D9 | Fungsi job + penulis DB | Grep kode: pembuat job (`INSERT INTO operational_tasks` dkk.), pengubah status (`UPDATE ... SET status`), pembuka koneksi DB; peta penulis dari V2-006 OQ-022 diverifikasi dari kode |
+| D10 | Lock + keputusan dedup | Journal grep "database is locked" 24 jam + transaksi panjang di kode; rangkai D1–D9 menjadi jawaban perluas-vs-tabel-baru (OQ-027) + handoff V2-010/V2-008 |
+
+## E. Pertanyaan teknis yang harus dijawab
+
+| # | Pertanyaan | Bukti yang menjawab |
+|---|---|---|
+| Q1 | Apa schema LENGKAP DB live (semua tabel + kolom + tipe + PK/FK/unique/index) — dan apakah daftar stub sudah lengkap (OQ-025)? | D1 + D2 (F.3) |
+| Q2 | `operational_tasks`: kolom aktual apa saja, status + `job_kind` apa yang ada di data, dan apakah `updated_at` bergerak mengikuti publish (OQ-002)? | D3 (F.4) |
+| Q3 | `channels` + `auth_tokens`: kolom kunci apa saja, dan apakah ikatan vault ganda konsisten (OQ dari insiden 12 Nov)? | D4 (F.4) |
+| Q4 | Tabel publish/live/LoopGen: skema + status + apakah `loopgen_agent_tasks` benar-benar kosong (OQ-001)? | D5 + D6 (F.4) |
+| Q5 | Indeks + unique constraint: apa yang ada, apa yang hilang di jalur query panas (OQ-026)? | D8 (F.6) |
+| Q6 | Fungsi apa saja yang membuat job dan mengubah status — dan apakah transisi di kode cocok dengan data (OQ-028)? | D9 (F.5) |
+| Q7 | Proses mana saja yang menulis DB, tabel apa yang ditulis masing-masing (OQ-022 dari V2-006)? | D9 + D1 (F.5) |
+| Q8 | Query/transaksi apa yang menyebabkan lock SQLite 31×/24 jam (R5)? | D8 + D10 (F.6) |
+| Q9 | Dapatkah `operational_tasks` diperluas untuk dedup key + generation + lease + fencing token, atau perlu tabel baru (OQ-027)? | D2 + D3 + D8 (F.3/F.4/F.6) |
+| Q10 | Apakah audit ini dapat diulang + apakah handoff ke V2-010/V2-008 tercatat? | D10 + dokumen §G |
+
+## F. Perintah / metode audit (executable, read-only, host `masjavas-vps-baru`)
+
+**F.1 — Verifikasi host + discovery DB (satu panggilan):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'hostname; df -h /opt/masjavas-os 2>/dev/null | tail -1; ls -la /opt/masjavas-os/*.db /opt/masjavas-os/**/*.db 2>/dev/null | head; find /opt/masjavas-os -maxdepth 3 -name "*.db" 2>/dev/null | head'
+```
+
+Catat hostname `vmi3762689` + disk 145G (bila tidak cocok — STOP, host
+salah). **JANGAN tebak path DB** — pakai hasil discovery (V2-001 F.2)
+dan catat path yang dipakai di semua perintah berikut sebagai
+`<DB>`; bila ada LEBIH DARI SATU file `.db`, catat semuanya dan
+tanyakan/putuskan mana DB utama sebelum lanjut (pelajaran F-E).
+
+**F.2 — Backup konsisten + verifikasi backup (baca-saja terhadap live):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'sqlite3 <DB> ".backup /tmp/v2-007-backup.db" && sqlite3 /tmp/v2-007-backup.db "PRAGMA integrity_check; PRAGMA journal_mode; SELECT count(*) FROM sqlite_master WHERE type=\"table\";" && ls -la /tmp/v2-007-backup.db'
+```
+
+Bila `sqlite3` CLI tidak tersedia, pakai `VACUUM INTO
+'/tmp/v2-007-backup.db'` lewat `python3 -c` dengan `timeout=30`
+(AGENTS.md 19 Nov: koneksi langsung ke DB live bisa
+`database is locked` — selalu `timeout=30`). Backup GAGAL =
+STOP — jangan audit tanpa backup. Hapus salinan dari `/tmp` VPS
+seusai audit (seperti skrip V2-001).
+
+**F.3 — Schema dump dari SALINAN (bukan file live):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'sqlite3 /tmp/v2-007-backup.db ".schema" > /tmp/v2-007-schema.sql; sqlite3 /tmp/v2-007-backup.db "SELECT type,name,sql FROM sqlite_master ORDER BY type,name;" | head -100; wc -l /tmp/v2-007-schema.sql'
+```
+
+Simpan `/tmp/v2-007-schema.sql` lengkap — ini tulang punggung audit
+(Q1/Q9). **Semua query berikut memakai salinan
+`/tmp/v2-007-backup.db`, BUKAN `<DB>` live.**
+
+**F.4 — Agregat status + kolom kunci (dari salinan; baca schema dulu):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'sqlite3 /tmp/v2-007-backup.db "SELECT status, count(*) FROM operational_tasks GROUP BY status; SELECT job_kind, count(*) FROM operational_tasks GROUP BY job_kind LIMIT 30; SELECT datetime(max(updated_at), \"unixepoch\"), datetime(min(updated_at), \"unixepoch\") FROM operational_tasks; SELECT count(*) FROM loopgen_agent_tasks; SELECT count(*) FROM channels WHERE channel_id LIKE \"STAGING-SLOT-%\";"'
+```
+
+**Baca schema (F.3) dulu sebelum query (F.4)** — nama kolom sudah
+terbukti menyesatkan (`schedule_time` tidak ada — AGENTS.md 12 Nov).
+Sesuaikan nama kolom/tabel dengan dump; bila tabel di F.4 tidak ada
+di dump, catat sebagai temuan (OQ-025), jangan paksa query.
+**TANPA data sensitif:** agregat + hitung saja — JANGAN `SELECT *`
+dari `auth_tokens` atau tampilkan nilai token/kunci.
+
+**F.5 — Fungsi pembuat/pengubah status + penulis DB (baca kode):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'grep -rn "INSERT INTO operational_tasks\|INSERT INTO loopgen_\|UPDATE operational_tasks SET\|SET status" /opt/masjavas-os --include="*.py" | head -40; echo ---CONN---; grep -rn "sqlite3.connect\|aiosqlite.connect\|init_schema" /opt/masjavas-os --include="*.py" | head -30'
+```
+
+Sesuaikan path kode dengan hasil discovery. Catat file + nomor baris
+tiap fungsi (dapat diulang). Bandingkan peta penulis dengan V2-006
+OQ-022 — cocok atau bertentangan, catat eksplisit.
+
+**F.6 — Indeks + bukti lock (baca-saja):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'sqlite3 /tmp/v2-007-backup.db "SELECT name FROM sqlite_master WHERE type=\"index\" ORDER BY name;" ; echo ---LOCKS---; journalctl --since "24 hours ago" 2>/dev/null | grep -i -c "database is locked"; echo ---INDEX-INFO---; sqlite3 /tmp/v2-007-backup.db "PRAGMA index_list(operational_tasks);"'
+```
+
+Bila `journalctl` tidak memberi hasil, pakai grep log aplikasi yang
+ditemukan saat discovery — catat metode yang dipakai. Ulangi
+`PRAGMA index_list` untuk tiap tabel D3–D7 yang relevan dengan lock.
+
+**DILARANG dalam tiket ini:**
+
+- Migration schema apa pun (ALTER/CREATE/DROP) — itu V2-010, setelah
+  V2-007 disetujui (aturan checklist §14).
+- Menulis ke DB live dalam bentuk apa pun — termasuk koneksi yang
+  memicu `init_schema()` (jalur tulis-live belum terbukti aman —
+  OQ-024); audit HANYA dari salinan backup (F.2/F.3).
+- Menampilkan / menyalin nilai token, kunci, atau kredensial apa pun
+  (hitung + skema saja).
+- Query ke DB live langsung bila terkunci — pakai salinan (F.2).
+- Menyimpulkan status/transisi dari KODE saja tanpa data (atau
+  sebaliknya) — Q2/Q6 wajib keduanya (OQ-002/OQ-028).
+- Mengambil schema di `masjavas-vps` (box lama) — host salah membuat
+  seluruh audit salah alamat (pelajaran F-E V2-002).
+
+## G.0 — Evidence manifest (wajib diisi saat eksekusi)
+
+Setiap Q1–Q10 wajib punya satu baris manifest. Isi manifest BERSAMAAN
+dengan eksekusi, bukan di akhir — backup dan schema berubah tiap jam.
+
+| Question ID | Command | Timestamp (WIB) | Exit code | Evidence | Finding | Confidence | Impact |
+|---|---|---|---|---|---|---|---|
+| Q1 | F.3 | | | `DATABASE_SCHEMA_AUDIT_V2_<tanggal>.md` | | | |
+| Q2 | F.4 | | | `DATABASE_SCHEMA_AUDIT_V2_<tanggal>.md` | | | |
+| Q3 | F.4 | | | `DATABASE_SCHEMA_AUDIT_V2_<tanggal>.md` | | | |
+| Q4 | F.4 | | | `DATABASE_SCHEMA_AUDIT_V2_<tanggal>.md` | | | |
+| Q5 | F.6 | | | `DATABASE_SCHEMA_AUDIT_V2_<tanggal>.md` | | | |
+| Q6 | F.5 | | | `DATABASE_SCHEMA_AUDIT_V2_<tanggal>.md` | | | |
+| Q7 | F.5 | | | `DATABASE_WRITER_MAP_V2.md` | | | |
+| Q8 | F.6 | | | `DATABASE_SCHEMA_AUDIT_V2_<tanggal>.md` | | | |
+| Q9 | F.3 + F.4 + F.6 | | | `DATABASE_MIGRATION_PLAN_V2.md` | | | |
+| Q10 | D10 + dokumen §G | | | `DATABASE_SCHEMA_AUDIT_V2_<tanggal>.md` | | | |
+
+Aturan manifest: sama seperti V2-001 §G.0 — `Confirmed` (bukti langsung
+dari dump schema salinan backup + agregat + grep kode), `Partial` (bukti
+tidak lengkap / hanya satu sumber), `Unknown` (tidak dapat diverifikasi +
+alasannya dicatat). `Unknown` yang eksplisit LEBIH BAIK daripada dugaan
+yang ditulis seolah fakta. Bukti TIDAK BOLEH berisi nilai kredensial.
+**Setiap entri schema WAJIB mencantumkan: nama tabel/kolom + timestamp
+backup + metode (salinan backup, bukan live).**
+
+## G. Bukti yang harus dilampirkan (deliverable tiket)
+
+1. `DATABASE_SCHEMA_AUDIT_V2_<tanggal>.md` — Q1–Q8 + Q10 (schema dump
+   berversi: semua tabel + kolom + indeks + constraint + status
+   distinct + jawaban OQ-001/OQ-002/OQ-024–OQ-028).
+2. `DATABASE_WRITER_MAP_V2.md` — peta penulis DB (Q7): proses →
+   tabel yang ditulis → fungsi/koneksi (verifikasi V2-006 OQ-022
+   dari kode).
+3. `DATABASE_MIGRATION_PLAN_V2.md` — Q9 (RENCANA saja, BUKAN
+   eksekusi): keputusan perluas-vs-tabel-baru + kolom yang dibutuhkan
+   (dedup key + generation + lease + fencing token) + backward
+   compatibility + urutan migration yang diusulkan untuk V2-010.
+   Eksekusi migration menunggu V2-010 + persetujuan user.
+4. `EVIDENCE_MANIFEST_V2-007.md` — manifest Q1–Q10 (bila dipisah dari
+   dokumen audit; bila digabung, catat di sini).
+5. Semua file di `workspace/engineering/v2-007/` (buat foldernya saat eksekusi).
+
+## H. Acceptance criteria (lulus / gagal)
+
+**LULUS bila SEMUA terpenuhi:**
+
+- [ ] Q1–Q10 terjawab dengan bukti; yang tidak bisa dijawab dicatat
+      eksplisit sebagai "TIDAK DAPAT DIVERIFIKASI + alasannya".
+- [ ] Schema dump lengkap dari SALINAN backup (bukan file live) +
+      `integrity_check` backup tercatat (OQ-024 terjawab).
+- [ ] Catatan awal stub dikonfirmasi atau dikoreksi eksplisit
+      (`slot_number` / `fleet_runs` / `job_queues` / `audio_progress`).
+- [ ] OQ-001 (`loopgen_agent_tasks` kosong) + OQ-002 (`updated_at`
+      20 Nov) terjawab dari data, bukan dugaan.
+- [ ] Keputusan perluas-vs-tabel-baru (OQ-027) tercatat dengan alasan
+      schema (kolom + indeks + constraint yang mendasarinya).
+- [ ] Peta penulis DB ada dan dicocokkan dengan V2-006 OQ-022.
+- [ ] Handoff ke V2-010 (kolom dedup yang dibutuhkan) dan V2-008
+      (tabel/metrik benchmark) tercatat eksplisit.
+- [ ] Nol perubahan schema + nol tulis ke DB live selama audit;
+      salinan backup dihapus dari `/tmp` VPS seusai audit.
+
+**GAGAL bila salah satu terjadi:**
+
+- Audit diambil di host yang salah (verifikasi host dulu —
+  pelajaran F-E).
+- Audit membaca file DB live langsung tanpa backup (risiko tulis
+  `init_schema()` + lock).
+- Migration apa pun dijalankan selama audit.
+- Nilai token/kunci tampil di bukti.
+- Status/transisi disimpulkan dari kode saja atau dari data saja
+  (Q2/Q6 butuh keduanya).
+- Keputusan perluas-vs-tabel-baru tidak berdasar schema dump.
+- `loopgen_agent_tasks` kosong tidak dijelaskan (OQ-001 terlewat).
+
+## I. Dampak jika gagal / jika tiket tidak dikerjakan
+
+- V2-010 (dedup) tidak bisa mulai TEKNIS — gerbang teknis (§14)
+  menahan desain + migration; V2.0 §9.3 tidak bisa diputuskan.
+- V2-008 (benchmark) tidak tahu tabel/metrik mana yang diukur —
+  modal vs konsumsi aktual tidak dapat dipetakan ke beban DB.
+- Rencana pembagian 3 bagian (P3) tidak tahu tabel mana yang dimiliki
+  tiap bagian — pemisahan dirancang dari ingatan, bukan schema.
+- Lock R5 (31×/24 jam) tetap tanpa penyebab — migrasi apa pun yang
+  menambah tulis berisiko memperparah lock tanpa disadari.
+- Status job tetap tidak dapat dipercaya (OQ-002) — baseline V2-005
+  dan gerbang Fase 0 memakai angka yang mungkin basi.
+
+## J. Batas tindakan yang diizinkan
+
+- **BOLEH:** semua perintah §F (read-only terhadap live; tulis HANYA
+  file backup + schema dump di `/tmp` VPS); membaca kode/config/
+  journal/DB salinan; `sqlite3`/`PRAGMA` terhadap SALINAN;
+  menulis dokumen bukti §G.
+- **TIDAK BOLEH:** migration apa pun; menulis ke DB live (termasuk
+  via `init_schema()`); menampilkan nilai token/kunci; mengambil
+  schema di `masjavas-vps` (box lama); `SELECT *` dari `auth_tokens`.
+- **Desain dedup + migration (V2-010) = pekerjaan terpisah** (memakai
+  hasil audit ini sebagai input, bukan isi tiket ini).
+
+## K. Pihak yang menyetujui langkah berikutnya
+
+| Langkah berikut | Penyetuju |
+|---|---|
+| Penetapan audit schema ini sebagai gerbang teknis lolos (V2-007 APPROVED) | User (menyetujui schema dump + jawaban OQ-027; audit ini hanya menyajikan bukti) |
+| Desain dedup + migration (V2-010) | User (L2/L3 sesuai perubahan — lihat tiket V2-010; TIDAK boleh mulai teknis sebelum V2-007 disetujui) |
+| Migration schema apa pun | User (L3 — setelah V2-007 disetujui + V2-010 selesai) |
+| Audit schema ulang (versi baru) | Tidak butuh persetujuan baru bila metode sama; bila metode berubah, catat sebagai versi baru + beri tahu user |
+| Lanjut ke V2-008 + V2-009 | Tidak butuh persetujuan baru (Batch 1 audit) |
+
+## L. Estimasi & catatan eksekusi
+
+- Estimasi: ±1–1,5 jam (termasuk tunggu SSH + backup + baca schema + grep kode).
+- Jalankan dari main/side chat (bukan proactivity handoff — konsistensi
+  dengan V2-001).
+- **Backup DULU (F.2), baru dump (F.3), baru query (F.4)** — urutan ini
+  melindungi DB live; JANGAN dibalik.
+- **Baca schema dulu sebelum query (F.4):** nama kolom sudah terbukti
+  menyesatkan (`schedule_time` tidak ada — AGENTS.md 12 Nov). JANGAN
+  menebak nama kolom/tabel.
+- Bila DB terkunci saat F.2, catat sebagai temuan (lock itu sendiri data
+  — R5/Q8) — jangan paksa; coba lagi sekali dengan `timeout=30`.
+- Koordinasi dengan lane lain: jangan audit bersamaan dengan restart
+  supervisor / deployment / benchmark — beri tahu sebelum mulai.
+- Audit ini adalah versi pertama yang berversi; audit berikutnya memakai
+  nama file tanggal baru (jangan timpa file ini).
+
 
 ---
 
@@ -1963,7 +2345,7 @@ hasil V2-007 disetujui.
 | V2-004 | Janitor safety audit | P0 | NOT_STARTED (tiket lengkap, diperluas Cycle 5 22 Nov 10:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
 | V2-005 | Baseline snapshot | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 6 22 Nov 14:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
 | V2-006 | Service inventory | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 7 22 Nov 18:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
-| V2-007 | Database schema audit (GERBANG TEKNIS) | P1 | NOT_STARTED (stub) | — |
+| V2-007 | Database schema audit (GERBANG TEKNIS) | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 8 22 Nov 22:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
 | V2-008 | Resource budget benchmark | P1 | NOT_STARTED (stub) | — |
 | V2-009 | VPS 8 price + storage cost verification (GERBANG BIAYA) | P1 | NOT_STARTED (stub) | — |
 | V2-010 | Deduplication design proposal | P1 | NOT_STARTED (stub, menunggu V2-007) | — |
