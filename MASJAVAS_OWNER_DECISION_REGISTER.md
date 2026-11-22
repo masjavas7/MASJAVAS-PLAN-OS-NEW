@@ -73,12 +73,13 @@ dilabeli).
 | OMNI-600 | Paket Google Omni API Generate Video (Unlimited 1 bulan, maks 1 paralel, Rp 600.000 + bonus API Image Unlimited) | MENUNGGU | Dievaluasi user 21 Nov 2026 | Belum ada keputusan pembelian (DOCUMENTED FACT NOT YET REVALIDATED — MEMORY.md) |
 | KEIN-IMG | Harga KEIN IMAGE per gambar + apakah boleh paralel (kini serial 78,7 dtk/gambar) | MENUNGGU | — | Tanyakan ke owner KEIN (rekomendasi BIAYA doc). Harga/gambar TIDAK DIKETAHUI |
 | WEB-RESTART | Restart `masjavas-os-web.service` agar R5 berlaku untuk start via API (proses web masih kode lama) | MENUNGGU | — | Follow-up `v2-002/ENCODER114_FIX_REPORT.md`; jadwalkan di jendela maintenance berikutnya |
+| TCO-1 | Cakupan cap $34,67/bln: seluruh TCO (infrastruktur + storage + backup + domain + layanan) | DIPUTUSKAN | 22 Nov 13:13 WIB | User memilih "Cap untuk seluruh TCO" (widget, sprint audit). Konsekuensi: infrastruktur saja sudah $34,67 → storage/backup harus $0 atau infrastruktur direvisi; skenario expected/worst TCO melebihi cap |
 
 ## 5. Ringkasan status
 
 | Status | Jumlah | ID |
 |---|---|---|
-| DIPUTUSKAN | 3 (+2 sebagian) | D7, D8, D11; EV6-2 (rencana saja — bentuk deploy menunggu), EV6-8 (P16 saja — P15 menunggu) |
+| DIPUTUSKAN | 4 (+2 sebagian) | D7, D8, D11, TCO-1; EV6-2 (rencana saja — bentuk deploy menunggu), EV6-8 (P16 saja — P15 menunggu) |
 | MENUNGGU | 26 | D2, D3, D4, D5, D6, D9, D10, PLAN10-1 s.d. PLAN10-7, EV6-1, EV6-3 s.d. EV6-7, TR-720p, STORAGE, KONTRAK-12, OMNI-600, KEIN-IMG, WEB-RESTART |
 | DITUTUP | 1 | D1 |
 | DITOLAK | 1 | V2-002-R2 |
