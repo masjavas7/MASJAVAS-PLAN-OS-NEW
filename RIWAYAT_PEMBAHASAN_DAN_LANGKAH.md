@@ -37,6 +37,7 @@ berjalan — entri terbaru di bawah.
 | 12:37 | 12 artefak §9 lengkap + repo siap | Register + rencana pendukung selesai, direview, di-push (21/21 file OK via brankas); dashboard §9 14/14 |
 | 12:38 | User setuju tambah push ke cron | Body cron diperbarui + terverifikasi; run berikut ~14:50 WIB |
 | 12:40 | **Prinsip pengoptimalan** (user): yang sudah solid dipertahankan; tugas = mengoptimalkan yang solid; jangan korbankan yang solid (naif) | Dicatat di MEMORY, AGENTS, work log, aturan cron, dan §2.9 dokumen ini |
+| 12:57 | Repo dijadikan **publik** (user) | Scan pra-publik bersih (tanpa kredensial); PATCH visibility public + verifikasi tanpa auth |
 
 ## 2. Pembahasan per topik
 
