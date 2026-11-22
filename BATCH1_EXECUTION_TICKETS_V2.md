@@ -2,6 +2,7 @@
 
 **Dokumen acuan (frozen):** `MASTER_ARCHITECTURE_MASJAVAS_TUBE_OS_V2.md` (Draft Baseline),
 `IMPLEMENTATION_CHECKLIST_MASJAVAS_TUBE_OS_V2.md` (v1.0)
+**Versi:** 1.5 — V2-005 diperluas Cycle 6, 22 Nov 14:50 WIB (cron local-only)
 **Versi:** 1.4 — status memakai kosakata direktif (QUEUED → NOT_STARTED); sumber status resmi: STATUS_REGISTRY.yaml
 **Versi:** 1.3 — V2-001 + V2-002 + V2-003 + V2-004 lengkap; V2-005–V2-010 stub antrean
 **Tanggal:** 22 November 2026 (v1.1: V2-002 diperluas Cycle 2, 06:50 WIB; v1.3: V2-004 diperluas Cycle 5, 10:50 WIB)
@@ -1167,16 +1168,338 @@ TIDAK BOLEH berisi nilai kredensial.
 
 ---
 
-# TIKET V2-005 — BASELINE SNAPSHOT (STUB)
+# TIKET V2-005 — BASELINE SNAPSHOT (AUDIT)
 
-**Prioritas:** P1 — CRITICAL | **Workstream:** P1.1 | **Status:** NOT_STARTED
-**Dependency:** akses metrics VPS
+**Judul:** Snapshot baseline kinerja sistem (CPU/RAM/disk/IO/TX/load per proses
++ metrik publish + lock + live) — lantai pengukuran untuk semua gerbang Fase 0
+**Prioritas:** P1 — CRITICAL | **Workstream:** P1.1 | **Owner:** Muse (audit)
+**Status:** NOT_STARTED (tiket lengkap — eksekusi menunggu sesi interaktif + SSH)
+**Dibuat:** 22 Nov 2026 (stub) — **Diperluas:** 22 Nov 2026 14:50 WIB
+(Cycle 6, cron local-only)
+**Dependency:** akses baca VPS (SSH Tailscale, host BENAR `masjavas-vps-baru`
+— pelajaran F-E V2-002); V2-007 membantu interpretasi status job, BUKAN
+blocker (snapshot ini memakai query yang sudah dikenal, bukan schema baru)
+**Diblokir oleh:** tidak ada — membutuhkan akses baca VPS + baca DB read-only
++ baca journal live/worker
 
-**Scope:** snapshot CPU/RAM/disk/IO/TX/load per proses + systemd unit;
-hitung SQLite lock/24 jam, SUPERSEDED + COMPLETED/7 hari, publish/hari +
-delay median/p90, encoder death + orphan, stream aktif.
-**Deliverable:** `BASELINE_MASJAVAS_V2_<tanggal>.md` (versioned).
-**Batas:** read-only; snapshot tidak mengubah sistem.
+## A. Masalah
+
+Semua gerbang Fase 0 (PLAN_PENAMBAHAN_VPS8 §2 scorecard 13 metrik) dan semua
+klaim perbaikan diukur TERHADAP baseline — tetapi baseline yang dipakai hari
+ini adalah angka-angka yang tersebar di 4 dokumen berbeda, dihitung pada
+hari dan dengan metode yang berbeda, dan sebagian sudah terbukti salah alamat:
+
+1. **Angka kematian encoder bertentangan:** scorecard memakai "5×/24 jam
+   slot 706" (P16), sementara V2-002 membuktikan **12 kematian/17 jam
+   slot 114** — bukan 706 — plus kematian #13 (~07:17) dan #14 (08:09:50).
+   Baseline live yang benar belum pernah ditulis dalam satu dokumen.
+2. **Sumber median delay belum dikonfirmasi:** "median delay 11,6 mnt,
+   p90 30,2 mnt" (21 Nov) dikutip dari EVALUASI l.52–54, tetapi metode
+   hitungnya (kolom DB mana, jendela hari mana, apakah termasuk tugas
+   skip-audio) belum pernah dicatat — angka ini adalah LANTAI pengikat
+   (user 22 Nov 12:40: baseline = lantai, satu metrik memburuk = gerbang
+   gagal = rollback), jadi metodenya harus dapat diulang.
+3. **Angka resource tersebar:** load 3,6–5,5, render 252% CPU, DB-lock
+   31×/24 jam, disk 72% — masing-masing dari dokumen berbeda, tanpa
+   satu snapshot koheren (per proses + per unit systemd + per lane)
+   yang diambil dalam SATU jendela waktu yang sama.
+4. **Churn belum di-baseline-kan:** 123 COMPLETED vs 333 SUPERSEDED
+   (66% churn, 7 hari) dikutip dari RENCANA_ORCHESTRATOR — belum pernah
+   dihitung ulang dari DB live sebagai bagian dari snapshot baseline.
+
+Tanpa snapshot ini, setiap klaim "tidak memburuk" pasca-perubahan tidak
+dapat dibuktikan — dan aturan rollback satu-metrik (sprint 13:08) tidak
+punya angka acuan yang sah.
+
+**Fakta terverifikasi (bukan asumsi):**
+
+| Fakta | Nilai | Sumber |
+|---|---|---|
+| Publish 21 Nov | 206 PUBLISHED, 0 FAILED, 0 BLOCKED (237 tugas; +31 skip audio) | `EVALUASI_SEBELUM_PERBAIKAN_2026-11-22.md` l.16, l.52; `PLAN_PENAMBAHAN_VPS8_2026-11-22.md` §1.7 |
+| Render 21 Nov (n=206) | rata-rata 651 dtk, median 463 dtk, p90 1.396 dtk, maks 2.979 dtk | EVALUASI l.52–54 |
+| Delay terbit vs jadwal 21 Nov | median 11,6 mnt, p90 30,2 mnt, maks 566 mnt; 7 tugas terlambat >2 jam | EVALUASI l.53–54 |
+| Publish 15–21 Nov | 15–18 Nov: 178–186/hari; 20–21 Nov: 198–206/hari | EVALUASI l.317 |
+| Load | 3,6–5,5; didominasi render (rata-rata 252% CPU pada 58 tick governor, ingestion 0%) | EVALUASI l.107–108 |
+| DB-lock | 31×/24 jam (live 24×); 26× "database is locked" di journal live 24 jam | EVALUASI l.108–109; VERIFIKASI_CPU l.119 |
+| Disk | 72% (41 GB bebas) 22 Nov | EVALUASI l.19 |
+| Worker | SATU proses Python + SATU event loop (`masjavas-os-worker`, PID 778998); lane tick: ingestion 10 dtk, loopgen 30 dtk, janitor 1800 dtk | EVALUASI l.103–108 |
+| Live | 2 stream jalan (slot 114 + 706); ±4,2 Mbps TX per stream; TX live ±8–9 Mbps; TX box melonjak ke 60 Mbps (03:33–03:36) | EVALUASI l.254; VERIFIKASI_CPU l.96, l.206 |
+| Semaphore render | render 2, longform 1, upload 3 (default kode) | EVALUASI l.55 |
+| DB | Sudah WAL + busy_timeout 30 dtk | EVALUASI l.118 |
+| Churn 7 hari | 123 COMPLETED vs 333 SUPERSEDED (66% churn) | RENCANA_ORCHESTRATOR (DOCUMENTED FACT NOT YET REVALIDATED — hitung ulang saat eksekusi) |
+| Kematian encoder (koreksi) | 12×/17 jam slot 114 (bukan 706); #13 ~07:17, #14 08:09:50 | V2-002 (READY_FOR_REVIEW) + Cycle 4 addendum |
+| Scorecard gerbang | 13 metrik PLAN §2 (baseline vs target Fase 0/Fase 1) | PLAN_PENAMBAHAN_VPS8 §2 |
+
+**Asumsi yang BELUM terverifikasi (jangan diperlakukan sebagai fakta):**
+angka churn 7 hari (123/333) belum dihitung ulang dari DB live; metode
+hitung median/p90 delay belum dicatat; angka load/disk di atas adalah
+cuplikan satu titik waktu, bukan rata-rata jendela.
+
+**OPEN QUESTION (ditemukan saat perluasan tiket — wajib dijawab saat eksekusi):**
+OQ-016 — dari kolom/ query DB mana median delay 11,6 mnt + p90 30,2 mnt
+dihitung (apakah termasuk 31 tugas skip-audio; jendela hari = 21 Nov saja
+atau 7 hari)? OQ-017 — angka churn 123 COMPLETED / 333 SUPERSEDED dihitung
+dari tabel apa (`operational_tasks`? tabel lain?) dan jendela 7 hari yang
+mana? OQ-018 — apakah ada snapshot baseline versi lama yang tersimpan
+(cek `workspace/engineering/` + VPS) yang bisa dipakai sebagai pembanding
+tren, atau snapshot ini adalah yang pertama?
+
+**Dua pekerjaan berbeda (jangan dicampur):**
+
+1. **Snapshot (tiket ini)** — ukur dan catat keadaan SEKARANG dengan
+   metode yang dapat diulang; JANGAN mengubah apa pun.
+2. **Perbandingan pasca-perubahan** — memakai snapshot ini sebagai acuan;
+   pekerjaan terpisah (tiap perubahan membandingkan dirinya ke snapshot
+   ini; bukan isi tiket ini).
+
+## B. Target
+
+1. Snapshot resource SATU jendela waktu: CPU/RAM/disk/IO/TX/load per
+   proses + per unit systemd + per lane (publish/ingestion/LoopGen/live/
+   janitor/web) — dengan timestamp + metode tiap angka.
+2. Hitung ulang metrik publish dari DB: publish/hari (7 hari terakhir,
+   per hari), delay vs jadwal (median/p90/maks, metode OQ-016 dicatat),
+   render (rata-rata/median/p90/maks), FAILED/BLOCKED/QUEUED per hari.
+3. Hitung ulang lock: "database is locked" per 24 jam (total + per
+   service: live vs worker vs web) + metode hitung.
+4. Hitung ulang churn 7 hari: COMPLETED vs SUPERSEDED (OQ-017) + status
+   job lain per hari.
+5. Baseline live: stream aktif, kematian encoder (rekonsiliasi P16 vs
+   V2-002 — angka benar per slot), orphan yang masih ada, TX per stream.
+6. Snapshot tersimpan sebagai dokumen BERVERSI (`BASELINE_MASJAVAS_V2_<tanggal>.md`)
+   + query/perintah yang dipakai, sehingga snapshot BERIKUTNYA dapat
+   diulang dengan metode identik.
+7. Scorecard PLAN §2 terisi kolom baseline dari snapshot ini (bukan dari
+   kutipan dokumen lama) — atau dicatat eksplisit metrik mana yang belum
+   bisa diisi + alasannya.
+
+## C. Prasyarat
+
+- [ ] Akses SSH baca ke `masjavas-vps-baru` (host BENAR — verifikasi
+      hostname `vmi3762689` + disk 145G sebelum snapshot, pelajaran F-E).
+- [ ] Jendela snapshot ditetapkan di awal (mis. 24 jam terakhir +
+      cuplikan "saat ini") dan dicatat di dokumen — semua angka merujuk
+      ke jendela yang sama.
+- [ ] Tidak ada restart/deploy/benchmark bersamaan selama snapshot
+      (koordinasi: snapshot read-only, tapi restart mengubah angka).
+- [ ] Baseline 21 Nov (EVALUASI l.52–54) dibaca sebagai pembanding —
+      BUKAN sebagai pengganti hitung ulang.
+
+## D. Scope pemeriksaan (file/module)
+
+| # | Area | Lokasi / cara periksa |
+|---|---|---|
+| D1 | Resource per proses | `ps aux --sort=-%cpu` + `top -b -n1` + `free -h` + `df -h` + `iostat` (bila ada) — satu cuplikan + rata-rata load 1/5/15 mnt |
+| D2 | Unit systemd | `systemctl list-units --type=service` (unit aplikasi: worker, live, web, janitor, timer) + `systemctl status` per unit + uptime masing-masing |
+| D3 | Lane worker | Tick per lane (ingestion/loopgen/janitor/Stage 2/publish) dari journal worker + atribusi CPU per lane (bila tersedia — catat bila tidak bisa, lihat V2-003 soal atribusi buta) |
+| D4 | Publish 7 hari | DB read-only `operational_tasks`: hitung per hari per status + delay vs jadwal (kolom waktu yang dipakai dicatat — OQ-016) + durasi render |
+| D5 | Lock 24 jam | `journalctl` (worker + live + web) grep "database is locked" per unit + DB `audit_logs` bila relevan; catat metode hitung |
+| D6 | Churn 7 hari | DB read-only: COMPLETED vs SUPERSEDED per hari (OQ-017) + status lain |
+| D7 | Live baseline | Stream aktif + TX per stream + kematian encoder per slot (rekonsiliasi P16 vs V2-002) + orphan (cek `ps`, bandingkan dengan V2-002) |
+| D8 | Disk + staging | `df -h` + ukuran direktori staging/cache/pool audio (20,5 GB pool audio — DOCUMENTED, verifikasi saat eksekusi) + tren pertumbuhan bila ada data historis |
+| D9 | Web/API | `healthz` (status + latensi) + TX box saat ini + jumlah koneksi |
+| D10 | Scorecard PLAN §2 | Isi 13 metrik dari D1–D9 (atau tandai belum terisi + alasan) |
+
+## E. Pertanyaan teknis yang harus dijawab
+
+| # | Pertanyaan | Bukti yang menjawab |
+|---|---|---|
+| Q1 | Berapa CPU/RAM/disk/IO/TX/load per proses + per unit systemd pada jendela snapshot? | D1 + D2 — angka + timestamp + metode |
+| Q2 | Berapa publish/hari 7 hari terakhir (per hari, per status) + delay median/p90/maks dengan metode yang dicatat? | D4 (OQ-016) |
+| Q3 | Berapa durasi render rata-rata/median/p90/maks (7 hari + 21 Nov pembanding)? | D4 |
+| Q4 | Berapa "database is locked" per 24 jam (total + per service)? | D5 |
+| Q5 | Berapa COMPLETED vs SUPERSEDED 7 hari (churn %) + status job lain? | D6 (OQ-017) |
+| Q6 | Baseline live yang benar: stream aktif, kematian encoder per slot (rekonsiliasi P16 vs V2-002), orphan, TX per stream? | D7 |
+| Q7 | Berapa ukuran staging/cache/pool + tren disk (apakah 41 GB bebas masih berlaku)? | D8 |
+| Q8 | Apakah snapshot ini dapat diulang (query + perintah tersimpan, jendela tercatat)? | D10 + dokumen §G (metode lengkap) |
+| Q9 | Scorecard PLAN §2: metrik mana terisi dari snapshot ini, mana yang masih kosong + mengapa? | D10 |
+| Q10 | Apakah ada snapshot baseline lama untuk tren (OQ-018)? | Pencarian workspace + VPS |
+
+## F. Perintah / metode audit (executable, read-only, host `masjavas-vps-baru`)
+
+**F.1 — Verifikasi host + cuplikan resource (satu panggilan):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'hostname; uptime; free -h; df -h / /opt 2>/dev/null | tail -3; ps aux --sort=-%cpu | head -25'
+```
+
+Catat hostname `vmi3762689` + disk 145G (bila tidak cocok — STOP, host salah).
+
+**F.2 — Unit systemd + status (baca-saja):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'systemctl list-units --type=service --state=running | grep -i -E "masjavas|live|worker|web|janitor"; systemctl list-timers --all | grep -i -E "masjavas|janitor"'
+```
+
+**F.3 — Lock 24 jam (journal, baca-saja):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'for u in masjavas-live.service masjavas-os-worker.service masjavas-web.service; do echo "== $u"; journalctl -u $u --since "24 hours ago" --no-pager 2>/dev/null | grep -c "database is locked"; done'
+```
+
+Sesuaikan nama unit dengan hasil F.2. Simpan output lengkap bila memungkinkan.
+
+**F.4 — Hitung publish + delay + render + churn (DB read-only, timeout 30 dtk):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'python3 - <<PYEOF
+import sqlite3
+c = sqlite3.connect("file:<DB>?mode=ro", uri=True, timeout=30)
+# GANTI <DB> dengan path hasil discovery (V2-001 F.2 / V2-007);
+# kolom waktu + status dicatat apa adanya — JANGAN menebak nama kolom,
+# baca schema dulu (PRAGMA table_info(operational_tasks)).
+print(list(c.execute("SELECT status, COUNT(*) FROM operational_tasks GROUP BY status")))
+PYEOF'
+```
+
+Query delay/render/churn ditulis SETELAH membaca nama kolom sebenarnya
+(`PRAGMA table_info`) — catat query final verbatim di dokumen bukti.
+**JANGAN** UPDATE/DELETE/INSERT. Bila DB terkunci, tunggu 30 dtk, coba
+sekali lagi; bila tetap terkunci, catat sebagai temuan.
+
+**F.5 — Live baseline (baca-saja):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'ps -ef | grep -i -E "ffmpeg|live_supervisor" | grep -v grep | head -20; ss -tlnp 2>/dev/null | head -20'
+```
+
+Bandingkan dengan temuan V2-002 (stream aktif, orphan, TX per stream).
+
+**F.6 — Disk + staging (baca-saja):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'du -sh /opt/masjavas-os/data/* 2>/dev/null | sort -h | tail -15; df -h'
+```
+
+Sesuaikan path dengan hasil discovery. Catat ukuran pool audio + staging.
+
+**DILARANG dalam tiket ini:**
+
+- Mengubah konfigurasi, threshold, semaphore, atau jadwal job apa pun
+  ("snapshot tidak mengubah sistem" — perubahan adalah tiket terpisah).
+- Menjalankan benchmark / load test / uji concurrency (itu V2-008).
+- Me-restart service/worker/web/live untuk "membersihkan" angka.
+- Menghitung baseline dari DOKUMEN LAMA saja tanpa hitung ulang dari
+  DB/log live (kutipan lama = pembanding, bukan pengganti).
+- Menyimpulkan tren dari SATU cuplikan (snapshot = satu titik + 7 hari
+  hitung ulang, bukan proyeksi).
+
+## G.0 — Evidence manifest (wajib diisi saat eksekusi)
+
+Setiap Q1–Q10 wajib punya satu baris manifest. Isi manifest BERSAMAAN
+dengan eksekusi, bukan di akhir — snapshot adalah titik waktu; angka
+"saat ini" berubah tiap jam.
+
+| Question ID | Command | Timestamp (WIB) | Exit code | Evidence | Finding | Confidence | Impact |
+|---|---|---|---|---|---|---|---|
+| Q1 | F.1 + F.2 | | | `BASELINE_MASJAVAS_V2_<tanggal>.md` | | | |
+| Q2 | F.4 publish/delay | | | `BASELINE_MASJAVAS_V2_<tanggal>.md` | | | |
+| Q3 | F.4 render | | | `BASELINE_MASJAVAS_V2_<tanggal>.md` | | | |
+| Q4 | F.3 lock | | | `BASELINE_MASJAVAS_V2_<tanggal>.md` | | | |
+| Q5 | F.4 churn | | | `BASELINE_MASJAVAS_V2_<tanggal>.md` | | | |
+| Q6 | F.5 live | | | `BASELINE_MASJAVAS_V2_<tanggal>.md` | | | |
+| Q7 | F.6 disk | | | `BASELINE_MASJAVAS_V2_<tanggal>.md` | | | |
+| Q8 | Metode §G | | | `BASELINE_MASJAVAS_V2_<tanggal>.md` | | | |
+| Q9 | D10 scorecard | | | `BASELINE_MASJAVAS_V2_<tanggal>.md` | | | |
+| Q10 | Pencarian snapshot lama | | | `BASELINE_MASJAVAS_V2_<tanggal>.md` | | | |
+
+Aturan manifest: sama seperti V2-001 §G.0 — `Confirmed` (bukti langsung
+dari DB/log/ps), `Partial` (bukti tidak lengkap / hanya satu sumber),
+`Unknown` (tidak dapat diverifikasi + alasannya dicatat). `Unknown` yang
+eksplisit LEBIH BAIK daripada dugaan yang ditulis seolah fakta. Bukti
+TIDAK BOLEH berisi nilai kredensial. **Setiap angka di snapshot WAJIB
+mencantumkan: nilai + jendela waktu + metode/query + sumber.**
+
+## G. Bukti yang harus dilampirkan (deliverable tiket)
+
+1. `BASELINE_MASJAVAS_V2_<tanggal>.md` — Q1–Q10 (snapshot berversi:
+   resource per proses/unit/lane + publish 7 hari + delay + render +
+   lock + churn + live + disk + scorecard PLAN §2 + metode hitung ulang).
+2. `EVIDENCE_MANIFEST_V2-005.md` — manifest Q1–Q10 (bila dipisah dari
+   dokumen baseline; bila digabung, catat di sini).
+3. Semua file di `workspace/engineering/v2-005/` (buat foldernya saat eksekusi).
+
+## H. Acceptance criteria (lulus / gagal)
+
+**LULUS bila SEMUA terpenuhi:**
+
+- [ ] Q1–Q10 terjawab dengan bukti; yang tidak bisa dijawab dicatat
+      eksplisit sebagai "TIDAK DAPAT DIVERIFIKASI + alasannya".
+- [ ] Setiap angka baseline mencantumkan nilai + jendela + metode/query.
+- [ ] Publish/delay/render/churn dihitung ulang dari DB live (bukan
+      dikutip dari dokumen lama) — atau dinyatakan eksplisit bila DB
+      tidak terbaca + alasannya.
+- [ ] Rekonsiliasi kematian encoder P16 vs V2-002 tercatat (angka benar
+      per slot).
+- [ ] Scorecard PLAN §2 terisi dari snapshot ini (atau metrik kosong
+      dicatat + alasannya).
+- [ ] Snapshot dapat diulang: query + perintah tersimpan verbatim.
+- [ ] Nol perubahan sistem selama snapshot.
+
+**GAGAL bila salah satu terjadi:**
+
+- Baseline ditulis dari kutipan dokumen lama tanpa hitung ulang dari
+  DB/log live.
+- Angka tanpa jendela waktu / tanpa metode (tidak dapat diulang).
+- Rekonsiliasi encoder (P16 vs V2-002) tidak dilakukan — gerbang memakai
+  angka salah alamat.
+- Snapshot diambil di host yang salah (verifikasi host dulu — pelajaran F-E).
+- Perubahan sistem terjadi selama snapshot tanpa dicatat.
+
+## I. Dampak jika gagal / jika tiket tidak dikerjakan
+
+- Aturan rollback satu-metrik tidak punya angka acuan yang sah — setiap
+  perubahan pasca-baseline tidak dapat dibuktikan "tidak memburuk".
+- Gerbang Fase 0 (scorecard 13 metrik) memakai angka dari dokumen lama
+  yang sebagian sudah terbukti salah alamat (kematian encoder).
+- V2-008 (benchmark) tidak punya pembanding — "lebih cepat/lambat dari
+  apa?" tidak terjawab.
+- Capacity model VPS 8 (puncak ≈7,4 core, headroom ±0,6) memakai angka
+  PROPOSAL, bukan baseline terukur — risiko salah ukuran box.
+
+## J. Batas tindakan yang diizinkan
+
+- **BOLEH:** semua perintah §F (read-only); membaca kode/config/journal/
+  DB/dokumen; `healthz`; menulis dokumen bukti §G.
+- **TIDAK BOLEH:** mengubah config/threshold/semaphore/jadwal; benchmark/
+  load test; restart service; eksekusi perbaikan apa pun; mengambil
+  snapshot di `masjavas-vps` (box lama).
+- **Perbandingan pasca-perubahan = pekerjaan terpisah** (memakai snapshot
+  ini sebagai acuan, bukan isi tiket ini).
+
+## K. Pihak yang menyetujui langkah berikutnya
+
+| Langkah berikut | Penyetuju |
+|---|---|
+| Penetapan snapshot ini sebagai baseline resmi gerbang Fase 0 | User (menyetujui angka + metode; snapshot ini hanya menyajikan bukti) |
+| Perubahan apa pun yang dibandingkan ke baseline ini | User (L2/L3 sesuai perubahan — lihat tiket perubahannya) |
+| Snapshot ulang (baseline baru) | Tidak butuh persetujuan baru bila metode sama; bila metode berubah, catat sebagai versi baru + beri tahu user |
+| Lanjut ke V2-006 dst. | Tidak butuh persetujuan baru (Batch 1 audit) |
+
+## L. Estimasi & catatan eksekusi
+
+- Estimasi: ±1–1,5 jam (termasuk tunggu SSH + baca schema + hitung ulang).
+- Jalankan dari main/side chat (bukan proactivity handoff — konsistensi
+  dengan V2-001).
+- **Tangkap cuplikan "saat ini" (F.1/F.2/F.5/F.6) dalam SATU sesi
+  berurutan** — angka resource berubah tiap menit; jeda antar perintah
+  dicatat.
+- **Baca schema dulu sebelum query (F.4):** nama kolom `operational_tasks`
+  sudah terbukti menyesatkan (`schedule_time` tidak ada — yang benar
+  `schedule_time_epoch` + `target_date_wib`; `updated_at` epoch INTEGER —
+  lihat AGENTS.md 12 Nov). JANGAN menebak nama kolom.
+- Bila DB terkunci saat F.4, catat sebagai temuan (lock itu sendiri data
+  baseline — Q4) — jangan paksa.
+- Koordinasi dengan lane lain: jangan snapshot bersamaan dengan restart
+  supervisor / deployment / benchmark — beri tahu sebelum mulai.
+- Snapshot ini adalah versi pertama yang berversi; snapshot berikutnya
+  memakai nama file tanggal baru (jangan timpa file ini).
 
 ---
 
@@ -1271,7 +1594,7 @@ hasil V2-007 disetujui.
 | V2-002 | Encoder 706 root-cause investigation | P0 | READY_FOR_REVIEW (audit 22 Nov 06:58–07:10; 12 kematian slot 114, RTMP timeout) | `workspace/engineering/v2-002/` (5 dokumen + manifest) |
 | V2-003 | Resource Guard v2 audit | P0 | READY_FOR_REVIEW (audit 22 Nov 07:15–07:40; governor 0 aksi efektif, Q6 solved) | `workspace/engineering/v2-003/` (6 dokumen + manifest) |
 | V2-004 | Janitor safety audit | P0 | NOT_STARTED (tiket lengkap, diperluas Cycle 5 22 Nov 10:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
-| V2-005 | Baseline snapshot | P1 | NOT_STARTED (stub) | — |
+| V2-005 | Baseline snapshot | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 6 22 Nov 14:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
 | V2-006 | Service inventory | P1 | NOT_STARTED (stub) | — |
 | V2-007 | Database schema audit (GERBANG TEKNIS) | P1 | NOT_STARTED (stub) | — |
 | V2-008 | Resource budget benchmark | P1 | NOT_STARTED (stub) | — |
