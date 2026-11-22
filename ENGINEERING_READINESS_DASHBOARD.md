@@ -1,6 +1,6 @@
 # ENGINEERING READINESS DASHBOARD — MASJAVAS TUBE OS
 
-**Terakhir diperbarui:** 22 Nov 2026, 15:15 WIB (insiden live mati massal 14:47 — B10/R20; Cycle 6 14:50: V2-005 diperluas)
+**Terakhir diperbarui:** 22 Nov 2026, 15:30 WIB (investigasi B10 selesai — mekanisme terbukti; live pulih 15:16, terverifikasi 15:29)
 **Sumber:** `AUTONOMOUS_WORK_LOG.md`, `BATCH1_EXECUTION_TICKETS_V2.md`,
 dokumen frozen V2.0, bukti audit V2-001.
 **Sumber status resmi:** `STATUS_REGISTRY.yaml` — bila ada perbedaan
@@ -118,7 +118,7 @@ dan verifikasi biaya.
 | R17 | Konfigurasi split guard V2/admission legacy + flag menyesatkan; alasan flag `false` tidak diketahui (OQ-010) | P1 | OPEN (V2-003-R1/R5) |
 | R18 | Atribusi lane ingestion buta (daemon → lane `other`; governor tidak bisa melihat ingestion) | P1 | OPEN (V2-003-R3) |
 | R19 | Orphan 706 mengudara TANPA AUDIO ±17 jam (pipe tanpa feeder sejak restart 14:42; bitrate tetap HEALTHY sehingga tak terdeteksi) | P1 | RESOLVED (restart manual 08:10:28 — audio mengalir, feeder 19,4 MB) |
-| R20 | Live MATI MASSAL 22 Nov 14:47 (4 stream/21 dtk) + pemulihan tidak andal (reconnect gagal DB-lock; status desync; 706 tanpa reconnect; encoder ganda 707; relay task mati; supervisor "hard exiting") | P0 | OPEN (dicatat 15:15 atas instruksi owner; investigasi + perbaikan menunggu keputusan owner; lihat B10/PR-16) |
+| R20 | Live MATI MASSAL 22 Nov 14:47 (4 stream/21 dtk) + pemulihan tidak andal (reconnect gagal DB-lock; status desync; 706 tanpa reconnect; encoder ganda 707; relay task mati; supervisor "hard exiting") | P0 | OPEN — mekanisme TERBUKTI 15:30 (overwrite stale-`now` daemon vs supervisor; health check STREAMING-only); live PULIH 15:16 (4/4 STREAMING, audio terverifikasi 15:29) tapi TIDAK STABIL (sentinel ghost-kill 114 2×; 3 proses pemulihan berpacu; encoder ganda 114; fix sentinel belum ter-deploy) |
 
 ## Owner decision register (awal)
 
