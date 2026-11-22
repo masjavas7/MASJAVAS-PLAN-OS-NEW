@@ -193,9 +193,46 @@ gerbang lolos + persetujuan owner.
   Live 24/7 tidak dapat diandalkan sebagai produk — kematian
   massal + pemulihan setengah jalan lebih buruk dari kematian
   satu encoder.
-- **Status:** DICATAT 22 Nov 15:15 atas instruksi owner. Akar
-  penyebab peristiwa bersama + 5 kegagalan pemulihan BELUM
-  diselidiki. Perbaikan menunggu keputusan owner (lihat §4).
+- **Status:** DICATAT 22 Nov 15:15 atas instruksi owner.
+  **Investigasi SELESAI 15:30 (mekanisme TERBUKTI dari kode +
+  log + DB):** (1) health check supervisor hanya membaca task
+  STREAMING (`live_supervisor.py:1010`) — task STOPPED tidak
+  terlihat selamanya; (2) watchdog step saat itu HANYA jalan di
+  daemon (supervisor lama 021a9f0 tidak memanggilnya — dibuktikan
+  via git) dan cabang terminal-nya menulis STOPPED + "Siaran
+  telah berhenti." HANYA 4 kolom (tanpa pid) dengan `now` yang
+  dihitung sekali di awal step — commit-nya yang tertunda
+  kontensi DB-lock (terbukti 14:47:57) menimpa baris STREAMING
+  segar dari start_stream: persis campuran kolom yang teramati
+  (pid/started_at baru, status/stopped_at/updated_at 14:47:21);
+  (3) guardian (resurrect STOPPED 24/7) saat itu hanya ada di
+  daemon dan meninggalkan NOL baris log dalam 27 menit — tidak
+  pernah mencoba membangkitkan 706 (perilaku daemon lama tidak
+  dapat diverifikasi pasca-fakta); (4) "hard exiting" TIDAK
+  DITEMUKAN di kode aplikasi/venv — sumber tidak teridentifikasi,
+  mati bersama supervisor lama (0 kemunculan di supervisor baru).
+- **Pemulihan (BUKAN oleh agen ini):** lane lain men-deploy
+  guardian (commit `0de723a` 15:12, `7ab9409` 15:18,
+  `621b24c` 15:23 — perbaikan bug sentinel Row→dict) +
+  me-restart layanan web+live 15:14:08 dan live lagi 15:19:18;
+  daemon baru (15:15:56) membangkitkan keempat stream 15:16:21–27
+  via guardian. **Terverifikasi 15:29 (13 menit stabil): 4/4
+  STREAMING, heartbeat segar, TX ±29 Mbps, audio MENGALIR di
+  semua task** (feeder wchar +2,6–3,5 MB/19 dtk ≈ 140–186 KB/s).
+  Agen ini sengaja TIDAK membunuh proses / mengubah DB apa pun —
+  state sudah sehat dan intervensi bedah akan ditimpa oleh loop
+  pemulihan yang berpacu + deploy lane lain yang sedang jalan.
+- **Ketidakstabilan yang TERSISA (temuan baru 15:30):** sentinel
+  ghost-detection lane lain membunuh 114 2× (15:24:43 + 15:27:31,
+  "OFFLINE di YouTube") dan restart ganda (supervisor manual +
+  daemon) menciptakan encoder ganda 114 lagi; kini TIGA proses
+  menjalankan loop pemulihan (supervisor systemd 638988 +
+  supervisor manual 650871, test instance sejak 15:23:54 + daemon
+  627930); feeder orphan purba masih hidup (114: 2 feeder, 4,5
+  jam + 1 hari 5 jam; 698: 1 feeder, 40 menit); perbaikan sentinel
+  (`621b24c`) sudah commit tapi BELUM ter-deploy di supervisor
+  systemd (berjalan sejak 15:19:22, sebelum commit). Perbaikan
+  struktural (SATU pemilik pemulihan) menunggu keputusan owner.
 
 ---
 
