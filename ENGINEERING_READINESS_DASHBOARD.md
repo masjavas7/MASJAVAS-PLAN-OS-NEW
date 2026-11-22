@@ -1,6 +1,6 @@
 # ENGINEERING READINESS DASHBOARD — MASJAVAS TUBE OS
 
-**Terakhir diperbarui:** 22 Nov 2026, 18:50 WIB (Cycle 7 cron local-only — tiket V2-006 diperluas ke format lengkap)
+**Terakhir diperbarui:** 22 Nov 2026, 19:08 WIB (diagnosis B11/R21 selesai — relink beku + sentinel buta; RIFFORA dibunuh sentinel saat tayang sehat; Cycle 7 18:50: V2-006 diperluas)
 **Sumber:** `AUTONOMOUS_WORK_LOG.md`, `BATCH1_EXECUTION_TICKETS_V2.md`,
 dokumen frozen V2.0, bukti audit V2-001.
 **Sumber status resmi:** `STATUS_REGISTRY.yaml` — bila ada perbedaan
@@ -119,6 +119,7 @@ dan verifikasi biaya.
 | R18 | Atribusi lane ingestion buta (daemon → lane `other`; governor tidak bisa melihat ingestion) | P1 | OPEN (V2-003-R3) |
 | R19 | Orphan 706 mengudara TANPA AUDIO ±17 jam (pipe tanpa feeder sejak restart 14:42; bitrate tetap HEALTHY sehingga tak terdeteksi) | P1 | RESOLVED (restart manual 08:10:28 — audio mengalir, feeder 19,4 MB) |
 | R20 | Live MATI MASSAL 22 Nov 14:47 (4 stream/21 dtk) + pemulihan tidak andal (reconnect gagal DB-lock; status desync; 706 tanpa reconnect; encoder ganda 707; relay task mati; supervisor "hard exiting") | P0 | OPEN — mekanisme TERBUKTI 15:30 (overwrite stale-`now` daemon vs supervisor; health check STREAMING-only); live PULIH 15:16 (4/4 STREAMING, audio terverifikasi 15:29) tapi TIDAK STABIL (sentinel ghost-kill 114 2×; 3 proses pemulihan berpacu; encoder ganda 114; fix sentinel belum ter-deploy) |
+| R21 | Relink publik gagal di UI ("Failed to fetch") + sentinel BUTA (bot-check) membunuh siaran sehat tiap ±4 mnt (RIFFORA tayang 19:00:32–19:04:40 lalu dibunuh sentinel) | P0 | OPEN — diagnosis SELESAI 19:08 (panggilan YouTube sinkron membekukan worker 60–120 dtk; probe kena LOGIN_REQUIRED; relink tanpa pemanggil otonom); perbaikan menunggu keputusan owner |
 
 ## Owner decision register (awal)
 
