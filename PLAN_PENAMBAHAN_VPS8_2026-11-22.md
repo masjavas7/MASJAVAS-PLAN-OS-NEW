@@ -341,6 +341,13 @@ ESTIMASI — verifikasi panel Contabo sebelum pembelian; bila total riil
 12 bulan VPS 8 → total $31,87/bln (bayar di muka $190,21) — putuskan
 setelah model terbukti (bulanan dulu).
 
+**KOREKSI 22 Nov 13:13 (DIPUTUSKAN — OQ-TCO-1):** cap $34,67/bln
+mencakup SELURUH TCO (infrastruktur + storage + backup + domain +
+layanan), bukan hanya Master + VPS 8. Infrastruktur saja sudah
+$34,67 → storage/backup harus $0 (mis. free tier object storage
+untuk DB 118 MB) atau infrastruktur direvisi; V2-009 memverifikasi
+TCO penuh, bukan hanya harga kedua box.
+
 **Mengapa bukan sekadar tambah bandwidth:** Contabo tidak menjual add-on
 port untuk VPS; naik paket Plus 4 → Plus 8 = +€21,50/bln (lebih mahal,
 tanpa isolasi). Detail: Lampiran A rancangan lama.
