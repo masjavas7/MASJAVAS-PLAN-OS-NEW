@@ -120,8 +120,10 @@ gerbang lolos + persetujuan owner.
   eskalasi (`reconnect_count` di-reset tiap sukses) sehingga tidak
   pernah alert.
 - **Status:** perbaikan R3–R8 + iterasi 2 deployed (commit `56f7a6d` +
-  `021a9f0`, tes 20/20) — observasi 24 jam berjalan; kematian #14
-  membuktikan masalah BELUM selesai.
+  `021a9f0`, tes 20/20) — **observasi 24 jam GAGAL pada ±6,5 jam:**
+  22 Nov 14:47:15–14:47:36 keempat stream mati serentak (lihat B10).
+  Watchdog iterasi 2 fired 14:47:11 (feeder stall) tapi encoder 706
+  tetap mati 14:47:15 — watchdog mendeteksi, TIDAK menyelamatkan.
 
 ### B7. Web adalah compute tersembunyi
 
@@ -158,6 +160,43 @@ gerbang lolos + persetujuan owner.
   siap, eksekusi antre; fallback KEIN sudah dihargai (DeepInfra FLUX
   Rp 35/gambar, Muse Image Rp 180/gambar) tapi belum diputuskan.
 
+### B10. Live MATI MASSAL + pemulihan TIDAK ANDAL (22 Nov 14:47)
+
+- **Bukti (diagnosis read-only 22 Nov 15:09–15:15, host live):**
+  keempat stream mati dalam 21 detik — 706 14:47:15 (exit 146,
+  RTMP timeout), 707 14:47:21 (orphan, tanpa handle Popen), 698
+  14:47:21 (orphan, tanpa handle Popen), 114 14:47:36 (exit 0,
+  keluar bersih — penyebab tidak diketahui). Kematian serentak =
+  penyebab bersama (kemungkinan peristiwa jaringan/egress —
+  BELUM TERBUKTI, butuh korelasi TX/log jaringan). Supervisor
+  menandai 706/114/698 STOPPED pada epoch yang sama (14:47:21).
+- **Pemulihan gagal di 5 titik:** (1) reconnect 707 gagal
+  "database is locked" 14:47:57 (B8 langsung mematahkan pemulihan);
+  (2) 114 + 698 berhasil mengudara lagi (PID baru, terverifikasi
+  jalan) tapi status DB tetap STOPPED — `started_at`/`pid`
+  ter-update, `updated_at` beku di 14:47:21 (desync status/proses);
+  (3) 706 TIDAK PERNAH dicoba reconnect — tanpa encoder sejak
+  14:47:15; (4) 707 punya DUA encoder ke satu RTMP key (auto-healer
+  web + reconnect supervisor berpacu tanpa koordinasi — dua jalur
+  pemulihan); (5) relay 706 tetap hidup untuk task yang sudah mati
+  (watchdog membunuh feeder tiap ±88 dtk; "sumber KEMBALI ONLINE"
+  5× dalam 90 dtk untuk siaran yang tidak ada).
+- **Temuan sampingan:** supervisor (PID 3951691, sejak 08:20)
+  masih hidup tapi mencatat "Received > 3 system signals, hard
+  exiting" berulang sejak 14:50 — penyebab pengiriman sinyal
+  TIDAK DIKETAHUI. 3 zombie ffmpeg di bawah uvicorn (web tidak
+  me-reap anaknya); 1 feeder orphan (PPID 1, 4 jam+); health check
+  supervisor kena "database is locked" 14:50:25.
+- **Dampak:** dari sudut user/dashboard: 706 mati total; 114/698
+  tampil STOPPED (encoder zombie mendorong ke broadcast yang sudah
+  berakhir); hanya 707 tampil STREAMING (dengan encoder ganda).
+  Live 24/7 tidak dapat diandalkan sebagai produk — kematian
+  massal + pemulihan setengah jalan lebih buruk dari kematian
+  satu encoder.
+- **Status:** DICATAT 22 Nov 15:15 atas instruksi owner. Akar
+  penyebab peristiwa bersama + 5 kegagalan pemulihan BELUM
+  diselidiki. Perbaikan menunggu keputusan owner (lihat §4).
+
 ---
 
 ## 3. Problem (daftar terstruktur)
@@ -179,6 +218,7 @@ gerbang lolos + persetujuan owner.
 | PR-13 | Kode web lawas (R5 belum dimuat di jalur API) | P2 | V2-002; restart web tertunda |
 | PR-14 | Orphan tanpa feeder tidak terdeteksi (±17 jam) | P2 | R19 (RESOLVED); R8 observability |
 | PR-15 | Master interim ±1 bulan (dukungan Contabo lambat) | P2 | Keputusan ~17 Des; PLAN §10 |
+| PR-16 | Live mati massal 14:47 (4 stream/21 dtk) + pemulihan tidak andal (DB lock gagalkan reconnect; status desync; 706 tanpa reconnect; encoder ganda; relay task mati) | P0 | B10; R20; diagnosis 15:09–15:15 |
 
 ---
 
@@ -195,7 +235,8 @@ menunggu instruksi owner.
 | Solusi | Menyelesaikan | Status / gerbang |
 |---|---|---|
 | Kalibrasi admission TX (budget 115 → 500 Mbps) | PR-01 (sebagian: 5 penolakan reconnect 06:15) | DONE (R4, 07:24) |
-| Perbaikan encoder R3–R8 + iterasi 2 (watchdog 10 dtk, queue 4096, rw_timeout 30 dtk, log exit code, alert restart, sapu orphan) | PR-01, PR-14 | DEPLOYED; observasi 24 jam |
+| Perbaikan encoder R3–R8 + iterasi 2 (watchdog 10 dtk, queue 4096, rw_timeout 30 dtk, log exit code, alert restart, sapu orphan) | PR-01, PR-14 | DEPLOYED; observasi 24 jam GAGAL 14:47 (B10) |
+| Investigasi + perbaikan jalur pemulihan live: selidiki penyebab bersama kematian massal; reconnect tahan DB-lock (retry + antrean); status STREAMING atomik dengan start encoder; satu jalur pemulihan (hapus race web vs supervisor); teardown relay saat task berhenti; selidiki sinyal supervisor | PR-16 | Investigasi antre; eksekusi menunggu **keputusan owner** |
 | Hentikan layanan box lama (akhiri split-brain) | Risiko data ganda | DONE (R1, 07:05) |
 | Pindahkan reassemble keluar dari web ke worker | PR-10, B4 | Direncanakan Fase 0 |
 | Perbaikan Guard v2 (V2-003-R1–R9: atribusi lane, executor shed_render, kalibrasi knob, admission V2) | PR-02, PR-06, PR-08 | Menunggu **D9 + D10** (OQ-010 prasyarat R1) |
@@ -237,19 +278,21 @@ menunggu instruksi owner.
 
 ## 5. Peta problem → solusi → status (ringkasan)
 
-| Bottleneck | Solusi utama | Fase | Status 22 Nov 12:33 |
+| Bottleneck | Solusi utama | Fase | Status 22 Nov 15:15 |
 |---|---|---|---|
 | B1 jaringan live | VPS 8 (600 Mbps) + admission EMA | 1 | Menunggu V2-009 + owner |
 | B2 gate ingestion | Kalibrasi gate + orkestrasi API | 0–1 | Akar terbukti; D1 ditunda |
 | B3 governor impoten | Perbaikan Guard v2 (D9) | 0 | Menunggu D9/D10 |
 | B4 reassemble tersembunyi | Anggaran ±1 core + pindah ke worker | 0–1 | Plan diperbaiki; eksekusi Fase 0 |
 | B5 Stage 2 I/O | Canary 2 slot di VPS 8 | 1 | Driver diperbaiki; canary antre |
-| B6 encoder mati | R3–R8 + iterasi 2 | 0 | Deployed; observasi 24 jam |
+| B6 encoder mati | R3–R8 + iterasi 2 | 0 | Deployed; observasi GAGAL 14:47 (B10) |
 | B7 web compute | Reassemble keluar dari web | 0 | Direncanakan |
-| B8 lock SQLite | Audit schema V2-007 | 0 | Gerbang teknis |
+| B8 lock SQLite | Audit schema V2-007 | 0 | Gerbang teknis; lock gagalkan reconnect 14:47 |
 | B9 kuota/dependensi | Doktrin 5/vault + fallback dihargai | 0–1 | Doktrin mengikat; P2 terbuka |
+| B10 mati massal + pemulihan | Investigasi + perbaikan jalur pemulihan | 0 | Dicatat 15:15; menunggu keputusan owner |
 
 **Definisi "siap deploy":** Batch 1 10/10 + semua artefak §9 lengkap +
 gerbang V2-007 + V2-009 lolos + D9/D10 diputuskan + observasi encoder
-24 jam bersih + persetujuan owner. Sampai saat itu, repo ini adalah
-paket persiapan — bukan instruksi eksekusi.
+24 jam bersih + persetujuan owner. Observasi 24 jam GAGAL 14:47
+(B10) — definisi ini belum terpenuhi. Sampai saat itu, repo ini
+adalah paket persiapan — bukan instruksi eksekusi.
