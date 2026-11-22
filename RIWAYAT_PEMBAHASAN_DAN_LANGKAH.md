@@ -34,6 +34,9 @@ berjalan — entri terbaru di bawah.
 | 12:33 | User: dokumentasikan konteks masalah + bottleneck + problem + solusi | `KONTEKS_MASALAH_BOTTLENECK_DAN_SOLUSI.md` ditulis + di-push (255 baris) |
 | 12:34 | User: "gunakan kartu hanya jalur token" + menyelesaikan kartu brankas | Konektor **custom.github** terhubung (vault); jalur OAuth dikesampingkan |
 | 12:35 | Runbook VPS 8 selesai (tim 2) | 3 runbook ditulis (758 baris total); direview + siap push |
+| 12:37 | 12 artefak §9 lengkap + repo siap | Register + rencana pendukung selesai, direview, di-push (21/21 file OK via brankas); dashboard §9 14/14 |
+| 12:38 | User setuju tambah push ke cron | Body cron diperbarui + terverifikasi; run berikut ~14:50 WIB |
+| 12:40 | **Prinsip pengoptimalan** (user): yang sudah solid dipertahankan; tugas = mengoptimalkan yang solid; jangan korbankan yang solid (naif) | Dicatat di MEMORY, AGENTS, work log, aturan cron, dan §2.9 dokumen ini |
 
 ## 2. Pembahasan per topik
 
@@ -127,6 +130,22 @@ berjalan — entri terbaru di bawah.
   dipakai (user: "hanya jalur token"); OAuth dikesampingkan.
   12 artefak §9 disusun paralel (register, runbook VPS 8, rencana
   pendukung); runbook selesai 12:35 (758 baris, direview).
+
+### 2.9 Prinsip pengoptimalan (12:40 — mengikat, memperkuat aturan 01:48)
+
+- Yang sudah SOLID dipertahankan; tugas program adalah
+  MENGOPTIMALKAN yang sudah solid — bukan mengganti atau menulis
+  ulang. Optimasi naif yang mengorbankan bagian yang solid lebih
+  buruk daripada tidak mengoptimasi sama sekali.
+- Baseline adalah LANTAI, bukan langit-langit: 206 PUBLISHED/hari,
+  0 FAILED/BLOCKED, delay p90 30,2 mnt. Setiap perubahan yang
+  diusulkan (termasuk perbaikan Guard v2 D9 dan Fase 0) wajib
+  membuktikan baseline tidak memburuk, dengan rencana verifikasi
+  pra/pasca + rollback + jendela observasi.
+- V2.0 bersifat aditif: box kedua, canary, expand-and-contract —
+  Master yang solid tetap berjalan dan tidak diganggu selama
+  transisi. Prinsip ini juga ditulis ke aturan cron readiness
+  (RULES) agar setiap siklus 4 jam menerapkannya.
 
 ---
 
