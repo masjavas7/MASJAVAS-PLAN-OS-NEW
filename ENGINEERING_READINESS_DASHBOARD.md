@@ -1,6 +1,6 @@
 # ENGINEERING READINESS DASHBOARD — MASJAVAS TUBE OS
 
-**Terakhir diperbarui:** 22 Nov 2026, 13:05 WIB (sprint audit P0 #1)
+**Terakhir diperbarui:** 22 Nov 2026, 14:50 WIB (Cycle 6 — V2-005 diperluas)
 **Sumber:** `AUTONOMOUS_WORK_LOG.md`, `BATCH1_EXECUTION_TICKETS_V2.md`,
 dokumen frozen V2.0, bukti audit V2-001.
 **Sumber status resmi:** `STATUS_REGISTRY.yaml` — bila ada perbedaan
@@ -12,9 +12,9 @@ ASSUMPTION / PROPOSAL / OPEN QUESTION / OWNER DECISION REQUIRED.
 
 **Alasan:** Batch 1: 1 EXECUTED (V2-001 — dengan KOREKSI: auditnya di
 host yang salah, lihat R15; bukti tidak berlaku untuk target) + 2
-READY_FOR_REVIEW (V2-002 + V2-003) dari 10; tiket lengkap ke-4 (V2-004
-janitor) selesai diperluas Cycle 5 10:50 WIB, eksekusi menunggu sesi
-interaktif + SSH;
+READY_FOR_REVIEW (V2-002 + V2-003) dari 10; tiket lengkap ke-5 (V2-005
+baseline snapshot) selesai diperluas Cycle 6 14:50 WIB, eksekusi menunggu
+sesi interaktif + SSH;
 gerbang biaya V2-009 belum dibuka (harga Master/VPS8 + storage belum
 terverifikasi); keputusan provider KEIN ditutup atas asumsi owner tanpa
 bukti live; runbook VPS8 + acceptance + rollback belum ada; risiko
@@ -59,7 +59,7 @@ dan verifikasi biaya.
 
 | Item | Status |
 |---|---|
-| Batch 1 tickets completed to readiness standard | NOT READY (1 EXECUTED dengan keterbatasan bukti + 2 READY_FOR_REVIEW dari 10; V2-004 tiket lengkap, belum dieksekusi; lihat STATUS_REGISTRY.yaml) |
+| Batch 1 tickets completed to readiness standard | NOT READY (1 EXECUTED dengan keterbatasan bukti + 2 READY_FOR_REVIEW dari 10; V2-004 + V2-005 tiket lengkap, belum dieksekusi; lihat STATUS_REGISTRY.yaml) |
 | Schema audit approved before migration work | NOT READY (V2-007 belum jalan; tidak ada migration yang berjalan — aman) |
 | Deployment sequence prepared | NOT READY |
 | Canary procedure prepared | NOT READY |
@@ -88,7 +88,7 @@ dan verifikasi biaya.
 | V2-002 | Encoder 706 root-cause | P0 | READY_FOR_REVIEW (audit 22 Nov 06:58–07:10; 12 kematian slot 114, RTMP timeout) | `workspace/engineering/v2-002/` (5 dokumen + manifest) |
 | V2-003 | Resource Guard v2 audit | P0 | READY_FOR_REVIEW (audit 22 Nov 07:15–07:40; governor 0 aksi efektif, Q6 solved) | `workspace/engineering/v2-003/` (6 dokumen + manifest) |
 | V2-004 | Janitor safety audit | P0 | QUEUED (tiket lengkap, diperluas Cycle 5 22 Nov 10:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
-| V2-005 | Baseline snapshot | P1 | NOT_STARTED (stub) | — |
+| V2-005 | Baseline snapshot | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 6 22 Nov 14:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
 | V2-006 | Service inventory | P1 | NOT_STARTED (stub) | — |
 | V2-007 | Database schema audit (GERBANG TEKNIS) | P1 | NOT_STARTED (stub) | — |
 | V2-008 | Resource budget benchmark | P1 | NOT_STARTED (stub) | — |
@@ -167,5 +167,5 @@ dan verifikasi biaya.
 1. Keputusan user D9/D10 (perbaikan Guard v2 + OQ-010 prasyarat) — menunggu.
 2. Observasi 24 jam pasca-deploy R3–R8 iterasi 2 (kematian 114, watchdog 10 dtk, refresh token, alert R7) — berjalan.
 3. Eksekusi audit V2-004 (janitor) saat sesi interaktif tersedia — tiket lengkap; tangkap `deletion_audit` SEGERA (retensi belum diketahui, OQ-014).
-4. Buat `MASJAVAS_RISK_REGISTER.md` + `MASJAVAS_OWNER_DECISION_REGISTER.md` (standalone, dari register awal di dashboard ini).
-5. Perluas V2-005–V2-010 berurutan + jawab OQ-005/006 (host benar) + OQ-011/012 + OQ-013/014/015 (saat eksekusi V2-004).
+4. Eksekusi audit V2-005 (baseline snapshot) saat sesi interaktif tersedia — tiket lengkap; snapshot adalah lantai gerbang Fase 0 (rollback satu-metrik butuh angka acuan yang sah); baca schema dulu sebelum query (OQ-016/017/018).
+5. Perluas V2-006–V2-010 berurutan + jawab OQ-005/006 (host benar) + OQ-011/012 + OQ-013/014/015 (saat eksekusi V2-004) + OQ-016/017/018 (saat eksekusi V2-005).
