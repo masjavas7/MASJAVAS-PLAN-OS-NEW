@@ -118,7 +118,7 @@ gates:
     conditions:
       - "Fase 0 lolos (semua metrik kritis tidak memburuk, 72 jam observasi)"
       - "Demand mendekati 12-16 stream ATAU 6 stream key terisi + antrean siap-live >= 10 (kriteria diperkuat di VPS8_PURCHASE_GATE.md — demand + operational risk + verified cost)"
-      - "Harga Master terverifikasi di panel + total <= $34,67/bln"
+      - "Harga Master terverifikasi di panel + TCO total (infra + storage + backup + domain) <= $34,67/bln (DIPUTUSKAN 22 Nov 13:13: cap = seluruh TCO; infrastruktur saja sudah $34,67)"
       - "Biaya storage/backup dihitung"
       - "Rencana rollback ada + persetujuan owner"
   D9_guard_v2_fixes:
