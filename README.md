@@ -85,6 +85,14 @@ sampai semua gerbang lolos.
   worst case +$4,97/bln — sebelum storage/domain).
 - `MASJAVAS_SLO_ERROR_BUDGET.md` — 8 SLO + error budget; hanya
   3 punya target angka dari baseline, 4 masih OPEN QUESTION.
+- `ORCHESTRATOR_API_CONTRACT_V1.md` — kontrak API orchestrator
+  pull-based REST v1: 7 endpoint lengkap (schema, auth, idempotency,
+  lease, fencing token), katalog error 20 kode, kasus uji wajib
+  TC-STALE-1 (worker basi ditolak).
+- `VPS8_FAILURE_INJECTION_TEST_PLAN.md` — 11 skenario uji kegagalan
+  terencana (Master mati, Tailscale putus, worker restart, SQLite
+  terkunci, disk penuh, FFmpeg mati, output sebagian, publish
+  timeout, stale worker, backup/restore gagal).
 
 ### Register
 
