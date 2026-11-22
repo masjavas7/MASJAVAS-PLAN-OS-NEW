@@ -233,6 +233,53 @@ gerbang lolos + persetujuan owner.
   (`621b24c`) sudah commit tapi BELUM ter-deploy di supervisor
   systemd (berjalan sejak 15:19:22, sebelum commit). Perbaikan
   struktural (SATU pemilik pemulihan) menunggu keputusan owner.
+- **UPDATE 19:0x (lihat B11):** supervisor manual 650871 sudah
+  tidak ada; sentinel fix ter-deploy via restart 18:47–18:48 —
+  dan sentinel kini membunuh SEMUA stream tiap ±4 menit karena
+  probe-nya dibutakan bot-check YouTube (B11).
+
+### B11. Relink membeku + sentinel BUTA membunuh siaran sehat (22 Nov 18:58–19:05)
+
+- **Bukti (diagnosis read-only 19:01–19:08):** (1) Endpoint
+  relink-publik (`POST /api/live/metadata/{id}/relink-public-
+  broadcast`) menjalankan 5–9 panggilan YouTube API SINKRON
+  berurutan (`googleapiclient .execute()`, 30× di
+  `live_broadcaster.py`, NOL `to_thread`) di dalam satu-satunya
+  worker uvicorn → event loop beku 60–120 dtk+ (3 hapusan saja
+  16 dtk) di tengah load 9,09. Klik user 18:58:2x BERHASIL di
+  server (broadcast publik baru `JmMbPqD3Qlo` dibuat + terikat +
+  DB ter-update dari `VYhwLLrMi8E`) tapi responsnya tidak pernah
+  sampai ke browser ("Failed to fetch", tanpa baris akses POST
+  di log uvicorn). Fitur publik + auto-start sendiri BEKERJA
+  (broadcast tayang 19:00:32). (2) Probe sentinel
+  (`live_health_sentinel.py`) men-scrape halaman watch publik
+  dari IP datacenter VPS dan YouTube membalas
+  `playabilityStatus: LOGIN_REQUIRED` ("Login untuk mengonfirmasi
+  bahwa Anda bukan bot") — TIDAK ADA data live sama sekali.
+  Probe tidak membedakan "tidak dapat memverifikasi" dari
+  "offline" → verdict OFFLINE palsu → ghost-kill. Terbukti dari
+  jaringan bersih: `JmMbPqD3Qlo` tayang 19:00:32–19:04:40 dan
+  DIBUNUH sentinel 19:04:05 (saat sedang tayang sehat).
+  (3) Lingkaran pembunuhan: sentinel membunuh tiap ±4 menit
+  (90 dtk warmup + 2 probe gagal); broadcast yang diakhiri
+  tidak bisa dilanjutkan; guardian me-restart encoder TANPA
+  membuat broadcast baru (relink TIDAK PUNYA pemanggil otonom —
+  hanya tombol manual yang responsnya hilang) → encoder
+  mendorong ke kunci tanpa broadcast live → sentinel membunuh
+  lagi. Stream key TERBUKTI cocok (encoder = task = channels).
+- **Dampak:** channel tidak punya siaran yang dapat ditonton
+  meski encoder jalan; user tidak bisa menerbitkan via UI
+  (klik tampak gagal padahal server bekerja — klik ulang =
+  broadcast duplikat); keempat stream berputar kill-restart
+  tiap ±4 menit.
+- **Status:** DIAGNOSIS SELESAI 19:08 atas permintaan owner.
+  Perbaikan menunggu keputusan owner: (a) probe sentinel jangan
+  membunuh atas hasil tak-kesimpulan — pakai YouTube Data API
+  (`liveBroadcasts.list`, otoritatif) atau anggap UNVERIFIED;
+  (b) panggilan YouTube ke `to_thread` / relink jadi job async;
+  (c) relink otonom saat broadcast terbukti berakhir;
+  (d) pertimbangkan matikan ghost-kill sementara sampai probe
+  diperbaiki. Lihat PR-17 + R21.
 
 ---
 
@@ -256,6 +303,7 @@ gerbang lolos + persetujuan owner.
 | PR-14 | Orphan tanpa feeder tidak terdeteksi (±17 jam) | P2 | R19 (RESOLVED); R8 observability |
 | PR-15 | Master interim ±1 bulan (dukungan Contabo lambat) | P2 | Keputusan ~17 Des; PLAN §10 |
 | PR-16 | Live mati massal 14:47 (4 stream/21 dtk) + pemulihan tidak andal (DB lock gagalkan reconnect; status desync; 706 tanpa reconnect; encoder ganda; relay task mati) | P0 | B10; R20; diagnosis 15:09–15:15 |
+| PR-17 | Relink publik gagal di UI ("Failed to fetch") + sentinel buta (bot-check) membunuh siaran sehat tiap ±4 mnt; tidak ada relink otonom | P0 | B11; R21; diagnosis 19:01–19:08 |
 
 ---
 
@@ -274,6 +322,7 @@ menunggu instruksi owner.
 | Kalibrasi admission TX (budget 115 → 500 Mbps) | PR-01 (sebagian: 5 penolakan reconnect 06:15) | DONE (R4, 07:24) |
 | Perbaikan encoder R3–R8 + iterasi 2 (watchdog 10 dtk, queue 4096, rw_timeout 30 dtk, log exit code, alert restart, sapu orphan) | PR-01, PR-14 | DEPLOYED; observasi 24 jam GAGAL 14:47 (B10) |
 | Investigasi + perbaikan jalur pemulihan live: selidiki penyebab bersama kematian massal; reconnect tahan DB-lock (retry + antrean); status STREAMING atomik dengan start encoder; satu jalur pemulihan (hapus race web vs supervisor); teardown relay saat task berhenti; selidiki sinyal supervisor | PR-16 | Investigasi antre; eksekusi menunggu **keputusan owner** |
+| Perbaikan sentinel + relink: probe via YouTube Data API (atau UNVERIFIED saat bot-check — jangan bunuh); panggilan YouTube ke `to_thread` / relink async (job + polling); relink otonom saat broadcast terbukti berakhir; opsi matikan ghost-kill sementara | PR-17 | Diagnosis selesai 19:08; eksekusi menunggu **keputusan owner** |
 | Hentikan layanan box lama (akhiri split-brain) | Risiko data ganda | DONE (R1, 07:05) |
 | Pindahkan reassemble keluar dari web ke worker | PR-10, B4 | Direncanakan Fase 0 |
 | Perbaikan Guard v2 (V2-003-R1–R9: atribusi lane, executor shed_render, kalibrasi knob, admission V2) | PR-02, PR-06, PR-08 | Menunggu **D9 + D10** (OQ-010 prasyarat R1) |
@@ -327,6 +376,7 @@ menunggu instruksi owner.
 | B8 lock SQLite | Audit schema V2-007 | 0 | Gerbang teknis; lock gagalkan reconnect 14:47 |
 | B9 kuota/dependensi | Doktrin 5/vault + fallback dihargai | 0–1 | Doktrin mengikat; P2 terbuka |
 | B10 mati massal + pemulihan | Investigasi + perbaikan jalur pemulihan | 0 | Dicatat 15:15; menunggu keputusan owner |
+| B11 relink beku + sentinel buta | Probe API + relink async + relink otonom | 0 | Diagnosis selesai 19:08; menunggu keputusan owner |
 
 **Definisi "siap deploy":** Batch 1 10/10 + semua artefak §9 lengkap +
 gerbang V2-007 + V2-009 lolos + D9/D10 diputuskan + observasi encoder
