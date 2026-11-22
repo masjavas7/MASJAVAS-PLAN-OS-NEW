@@ -14,8 +14,8 @@
 # Keterbatasan bukti dicatat di field limitation, BUKAN di nama status.
 
 version: "1.0"
-updated: "2026-11-23T02:50:00+07:00"
-updated_by: "Autonomous Readiness Cycle 9 (cron local-only)"
+updated: "2026-11-23T06:50:00+07:00"
+updated_by: "Autonomous Readiness Cycle 10 (cron local-only)"
 overall_readiness: NOT_READY
 overall_readiness_reason: "Batch 1: 1 EXECUTED (dengan keterbatasan bukti) + 2 READY_FOR_REVIEW dari 10; gerbang V2-007 + V2-009 belum lolos; harga Master + VPS 8 belum terverifikasi panel; biaya storage/backup belum dihitung; D9/D10 menunggu user."
 
@@ -95,9 +95,9 @@ tickets:
   V2-009:
     title: "VPS 8 price + storage cost verification (GERBANG BIAYA)"
     priority: P1
-    ticket_status: STUB
+    ticket_status: COMPLETE
     work_status: NOT_STARTED
-    note: "Gerbang biaya: TIDAK ADA pembelian sebelum V2-009 lolos. Butuh user di panel Contabo (Turnstile memblokir browser cloud)."
+    note: "Tiket diperluas ke format 15 elemen (Cycle 10, 23 Nov 06:50). Eksekusi QUEUED-FOR-INTERACTIVE — menunggu sesi interaktif + angka panel Contabo dari user; TIDAK butuh SSH; JANGAN coba browser task untuk panel (Turnstile terbukti memblokir 17 Nov + 22 Nov). Gerbang biaya: TIDAK ADA pembelian sebelum V2-009 lolos. OQ-036–OQ-045 (harga Master/VPS 8 aktual + renewal, kuota trafik, provider + harga object storage, volume backup, free tier $0, komposisi kontrak 12 bln $190,21, KEIN/Dahono, monitoring) dijawab saat eksekusi."
   V2-010:
     title: "Dedup design"
     priority: P1
@@ -135,5 +135,5 @@ counts:
   executed_with_limitation: 1
   ready_for_review: 2
   not_started: 7
-  ticket_complete: 7
-  ticket_stub: 3
+  ticket_complete: 8
+  ticket_stub: 2
