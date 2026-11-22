@@ -116,5 +116,8 @@ biaya tambahan berada DI ATAS cap. Skenario expected sudah
 melampaui cap pada biaya yang diketahui saja. Komponen BELUM
 DIHITUNG (storage, retensi, snapshot, egress, domain, renewal,
 KEIN) tetap BELUM DIHITUNG — bukan nol, bukan tercakup cap.
-Keputusan owner yang dibutuhkan: apakah cap $34,67 mencakup
-seluruh TCO atau hanya infrastruktur (OQ-TCO-1).
+**Keputusan owner (DIPUTUSKAN 22 Nov 13:13 WIB):** cap $34,67
+mencakup SELURUH TCO (OQ-TCO-1 tertutup). Konsekuensi: skenario
+expected + worst case MELEBIHI cap dan tidak dapat diterima
+sebagai rencana; storage/backup harus $0 (mis. free tier) atau
+infrastruktur direvisi.
