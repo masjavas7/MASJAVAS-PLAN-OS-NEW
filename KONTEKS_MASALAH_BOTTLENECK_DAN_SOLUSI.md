@@ -312,14 +312,21 @@ gerbang lolos + persetujuan owner.
   ≥2 — orphan tak-terpanen tiap restart); ±9 feeder yatim
   (tertua 1,7 hari); zombie ffmpeg tak-terpanen; daemon kedua
   sempat muncul 03:33:32 lalu hilang ±03:37 (aktor tak dikenal).
-- **Rem darurat SIAP (menunggu persetujuan deploy):** patch
-  tri-state `live_health_sentinel.py` — hasil probe tak-pasti
-  (bot-check/galat/tanpa penanda) menjadi UNVERIFIED, TIDAK
-  membunuh dan TIDAK menambah hitungan offline; sinyal offline
-  positif tetap membunuh pada kegagalan ke-2. Tes terisolasi
-  10/10 hijau (`v2-002/test_sentinel_brake.py`). Deploy = backup
-  + patch + restart `masjavas-live.service` saja (daemon lama
-  sentinel-nya buta-rusak; web tidak menjalankan watchdog).
+- **Rem darurat DI-DEPLOY 03:53 (disetujui owner 03:51, commit
+  `96e5ee4`):** patch tri-state `live_health_sentinel.py` —
+  hasil probe tak-pasti menjadi UNVERIFIED, TIDAK membunuh;
+  sinyal offline positif tetap membunuh pada kegagalan ke-2.
+  Verifikasi 03:53–04:03: kill BUTA 0 (dari ±12/8 mnt); 114
+  dibunuh 2× atas sinyal offline positif asli
+  (LIVE_STREAM_OFFLINE) lalu pulih tiap kali; 706/707/698
+  stabil (PID 7–12 mnt). Backup file asli di
+  `data/backups/sentinel-brake-20261123-0353/`.
+- **Temuan lanjutan (04:02):** ensurer HANYA berjalan saat
+  stream start/reconnect (supervisor l.578/l.895) — tanpa
+  pemicu berkala. 114 pulih sendiri pasca-reset lewat
+  siklusnya; 706/707/698 butuh SATU restart encoder setelah
+  15:00. Cron satu-kali `live-quota-reset-recovery-20261123`
+  dijadwalkan 15:10 WIB untuk cek + restart yang masih gelap.
   Lihat PR-18 + R22.
 
 ---
