@@ -1,10 +1,11 @@
 # KONTEKS MASALAH, BOTTLENECK, PROBLEM & SOLUSI YANG DIHARAPKAN
-## MASJAVAS TUBE OS — 22 Nov 2026
+## MASJAVAS TUBE OS — 22–23 Nov 2026 (terakhir diperbarui 23 Nov 06:48 WIB)
 
 Dokumen kerja program readiness (turunan). Bukan dokumen beku dan bukan
 instruksi deployment. Setiap angka di bawah ini terverifikasi dari audit
-22 Nov 2026 (V2-001/V2-002/V2-003, plan VPS 8, dashboard) atau dilabeli
-sebagai asumsi/estimasi bila belum terverifikasi.
+22 Nov 2026 (V2-001/V2-002/V2-003, plan VPS 8, dashboard), diagnosis
+live 22 Nov sore – 23 Nov pagi (B10–B13), atau dilabeli sebagai
+asumsi/estimasi bila belum terverifikasi.
 
 ---
 
@@ -22,7 +23,7 @@ jaringan:
 |---|---|---|
 | PUBLISH | 1 video/channel/hari ke YouTube (206 PUBLISHED/hari) | Real-time, terikat kuota API |
 | PREPARATION | Ingestion (audio/video/thumbnail) + kurasi audio (reassemble) + LoopGen Stage 2 | Batch, CPU + I/O berat |
-| LIVE | Streaming 24/7 (limit 16 channel; 2–3 jalan) | Real-time, butuh egress stabil |
+| LIVE | Streaming 24/7 (limit 16 channel; 3 jalan — 698 dihapus 23 Nov 06:06) | Real-time, butuh egress stabil |
 | CONTROL | Web dashboard/API + worker daemon + governor | Harus selalu responsif |
 
 **Baseline "solid" yang harus dilindungi** (terverifikasi 21–22 Nov):
@@ -49,7 +50,17 @@ gerbang lolos + persetujuan owner.
   CPU bukan masalah.
 - **Dampak:** tidak ada ruang tumbuh live di Master; setiap stream baru
   berebut port dengan upload prep + sinkronisasi Drive.
-- **Status:** dipahami; solusinya VPS 8 (port 600 Mbit/s) — Fase 1.
+- **KOREKSI 23 Nov 06:32 (bukti segar):** pada skala SAAT INI (3 stream),
+  live TIDAK terjepit jaringan — guard tick menunjukkan tx_ema ±33 Mbps
+  dari port 500 Mbps (6,5%), load 3,39, RAM bebas 4,6 GB, live_share
+  12–22%. B1 berlaku sebagai batas SKALA (50 channel), bukan sebagai
+  kendala saat ini. Semua kegagalan live 16 jam terakhir terjadi saat
+  box masih longgar — kendala terbesar live adalah rantai kuota +
+  deteksi + pemulihan (B11–B13), BUKAN kapasitas. VPS 8 menyelesaikan
+  skala, bukan keandalan — membeli sekarang untuk "memperbaiki live"
+  adalah mubazir (lihat §4 Fase 1).
+- **Status:** dipahami; solusinya VPS 8 (port 600 Mbit/s) — Fase 1,
+  setelah Fase 0 lolos + kesiapan skala terbukti (PR-20).
 
 ### B2. Ingestion macet di GATE + bot-check, bukan CPU
 
@@ -273,13 +284,22 @@ gerbang lolos + persetujuan owner.
   broadcast duplikat); keempat stream berputar kill-restart
   tiap ±4 menit.
 - **Status:** DIAGNOSIS SELESAI 19:08 atas permintaan owner.
-  Perbaikan menunggu keputusan owner: (a) probe sentinel jangan
-  membunuh atas hasil tak-kesimpulan — pakai YouTube Data API
-  (`liveBroadcasts.list`, otoritatif) atau anggap UNVERIFIED;
-  (b) panggilan YouTube ke `to_thread` / relink jadi job async;
-  (c) relink otonom saat broadcast terbukti berakhir;
-  (d) pertimbangkan matikan ghost-kill sementara sampai probe
-  diperbaiki. Lihat PR-17 + R21.
+  Perbaikan dikerjakan lane Antigravity (owner, 19:27: "sedang
+  dikerjakan antigravity pantau dulu"). Terkirim 22 Nov 19:33–
+  23 Nov 05:57: relink <2 dtk + ensurer otonom (`07c4b8f`),
+  `import asyncio` (`c4ef58b`), uvicorn multi-worker
+  (`8dd9142`), circuit breaker kuota 30-mnt (`7753c06`),
+  "reliability v2" — quota guard + sanitasi tag + duplicate
+  encoder reaper + jalur non-blocking (`33f1c15`), CSP/relink
+  quota/preview dual-mode (`3cb5fa8`), logging (`895715c`).
+  **Terverifikasi bekerja:** reaper encoder ganda — sensus
+  23 Nov 06:48 menunjukkan tepat 3 encoder (1/task), nol
+  duplikat (dari ≥3 untuk 707 pada 03:35). **Belum
+  terverifikasi:** klaim quota guard (ledger masih 0 operasi
+  live — lihat B12), klaim jalur non-blocking, klaim satu
+  pemilik pemulihan. **Belum terkirim:** probe berbasis API
+  (perbaikan permanen sentinel) — rem darurat tri-state
+  (§B12) masih menjadi satu-satunya pengaman. Lihat PR-17 + R21.
 
 ### B12. Kuota YouTube API habis dibakar lingkaran kill-relink — keempat live GELAP di YouTube sejak ±21:30 (22 Nov)
 
@@ -327,7 +347,42 @@ gerbang lolos + persetujuan owner.
   siklusnya; 706/707/698 butuh SATU restart encoder setelah
   15:00. Cron satu-kali `live-quota-reset-recovery-20261123`
   dijadwalkan 15:10 WIB untuk cek + restart yang masih gelap.
-  Lihat PR-18 + R22.
+- **UPDATE 23 Nov 06:32–06:48 (bukti segar):** rem TERBUKTI
+  bekerja hingga kini — kill BUTA 0; 22 kill/jam terakhir
+  semuanya 114 atas sinyal offline positif (siklus ±3 mnt,
+  tidak dapat memperbaiki diri sampai reset). Ledger MASIH
+  0 operasi live dalam 24 jam (vault 706/707 tercatat 28/
+  10.000, 114 tercatat 54/10.000) — klaim "quota guard"
+  `33f1c15` BELUM TERBUKTI mencatat panggilan live.
+  quotaExceeded menurun (33/jam → 20/jam) tapi masih muncul.
+  Cek halaman publik dari jaringan bersih kini dibalas
+  bot-check (LOGIN_REQUIRED) untuk 706/707 dan ERROR untuk
+  114 — status broadcast tidak dapat dibaca langsung, namun
+  siaran PASTI masih gelap karena tidak ada relink yang bisa
+  berhasil dengan kuota 0. Kapasitas BUKAN kendala (lihat
+  koreksi B1). Lihat PR-18 + R22.
+
+### B13. Task live dihapus manual + guardian berputar tanpa henti pada task yang sudah tidak ada (23 Nov 06:06–06:48)
+
+- **Bukti (log web + live journal, terverifikasi 06:11 + 06:48):**
+  06:06:32 `POST /api/live/stop/1795332171262` (alasan "manual")
+  lalu 06:06:37 `DELETE /api/live/1795332171262`, keduanya 200 OK
+  dari IP 103.214.112.181 — slot 698 (RUANGIRAMA) DIHAPUS dari
+  `live_stream_tasks`; encoder-nya tinggal zombie. Aktor belum
+  terkonfirmasi (Bapak/operator via dashboard atau lane lain —
+  ditanyakan ke owner 06:09, belum dijawab).
+- **Guardian tidak berhenti:** supervisor terus mencoba membangkitkan
+  task yang sudah dihapus — 225 baris journal menyebut 1795332171262
+  sejak 06:11 (±75 percobaan, tiap ±30 dtk), terakhir 06:48:26
+  "Menjadwalkan siaran ulang otonom ... dalam 30s...". Setiap
+  percobaan gagal ("Tugas siaran live tidak ditemukan") lalu
+  dijadwalkan ulang — loop tanpa batas, tanpa cek keberadaan task,
+  tanpa cap percobaan.
+- **Dampak:** log membengkak (±6 baris/mnt selamanya), siklus CPU
+  terbuang, dan pola yang sama akan terulang pada setiap task yang
+  dihapus di masa depan. 698 tidak akan kembali tanpa dibuat ulang.
+- **Status:** DICATAT 06:09; perbaikan (cek keberadaan + cap
+  percobaan + alert) menunggu lane Antigravity. Lihat PR-19.
 
 ---
 
@@ -353,6 +408,8 @@ gerbang lolos + persetujuan owner.
 | PR-16 | Live mati massal 14:47 (4 stream/21 dtk) + pemulihan tidak andal (DB lock gagalkan reconnect; status desync; 706 tanpa reconnect; encoder ganda; relay task mati) | P0 | B10; R20; diagnosis 15:09–15:15 |
 | PR-17 | Relink publik gagal di UI ("Failed to fetch") + sentinel buta (bot-check) membunuh siaran sehat tiap ±4 mnt; tidak ada relink otonom | P0 | B11; R21; diagnosis 19:01–19:08 |
 | PR-18 | Kuota YouTube API 3 vault live habis (±21:25) dibakar lingkaran kill-relink; keempat live gelap di YouTube sejak ±21:30 meski dashboard STREAMING; panggilan live tidak terlacak di ledger/guard kuota | P0 | B12; R22; diagnosis 03:28–03:45 23 Nov |
+| PR-19 | Guardian berputar tanpa henti membangkitkan task live yang sudah dihapus (698, DELETE 06:06:37; ±75 percobaan gagal sejak 06:11, tanpa cek keberadaan/cap) | P1 | B13; log live journal 06:11–06:48 |
+| PR-20 | VPS 8 belum terjustifikasi + armada belum siap skala: live tidak terjepit kapasitas pada 3 stream (tx ±33 Mbps/500, load 3,39 — 06:32); MAX_GLOBAL_LIVE_STREAMS=4 + batas operator 2 mengunci skala; hanya 6 channel punya stream key; 203/237 channel_id masih STAGING | P1 | B1 koreksi; audit Tahap 0 21 Nov; purchase gate |
 
 ---
 
@@ -370,21 +427,24 @@ menunggu instruksi owner.
 |---|---|---|
 | Kalibrasi admission TX (budget 115 → 500 Mbps) | PR-01 (sebagian: 5 penolakan reconnect 06:15) | DONE (R4, 07:24) |
 | Perbaikan encoder R3–R8 + iterasi 2 (watchdog 10 dtk, queue 4096, rw_timeout 30 dtk, log exit code, alert restart, sapu orphan) | PR-01, PR-14 | DEPLOYED; observasi 24 jam GAGAL 14:47 (B10) |
-| Investigasi + perbaikan jalur pemulihan live: selidiki penyebab bersama kematian massal; reconnect tahan DB-lock (retry + antrean); status STREAMING atomik dengan start encoder; satu jalur pemulihan (hapus race web vs supervisor); teardown relay saat task berhenti; selidiki sinyal supervisor | PR-16 | Investigasi antre; eksekusi menunggu **keputusan owner** |
-| Perbaikan sentinel + relink: probe via YouTube Data API (atau UNVERIFIED saat bot-check — jangan bunuh); panggilan YouTube ke `to_thread` / relink async (job + polling); relink otonom saat broadcast terbukti berakhir; opsi matikan ghost-kill sementara | PR-17 | Diagnosis selesai 19:08; eksekusi menunggu **keputusan owner** |
-| Hentikan bakar kuota live: deploy rem darurat sentinel (UNVERIFIED jangan bunuh) + restart supervisor; verifikasi 0 kill + PID stabil; tunggu reset kuota 15:00 WIB (ensurer relink otomatis); catat panggilan live di ledger/guard (tindak lanjut); rapikan encoder/feeders ganda | PR-18 | Patch + tes 10/10 SIAP; deploy menunggu **persetujuan owner** |
+| Investigasi + perbaikan jalur pemulihan live: selidiki penyebab bersama kematian massal; reconnect tahan DB-lock (retry + antrean); status STREAMING atomik dengan start encoder; satu jalur pemulihan (hapus race web vs supervisor); teardown relay saat task berhenti; selidiki sinyal supervisor | PR-16 | Investigasi SELESAI 15:30 (mekanisme terbukti); perbaikan struktural menunggu keputusan owner — `33f1c15` mengklaim satu pemilik pemulihan (F5), belum terverifikasi |
+| Perbaikan sentinel + relink: probe via YouTube Data API (otoritatif) sebagai pengganti permanen rem; panggilan YouTube non-blocking / relink async (job + polling); relink otonom HANYA saat broadcast terbukti berakhir + kuota tersedia (gerbang relink — ide #1, 23 Nov 06:46) | PR-17 | Sebagian TERKIRIM lane Antigravity (ensurer, relink <2 dtk, multi-worker, klaim non-blocking — belum terverifikasi); probe API BELUM terkirim; rem darurat masih pengaman |
+| Hentikan bakar kuota live: rem darurat sentinel DEPLOYED 03:53 (commit `96e5ee4`, kill buta 0 hingga 06:48); reset kuota 15:00 WIB + cron pemulihan 15:10 (restart 706/707 yang masih gelap — 698 kini dihapus); anggaran kuota live per vault (mis. 2.000 unit/hari, publish simpan 8.000) + catat panggilan live di ledger/guard | PR-18 | Rem DEPLOYED + terverifikasi; ledger MASIH 0 operasi live (06:32) — klaim quota guard `33f1c15` belum terbukti |
+| Circuit breaker kill-loop: task yang sama dibunuh 3×/60 mnt → berhenti membunuh, tandai "butuh manusia", alert Telegram | PR-18 | Ide #3 (23 Nov 06:46); belum dikerjakan |
+| Guardian: cek keberadaan task sebelum force-resume; cap 5 percobaan lalu alert + berhenti | PR-19 | Ide #6 (23 Nov 06:46); belum dikerjakan |
+| Satu probe ter-cache (±60 dtk) dipakai bersama sentinel + ensurer + dashboard + kolektor metrik; dashboard tampilkan status tayang YouTube + stempel cek terakhir + kuota terpakai | PR-17, PR-18 | Ide #5 + #7 (23 Nov 06:46); belum dikerjakan |
 | Hentikan layanan box lama (akhiri split-brain) | Risiko data ganda | DONE (R1, 07:05) |
 | Pindahkan reassemble keluar dari web ke worker | PR-10, B4 | Direncanakan Fase 0 |
 | Perbaikan Guard v2 (V2-003-R1–R9: atribusi lane, executor shed_render, kalibrasi knob, admission V2) | PR-02, PR-06, PR-08 | Menunggu **D9 + D10** (OQ-010 prasyarat R1) |
 | Audit janitor (V2-004) | PR-07 | Tiket lengkap; eksekusi antre (SSH) |
 | Audit schema (V2-007) | PR-11 | Gerbang teknis sebelum migrasi apa pun |
-| Restart web (muat R5 di jalur API) | PR-13 | Jendela maintenance berikut |
+| Restart web (muat R5 di jalur API) | PR-13 | DONE (web di-restart 15:14:08 + berkali-kali sesudahnya; R5 termuat) |
 
 ### Fase 1 — VPS 8 ($18,65/bln + $2,66 setup; total $34,67/bln)
 
 | Solusi | Menyelesaikan | Status / gerbang |
 |---|---|---|
-| Topologi 2 box: Master (control + publish) + Live-01 (live + prep worker + DR) | B1, B5, B7 | Menunggu **V2-009** (harga panel) + persetujuan owner |
+| Topologi 2 box: Master (control + publish) + Live-01 (live + prep worker + DR) | B1, B5, B7 | Menunggu **V2-009** (harga panel) + persetujuan owner; gerbang BELUM lolos — Fase 0 belum selesai (F1/F2/F3 belum terbukti) dan armada belum siap skala (PR-20: limit live 4, hanya 6 stream key). Membeli sekarang untuk 'memperbaiki live' = mubazir (verdict 23 Nov 06:32): VPS 8 menyelesaikan skala, bukan keandalan |
 | Guard lokal per box (pengganti guard saling sandera) | PR-02, G1–G12 | Desain di V2.0; implementasi pasca-Fase 0 |
 | Orkestrasi API + SQLite (Option A): register/claim/heartbeat/complete, lease + fencing token, idempotency | PR-03 (skala), B8 | Menunggu V2-007 (audit schema) |
 | Canary Stage 2 (2 slot) + prep worker di VPS 8, diuji BERSAMAAN dengan reassemble | PR-12, B4, B5 | Acceptance test plan |
@@ -414,7 +474,7 @@ menunggu instruksi owner.
 
 ## 5. Peta problem → solusi → status (ringkasan)
 
-| Bottleneck | Solusi utama | Fase | Status 22 Nov 15:15 |
+| Bottleneck | Solusi utama | Fase | Status 23 Nov 06:48 |
 |---|---|---|---|
 | B1 jaringan live | VPS 8 (600 Mbps) + admission EMA | 1 | Menunggu V2-009 + owner |
 | B2 gate ingestion | Kalibrasi gate + orkestrasi API | 0–1 | Akar terbukti; D1 ditunda |
@@ -426,11 +486,14 @@ menunggu instruksi owner.
 | B8 lock SQLite | Audit schema V2-007 | 0 | Gerbang teknis; lock gagalkan reconnect 14:47 |
 | B9 kuota/dependensi | Doktrin 5/vault + fallback dihargai | 0–1 | Doktrin mengikat; P2 terbuka |
 | B10 mati massal + pemulihan | Investigasi + perbaikan jalur pemulihan | 0 | Dicatat 15:15; menunggu keputusan owner |
-| B11 relink beku + sentinel buta | Probe API + relink async + relink otonom | 0 | Diagnosis selesai 19:08; menunggu keputusan owner |
-| B12 kuota habis + live gelap | Rem sentinel + reset kuota 15:00 + lacak panggilan live | 0 | Diagnosis selesai 03:45 23 Nov; deploy rem menunggu persetujuan owner |
+| B11 relink beku + sentinel buta | Probe API + relink async + relink otonom | 0 | Sebagian terkirim Antigravity (ensurer, multi-worker, reaper terverifikasi); probe API belum |
+| B12 kuota habis + live gelap | Rem sentinel + reset kuota 15:00 + lacak panggilan live | 0 | Rem DEPLOYED 03:53, kill buta 0; ledger masih 0; reset 15:00 + cron 15:10 |
+| B13 task dihapus + guardian loop | Cek keberadaan + cap percobaan | 0 | Dicatat 06:09; loop masih berjalan 06:48 |
 
 **Definisi "siap deploy":** Batch 1 10/10 + semua artefak §9 lengkap +
 gerbang V2-007 + V2-009 lolos + D9/D10 diputuskan + observasi encoder
 24 jam bersih + persetujuan owner. Observasi 24 jam GAGAL 14:47
-(B10) — definisi ini belum terpenuhi. Sampai saat itu, repo ini
-adalah paket persiapan — bukan instruksi eksekusi.
+(B10); live gelap sejak 21:30 22 Nov (B12) dengan pemulihan terjadwal
+15:10 23 Nov; Fase 0 belum lolos — definisi ini belum terpenuhi.
+Sampai saat itu, repo ini adalah paket persiapan — bukan instruksi
+eksekusi.
