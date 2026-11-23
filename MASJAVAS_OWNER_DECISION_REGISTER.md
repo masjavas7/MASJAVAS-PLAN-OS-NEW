@@ -1,6 +1,8 @@
 # MASJAVAS OWNER DECISION REGISTER — MASJAVAS TUBE OS V2
 
-**Versi:** 1.0 — 22 Nov 2026, 12:35 WIB.
+**Versi:** 1.1 — 23 Nov 2026, 14:50 WIB (Cycle 12: D4 DIPUTUSKAN +
+dieksekusi owner 14:41; D12–D14 baru dari RENCANA_KEDEPAN §6; pemetaan
+nomor RENCANA D1–D6 dicatat — JANGAN disamakan dengan nomor register ini).
 **Sumber:** `ENGINEERING_READINESS_DASHBOARD.md` (§ owner decision register),
 `PLAN_PENAMBAHAN_VPS8_2026-11-22.md` (§10),
 `EVALUASI_SEBELUM_PERBAIKAN_2026-11-22.md` (§6), temuan V2-001–V2-003,
@@ -28,7 +30,10 @@ dilabeli).
 | D1 | Provider KEIN: top-up / fallback / HOLD | DITUTUP | 22 Nov 06:55 WIB | User: "ASUMSIKAN KEIN AMAN"; konfirmasi 07:03 "lanjut V2-003, KEIN tetap dilewati". KOREKSI: bukti V2-001 dari host salah — asumsi tanpa bukti live (R15). Expiry 23 Nov 2026 |
 | D2 | Pilot DeepInfra 3 varian (Rp 800) | MENUNGGU | Ditawarkan 18 Nov 2026 | Belum dijawab user. Satu-satunya fallback image-gen yang sudah dihargai per-varian (Rp 35,44/gambar FLUX) |
 | D3 | D1 proxy residential (WaroengProxy Rp 10.000/GB, uji 1 GB) | MENUNGGU | Ditunda user 20 Nov 2026 | **Jangan tanya ulang** (aturan eksplisit). Dahono 407 terbukti sisi provider (21 Nov). Alternatif belum diuji |
-| D4 | Pembelian VPS 8 (cap $34,67/bln mengikat) | MENUNGGU | — | Menunggu gerbang: Fase 0 lolos + demand mendekati 12–16 stream (atau 6 stream key penuh + antrean ready-live ≥10) + harga Master terverifikasi panel + storage dihitung + rollback siap + persetujuan owner |
+| D4 | Pembelian VPS 8 (cap $34,67/bln mengikat) | DIPUTUSKAN + DIEKSEKUSI | Dibeli owner 23 Nov 2026 14:41 WIB | Screenshot panel Contabo: `vmi3778263` — Cloud VPS 8 (2026), Running, EU/Hub Europe, no setup. Gerbang pembelian 06:31 SUPERSEDED oleh keputusan langsung owner ("lanjut fase berikutnya tanpa menunggu"). Prompt implementasi Fase 1: `PROMPT_ANTIGRAVITY_IMPLEMENTASI_VPS8_2026-11-23.md` (14:52; canary 706 dulu, 114/707 SETELAH 15:00; JANGAN sentuh Master 15:00–15:15). IP publik TIDAK dicatat di dokumen program (lihat MEMORY.md). Verifikasi harga aktual panel + storage $0 tetap terbuka (V2-009, kini verifikasi pasca-beli) |
+| D12 | Nasib slot 698 — dikembalikan (buat task live baru) atau tidak? | MENUNGGU | — | MONA menghapus 698 (dikonfirmasi user 09:11, "mona yang hapus"); guardian loop mati sejak restart live 08:48; channel vault-ready (vault MV-E02321CFBE9C3F73); keputusan MONA (RENCANA §6 D2 — nomor RENCANA, bukan register) |
+| D13 | Jadwal restart service untuk mengaktifkan `cd4fb7a` (perbaikan schema lock) | MENUNGGU | — | Perbaikan ada di disk tapi belum berjalan (restart live 13:50:05 + web 14:00:57 sebelum commit 14:02:53); tenggat 24 jam (RENCANA §6 D3 — nomor RENCANA, bukan register) |
+| D14 | Fase 2 Antigravity (bitrate conditioner + `assigned_node_id`) | MENUNGGU | — | Antigravity mengklaim "siap Fase 2"; owner belum menyetujui; persetujuan terpisah; setelah Tahap A (RENCANA §6 D4 — nomor RENCANA, bukan register) |
 | D5 | Bundle PLAN §10 #4–#7: sweeper batch, ambang TX-throttle, failover live auto/manual, kepemilikan janitor, limit live final, provider Master pasca-Des | MENUNGGU | — | Rincian per item di §2 (PLAN10-4 s.d. PLAN10-7) |
 | D6 | Aktivasi distribusi Stage 2 live (guard 422) + peluncuran batch massal | MENUNGGU | — | Peluncuran = keputusan user semata. CATATAN: distribusi live Stage 2 tercatat AKTIF sejak 19 Nov 11:08 (DOCUMENTED FACT NOT YET REVALIDATED — ALIGNMENT_SYNTHESIS); keputusan guard-422 perlu re-review |
 | D7 | Hentikan layanan aplikasi di box lama Tencent (V2-002 R1) | DIPUTUSKAN | Disetujui + dieksekusi 22 Nov 07:05 WIB | Web lama stopped+disabled; port 8080 tutup; DB statis terverifikasi 07:09. Split-brain berakhir (R14 RESOLVED) |
@@ -36,6 +41,12 @@ dilabeli).
 | D9 | Perbaikan Guard v2 (V2-003-R1–R9; prioritaskan R1/R2 admission TX) | MENUNGGU | — | `v2-003/GUARD_RECOMMENDATIONS_V2-003.md`. Prasyarat R1 = D10 |
 | D10 | OQ-010 — siapa men-set `LIVE_GUARD_V2_ENABLED=false` + CPU 90 di `.env`, dan mengapa | MENUNGGU | — | `.env` diubah 21 Nov 17:58; alasan tidak diketahui. Prasyarat V2-003-R1 (aktifkan admission governor) |
 | D11 | Restart manual stream 706 untuk memulihkan audio (orphan tanpa feeder — R19) | DIPUTUSKAN | Disetujui + dieksekusi 22 Nov 08:10 WIB | Downtime ±48 dtk; audio terverifikasi mengalir (feeder 19,4 MB). R19 RESOLVED |
+
+**CATATAN PENOMORAN (Cycle 12):** `RENCANA_KEDEPAN_PASCA_PERBAIKAN_2026-11-23.md`
+§6 memakai nomor D1–D6 sendiri — JANGAN disamakan dengan nomor register ini.
+Pemetaan: RENCANA-D1 = D4 (beli VPS 8 — DIPUTUSKAN 14:41); RENCANA-D2 = D12;
+RENCANA-D3 = D13; RENCANA-D4 = D14; RENCANA-D5 = D9; RENCANA-D6 = STORAGE
+(§4 di bawah, masih MENUNGGU).
 
 ## 2. Keputusan PLAN §10 (plan penambahan VPS 8)
 
@@ -79,11 +90,11 @@ dilabeli).
 
 | Status | Jumlah | ID |
 |---|---|---|
-| DIPUTUSKAN | 4 (+2 sebagian) | D7, D8, D11, TCO-1; EV6-2 (rencana saja — bentuk deploy menunggu), EV6-8 (P16 saja — P15 menunggu) |
-| MENUNGGU | 26 | D2, D3, D4, D5, D6, D9, D10, PLAN10-1 s.d. PLAN10-7, EV6-1, EV6-3 s.d. EV6-7, TR-720p, STORAGE, KONTRAK-12, OMNI-600, KEIN-IMG, WEB-RESTART |
+| DIPUTUSKAN | 5 (+2 sebagian) | D4, D7, D8, D11, TCO-1; EV6-2 (rencana saja — bentuk deploy menunggu), EV6-8 (P16 saja — P15 menunggu) |
+| MENUNGGU | 28 | D2, D3, D5, D6, D9, D10, D12, D13, D14, PLAN10-1 s.d. PLAN10-7, EV6-1, EV6-3 s.d. EV6-7, TR-720p, STORAGE, KONTRAK-12, OMNI-600, KEIN-IMG, WEB-RESTART |
 | DITUTUP | 1 | D1 |
 | DITOLAK | 1 | V2-002-R2 |
 
 Keputusan paling mendesak menurut program (PROPOSAL, bukan keputusan user):
-D9/D10 (Guard v2 — prasyarat proteksi live), PLAN10-2 (Fase 0 $0),
-PLAN10-3 + D4 (pemicu pembelian VPS 8), EV6-4 (diagnosa P2).
+D9/D10 (Guard v2 — prasyarat proteksi live), D12/D13 (nasib 698 + restart
+`cd4fb7a`), PLAN10-2 (Fase 0 $0), EV6-4 (diagnosa P2).
