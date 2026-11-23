@@ -38,7 +38,7 @@ dilabeli).
 | D12 | Nasib slot 698 — dikembalikan (buat task live baru) atau tidak? | MENUNGGU | — | MONA menghapus 698 (dikonfirmasi user 09:11, "mona yang hapus"); guardian loop mati sejak restart live 08:48; channel vault-ready (vault MV-E02321CFBE9C3F73); keputusan MONA (RENCANA §6 D2 — nomor RENCANA, bukan register) |
 | D13 | Jadwal restart service untuk mengaktifkan `cd4fb7a` (perbaikan schema lock) | DIPUTUSKAN + DIEKSEKUSI | Dieksekusi 23 Nov 16:38:51 WIB (restart live, sebagai bagian migrasi) | Restart live 16:38:51 MENGAKTIFKAN cd4fb7a (MEMORY.md 16:27–16:41) — bukan jadwal terpisah seperti rencana awal, dicatat jujur. R25 → RESOLVED. Observasi: laju error worker turun separuh pasca-restart |
 | D15 | Jadwal restart service Master untuk mengaktifkan `f7ee5ce` (perbaikan sistemik: semaphore Opsi A + RTMP resilient + auto-heal + watchdog + DR) | MENUNGGU | — | f7ee5ce AKTIF di VPS 8 (restart live 18:27:55; RTMP timeout 0/27 mnt — TERBUKTI) tapi BELUM AKTIF di Master (web PID 4134208 sejak 17:08, live PID 4158014 sejak 17:19). Restart Master = L3, butuh persetujuan + jendela (R28) |
-| D16 | Restart tunnel cloudflared (URL publik mati total — koneksi edge 6 hari stale) | MENUNGGU | — | Web lokal cepat (0,77 dtk) tapi curl publik timeout 2× + self-test Master HTTP 000 (18:52–18:54); tunnel PID 69061 hidup tapi log `/var/log/cloudflared.log` TIDAK ADA. Restart tunnel = L3, butuh persetujuan user (R30) |
+| D16 | Restart tunnel cloudflared (URL publik mati total — koneksi edge 6 hari stale) | DIPUTUSKAN + DIEKSEKUSI | Dieksekusi 23 Nov 19:00 WIB | Restart berhasil (PID 69061 → 139105, 19:00:09); curl publik `/` HTTP 200/2,07 dtk; self-test Master HTTP 200/1,76 dtk; URL publik PULIH TOTAL. R30 → RESOLVED. Pelajaran: tunnel 6 hari bisa basi tanpa error di log |
 | D14 | Fase 2 Antigravity (bitrate conditioner + `assigned_node_id`) | MENUNGGU | — | Antigravity mengklaim "siap Fase 2"; owner belum menyetujui; persetujuan terpisah; setelah Tahap A (RENCANA §6 D4 — nomor RENCANA, bukan register) |
 | D5 | Bundle PLAN §10 #4–#7: sweeper batch, ambang TX-throttle, failover live auto/manual, kepemilikan janitor, limit live final, provider Master pasca-Des | MENUNGGU | — | Rincian per item di §2 (PLAN10-4 s.d. PLAN10-7) |
 | D6 | Aktivasi distribusi Stage 2 live (guard 422) + peluncuran batch massal | MENUNGGU | — | Peluncuran = keputusan user semata. CATATAN: distribusi live Stage 2 tercatat AKTIF sejak 19 Nov 11:08 (DOCUMENTED FACT NOT YET REVALIDATED — ALIGNMENT_SYNTHESIS); keputusan guard-422 perlu re-review |
@@ -96,12 +96,11 @@ RENCANA-D3 = D13; RENCANA-D4 = D14; RENCANA-D5 = D9; RENCANA-D6 = STORAGE
 
 | Status | Jumlah | ID |
 |---|---|---|
-| DIPUTUSKAN | 6 (+2 sebagian) | D4, D7, D8, D11, D13, TCO-1; EV6-2 (rencana saja — bentuk deploy menunggu), EV6-8 (P16 saja — P15 menunggu) |
-| MENUNGGU | 29 | D2, D3, D5, D6, D9, D10, D12, D14, D15, D16, PLAN10-1 s.d. PLAN10-7, EV6-1, EV6-3 s.d. EV6-7, TR-720p, STORAGE, KONTRAK-12, OMNI-600, KEIN-IMG, WEB-RESTART |
+| DIPUTUSKAN | 7 (+2 sebagian) | D4, D7, D8, D11, D13, D16, TCO-1; EV6-2 (rencana saja — bentuk deploy menunggu), EV6-8 (P16 saja — P15 menunggu) |
+| MENUNGGU | 28 | D2, D3, D5, D6, D9, D10, D12, D14, D15, PLAN10-1 s.d. PLAN10-7, EV6-1, EV6-3 s.d. EV6-7, TR-720p, STORAGE, KONTRAK-12, OMNI-600, KEIN-IMG, WEB-RESTART |
 | DITUTUP | 1 | D1 |
 | DITOLAK | 1 | V2-002-R2 |
 
 Keputusan paling mendesak menurut program (PROPOSAL, bukan keputusan user):
-D9/D10 (Guard v2 — prasyarat proteksi live), D12/D15/D16 (nasib 698 +
-restart Master f7ee5ce + restart tunnel — ketiganya baru/mendesak),
-PLAN10-2 (Fase 0 $0), EV6-4 (diagnosa P2).
+D9/D10 (Guard v2 — prasyarat proteksi live), D12/D15 (nasib 698 +
+restart Master f7ee5ce), PLAN10-2 (Fase 0 $0), EV6-4 (diagnosa P2).
