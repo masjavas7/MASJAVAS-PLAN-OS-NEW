@@ -14,10 +14,10 @@
 # Keterbatasan bukti dicatat di field limitation, BUKAN di nama status.
 
 version: "1.0"
-updated: "2026-11-23T10:50:00+07:00"
-updated_by: "Autonomous Readiness Cycle 11 (cron local-only)"
+updated: "2026-11-23T14:50:00+07:00"
+updated_by: "Autonomous Readiness Cycle 12 (cron local-only)"
 overall_readiness: NOT_READY
-overall_readiness_reason: "Batch 1: 1 EXECUTED (dengan keterbatasan bukti) + 2 READY_FOR_REVIEW dari 10; gerbang V2-007 + V2-009 belum lolos; harga Master + VPS 8 belum terverifikasi panel; biaya storage/backup belum dihitung; D9/D10 menunggu user."
+overall_readiness_reason: "Batch 1: 1 EXECUTED (dengan keterbatasan bukti) + 2 READY_FOR_REVIEW dari 10; 10/10 tiket lengkap di sisi dokumen; VPS 8 DIBELI owner 14:41 (vmi3778263) — gerbang pembelian 06:31 SUPERSEDED, D4 DIPUTUSKAN; gerbang V2-007 + V2-009 (verifikasi pasca-beli) belum lolos; penentu 15:00-15:10 (relink 114/707 + ledger tahap 2); D9/D10/D12/D13/D14 menunggu user."
 
 tickets:
   V2-001:
@@ -97,7 +97,7 @@ tickets:
     priority: P1
     ticket_status: COMPLETE
     work_status: NOT_STARTED
-    note: "Tiket diperluas ke format 15 elemen (Cycle 10, 23 Nov 06:50). Eksekusi QUEUED-FOR-INTERACTIVE — menunggu sesi interaktif + angka panel Contabo dari user; TIDAK butuh SSH; JANGAN coba browser task untuk panel (Turnstile terbukti memblokir 17 Nov + 22 Nov). Gerbang biaya: TIDAK ADA pembelian sebelum V2-009 lolos. OQ-036–OQ-045 (harga Master/VPS 8 aktual + renewal, kuota trafik, provider + harga object storage, volume backup, free tier $0, komposisi kontrak 12 bln $190,21, KEIN/Dahono, monitoring) dijawab saat eksekusi."
+    note: "Tiket diperluas ke format 15 elemen (Cycle 10, 23 Nov 06:50). Eksekusi QUEUED-FOR-INTERACTIVE — menunggu sesi interaktif + angka panel Contabo dari user; TIDAK butuh SSH; JANGAN coba browser task untuk panel (Turnstile terbukti memblokir 17 Nov + 22 Nov). Gerbang biaya: TIDAK ADA pembelian sebelum V2-009 lolos. OQ-036–OQ-045 (harga Master/VPS 8 aktual + renewal, kuota trafik, provider + harga object storage, volume backup, free tier $0, komposisi kontrak 12 bln $190,21, KEIN/Dahono, monitoring) dijawab saat eksekusi. ADDENDUM Cycle 12 (23 Nov 14:50): VPS 8 DIBELI owner 14:41 (vmi3778263) SEBELUM verifikasi ini selesai — gerbang pembelian SUPERSEDED oleh keputusan langsung owner (D4 DIPUTUSKAN). Verifikasi harga aktual panel + storage $0 tetap terbuka sebagai verifikasi pasca-beli; verdict C-1–C-5 kini menilai apakah pembelian yang sudah terjadi muat cap $34,67/bln dan apa yang harus direvisi bila tidak."
   V2-010:
     title: "Dedup design"
     priority: P1
@@ -112,10 +112,11 @@ gates:
   V2-009_cost_gate:
     status: NOT_STARTED
     blocks: "Pembelian infrastruktur (VPS 8, storage, backup)."
-    note: "Harga Master + VPS 8 belum terverifikasi panel; biaya storage/backup belum dihitung."
+    note: "Harga Master + VPS 8 belum terverifikasi panel; biaya storage/backup belum dihitung. ADDENDUM Cycle 12: pembelian VPS 8 SUDAH terjadi 14:41 atas keputusan langsung owner (D4) — gerbang ini tidak lagi menahan pembelian; verifikasi berlanjut sebagai verifikasi pasca-beli."
   purchase_gate:
-    status: NOT_READY
+    status: CANCELLED
     blocks: "Pembelian VPS 8."
+    note: "Cycle 12 (23 Nov 14:41): owner membeli VPS 8 langsung (vmi3778263) — gerbang pembelian 06:31 SUPERSEDED oleh keputusan owner. Kondisi di bawah TIDAK lagi menahan pembelian; V2-009 berlanjut sebagai verifikasi pasca-beli. Status memakai kosakata direktif (CANCELLED = gerbang sebagai penahan pembelian dibatalkan oleh keputusan owner; bukan status baru)."
     conditions:
       - "Fase 0 lolos (semua metrik kritis tidak memburuk, 72 jam observasi)"
       - "Demand mendekati 12-16 stream ATAU 6 stream key terisi + antrean siap-live >= 10 (kriteria diperkuat di VPS8_PURCHASE_GATE.md — demand + operational risk + verified cost)"
