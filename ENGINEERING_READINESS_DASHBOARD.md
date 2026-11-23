@@ -1,12 +1,6 @@
 # ENGINEERING READINESS DASHBOARD — MASJAVAS TUBE OS
 
-**Terakhir diperbarui:** 23 Nov 2026, 19:00 WIB (Cycle 13 + addendum:
-R30 RESOLVED + D16 DIEKSEKUSI — tunnel di-restart 19:00, URL publik pulih;
-sebelumnya 18:50: hasil 15:00 SEBAGIAN BERHASIL — R24/OQ-057; R25 RESOLVED
-(cd4fb7a aktif 16:38:51); R27–R30 baru; D13 DONE + D15/D16 baru; V2-009
-F.2–F.5 dikerjakan — storage $0 DB-only, TCO MINIMUM $34,77–$34,86 LEBIH
-cap tipis; kesiapan gerbang TETAP ±65% per laporan 15:20 — belum dinilai
-ulang pasca-18:52)
+**Terakhir diperbarui:** 23 Nov 2026, 22:50 WIB (Cycle 14: D15 DIPUTUSKAN + DIEKSEKUSI — f7ee5ce AKTIF di Master (web 19:15, live 19:50:52, worker 20:39:14), auto-heal fix TERBUKTI, R28 RESOLVED; R30 DIKOREKSI — diagnosis tunnel SALAH (jalur sebenarnya router studio → Caddy; Web Guardian v2.1 aktif 19:07); R31 baru (UX /live migrasi); OQ-060/061/062 baru; D17 baru (arsitektur multi-node v1.0 DRAFT menunggu persetujuan); R29 sebagian teratasi (DR backup symlink valid, restore drill belum); kesiapan gerbang TETAP ±65% per laporan 15:20 — belum dinilai ulang pasca-18:52)
 **Sumber:** `AUTONOMOUS_WORK_LOG.md`, `BATCH1_EXECUTION_TICKETS_V2.md`,
 dokumen frozen V2.0, bukti audit V2-001.
 **Sumber status resmi:** `STATUS_REGISTRY.yaml` — bila ada perbedaan
@@ -26,13 +20,14 @@ owner, D4 DIPUTUSKAN**; **3 stream MIGRASI ke VPS 8 (15:51–16:38, Master 0
 live)**; hasil 15:00 SEBAGIAN BERHASIL (R24: 114 relink tapi UNLISTED +
 kill loop; 707 tanpa relink; ledger tahap 2 BEKERJA; kesiapan TETAP ±65%
 per laporan 15:20); **f7ee5ce AKTIF di VPS 8 (18:27:55 — RTMP timeout 0/27
-mnt, TERBUKTI) tapi BELUM AKTIF di Master (R28/D15)**; **URL PUBLIK sempat
-MATI (tunnel edge stale 6 hari — R30, PULIH TOTAL 19:00 via restart tunnel,
-D16 DIEKSEKUSI)**; V2-009 F.2–F.5 dikerjakan Cycle 13
+mnt, TERBUKTI) DAN di Master (web 19:15, live 19:50:52, worker 20:39:14 —
+auto-heal fix TERBUKTI, R28 RESOLVED, D15 DIEKSEKUSI)**; **URL PUBLIK PULIH
+(R30 RESOLVED — diagnosis tunnel DIKOREKSI Cycle 14: bukan tunnel; Web
+Guardian v2.1 aktif 19:07)**; V2-009 F.2–F.5 dikerjakan Cycle 13
 (storage $0 DB-only; TCO MINIMUM $34,77–$34,86 — LEBIH cap $0,10–$0,19;
 verdict C-1/C-2/C-4 tetap TIDAK DAPAT DINILAI — F.1 menunggu user);
 keputusan provider KEIN ditutup atas asumsi owner tanpa bukti live; risiko
-split-brain box lama (R14) sudah RESOLVED 07:05 WIB. Fondasi dokumen
+split-brain box lama (R14) sudah RESOLVED 07:05 WIB. Arsitektur multi-node v1.0 DRAFT (D17 menunggu persetujuan owner). Fondasi dokumen
 (arsitektur + checklist frozen) kuat — yang kurang adalah bukti eksekusi,
 verifikasi biaya, dan pembuktian pemulihan 15:00.
 
@@ -65,7 +60,7 @@ verifikasi biaya, dan pembuktian pemulihan 15:00.
 |---|---|
 | Production stabilization risks reviewed | READY WITH ACCEPTED RISKS (P1–P16 di EVALUASI_SEBELUM_PERBAIKAN; V2-002 + V2-003 selesai — P16 terdiagnosis, Guard v2 diaudit; V2-004 belum diaudit) |
 | KEIN fallback decision presented to owner | READY WITH ACCEPTED RISKS (V2-001 EXECUTED atas asumsi owner; KOREKSI 07:05: audit V2-001 di host salah — tidak ada bukti live; matriks harga tetap valid) |
-| Monitoring and alerting plan ready | NOT READY (arah: heartbeat + watchdog eksternal dulu; rencana detail belum ada) |
+| Monitoring and alerting plan ready | NOT READY (Web Guardian v2.1 AKTIF 19:07 — cek 3 lapis 5 mnt + auto-restart Caddy, uji end-to-end lolos — komponen pertama; rencana detail (heartbeat eksternal dsb.) belum ada) |
 | Backup and restore procedure ready | NOT READY (RPO/RTO = target, belum dibuktikan restore drill) |
 | Recovery targets documented and testable | NOT READY |
 
@@ -88,8 +83,8 @@ verifikasi biaya, dan pembuktian pemulihan 15:00.
 | A | Production stabilization | IN_PROGRESS | V2-002 + V2-003 READY_FOR_REVIEW; V2-004 tiket lengkap (Cycle 5), menunggu eksekusi; P1–P16 terdokumentasi |
 | B | KEIN fallback readiness | IN_PROGRESS | V2-001 EXECUTED dengan keterbatasan bukti (audit di host salah; Q5/Q6 ditutup atas asumsi owner 06:55 — bukan bukti live) |
 | C | Orchestrator & job lifecycle | NOT_STARTED | Desain di V2.0 + orchestrator doc; kontrak API detail belum ditulis |
-| D | VPS8 infrastructure readiness | IN_PROGRESS | VPS 8 DIBELI owner 14:41 (`vmi3778263`, Cloud VPS 8, EU, no setup); 3 stream MIGRASI 15:51–16:38 (706 15:51, 114/707 ~16:30–16:38 — observasi canary 1 jam TIDAK selesai penuh); Master 0 live; VPS 8 3/3 STREAMING 18:52 (f7ee5ce aktif, RTMP timeout 0/27 mnt); Fase 1 berjalan via Antigravity — program memantau, tidak mengeksekusi; runbook + acceptance + rollback sudah ada sebagai dokumen |
-| E | Backup, monitoring, recovery | NOT_STARTED | Arah di V2.0 §12–§13; rencana detail belum ada |
+| D | VPS8 infrastructure readiness | IN_PROGRESS | VPS 8 DIBELI owner 14:41 (`vmi3778263`, Cloud VPS 8, EU, no setup); 3 stream MIGRASI 15:51–16:38 (706 15:51, 114/707 ~16:30–16:38 — observasi canary 1 jam TIDAK selesai penuh); Master 0 live; VPS 8 3/3 STREAMING 18:52 (f7ee5ce aktif, RTMP timeout 0/27 mnt); f7ee5ce kini AKTIF di Master juga (D15, 19:50:52); prep worker VPS 8 BELUM berjalan (T1 prompt 19:43); arsitektur multi-node v1.0 DRAFT (D17 menunggu persetujuan); Fase 1 berjalan via Antigravity — program memantau, tidak mengeksekusi; runbook + acceptance + rollback sudah ada sebagai dokumen |
+| E | Backup, monitoring, recovery | NOT_STARTED | Arah di V2.0 §12–§13; rencana detail belum ada; Web Guardian v2.1 aktif 19:07 (komponen monitoring pertama); DR backup kini symlink valid (R29), restore drill belum dilakukan |
 | F | Deployment & release mgmt | NOT_STARTED | Manifest rilis di V2.0; rencana detail belum ada |
 | G | Security & access control | NOT_STARTED | — |
 | H | Documentation & execution readiness | IN_PROGRESS | 14/14 artefak §9 ada (12 selesai + di-push ke repo 22 Nov 12:37); repo MASJAVAS-PLAN-OS-NEW 21 file |
@@ -132,17 +127,18 @@ verifikasi biaya, dan pembuktian pemulihan 15:00.
 | R17 | Konfigurasi split guard V2/admission legacy + flag menyesatkan; alasan flag `false` tidak diketahui (OQ-010) | P1 | OPEN (V2-003-R1/R5) |
 | R18 | Atribusi lane ingestion buta (daemon → lane `other`; governor tidak bisa melihat ingestion) | P1 | OPEN (V2-003-R3) |
 | R19 | Orphan 706 mengudara TANPA AUDIO ±17 jam (pipe tanpa feeder sejak restart 14:42; bitrate tetap HEALTHY sehingga tak terdeteksi) | P1 | RESOLVED (restart manual 08:10:28 — audio mengalir, feeder 19,4 MB) |
-| R20 | Live MATI MASSAL 22 Nov 14:47 (4 stream/21 dtk) + pemulihan tidak andal (reconnect gagal DB-lock; status desync; 706 tanpa reconnect; encoder ganda 707; relay task mati; supervisor "hard exiting") | P0 | OPEN — mekanisme TERBUKTI 15:30 (overwrite stale-`now` daemon vs supervisor; health check STREAMING-only); live PULIH 15:16 (4/4 STREAMING, audio terverifikasi 15:29) tapi TIDAK STABIL (sentinel ghost-kill 114 2×; 3 proses pemulihan berpacu; encoder ganda 114; fix sentinel belum ter-deploy). KEKAMBUHAN 23 Nov 17:18:57: ketiga task Master STOPPED serentak (rc=1, pola B10), restart live 17:19:05 TIDAK menghidupkan satu pun (±80 mnt s.d. 18:39 — benar karena sudah migrasi; VPS 8 3/3 STREAMING 18:52) |
+| R20 | Live MATI MASSAL 22 Nov 14:47 (4 stream/21 dtk) + pemulihan tidak andal (reconnect gagal DB-lock; status desync; 706 tanpa reconnect; encoder ganda 707; relay task mati; supervisor "hard exiting") | P0 | OPEN — mekanisme TERBUKTI 15:30 (overwrite stale-`now` daemon vs supervisor; health check STREAMING-only); live PULIH 15:16 (4/4 STREAMING, audio terverifikasi 15:29) tapi TIDAK STABIL (sentinel ghost-kill 114 2×; 3 proses pemulihan berpacu; encoder ganda 114; fix sentinel belum ter-deploy). KEKAMBUHAN 23 Nov 17:18:57: ketiga task Master STOPPED serentak (rc=1, pola B10), restart live 17:19:05 TIDAK menghidupkan satu pun (±80 mnt s.d. 18:39 — benar karena sudah migrasi; VPS 8 3/3 STREAMING 18:52). Update Cycle 14: 3 task Master tetap STOPPED (ekspektasi pasca-migrasi); guard memblokir start ulang (terverifikasi 19:54, klik MONA ditolak); restart live 19:50:52 TIDAK me-restart task migrasi — auto-heal fix TERBUKTI (→ R28/D15) |
 | R21 | Relink publik gagal di UI ("Failed to fetch") + sentinel BUTA (bot-check) membunuh siaran sehat tiap ±4 mnt (RIFFORA tayang 19:00:32–19:04:40 lalu dibunuh sentinel) | P0 | OPEN — diagnosis SELESAI 19:08 (panggilan YouTube sinkron membekukan worker 60–120 dtk; probe kena LOGIN_REQUIRED; relink tanpa pemanggil otonom); perbaikan menunggu keputusan owner |
-| R22 | Kuota YouTube API 3 vault live HABIS (±21:25 22 Nov) dibakar lingkaran kill-relink; keempat live GELAP di YouTube sejak ±21:30 meski dashboard STREAMING | P0 | OPEN — REM DI-DEPLOY 03:53 23 Nov (commit 96e5ee4); lingkaran kill BERHENTI (0 kill jendela 18:08–18:39, total 770; monitor 18:39). Ledger tahap 2 TERVERIFIKASI 15:20 (INSERT 50 + BIND 50 vault 114; relink 150 unit, bukan 101). Ensurer TERBUKTI relink 114 15:09:44 — tapi broadcast UNLISTED (→ R24) |
+| R22 | Kuota YouTube API 3 vault live HABIS (±21:25 22 Nov) dibakar lingkaran kill-relink; keempat live GELAP di YouTube sejak ±21:30 meski dashboard STREAMING | P0 | OPEN — REM DI-DEPLOY 03:53 23 Nov (commit 96e5ee4); lingkaran kill BERHENTI (0 kill jendela 18:08–18:39, total 770; monitor 18:39). Ledger tahap 2 TERVERIFIKASI 15:20 (INSERT 50 + BIND 50 vault 114; relink 150 unit, bukan 101). Ensurer TERBUKTI relink 114 15:09:44 — tapi broadcast UNLISTED (→ R24). Update Cycle 14: 0 kill sejak 17:39 (total 770); badai kuota BERAKHIR (0 quotaExceeded web/live 20:47–21:52); 3 badai berakhir (kuota, flapping guardian, worker hard-exiting — run 21:45) |
 | R23 | Slot 698 (RUANGIRAMA) DIHAPUS 06:06 WIB 23 Nov (stop manual + DELETE, IP 103.214.112.181) — guardian mencoba membangkitkannya tiap 30 dtk | P1 | RESOLVED (asal + loop) / OPEN (nasib) — ASAL TERKONFIRMASI: MONA yang menghapus, dikonfirmasi user 09:11 ("mona yang hapus"); guardian loop MATI sejak restart live 08:48 (KONTEKS_MASALAH_TERBARU §3.4). SISA: task baru belum dibuat — menunggu keputusan MONA (D12). CATATAN POSITIF: reaper encoder ganda commit 33f1c15 TERVERIFIKASI bekerja (sensus 06:48: tepat 3 encoder, 0 duplikat) — duplikat encoder bukan lagi masalah aktif |
-| R24 | Pemulihan 15:00 untuk 114/707 BELUM TERBUKTI — encoder STREAMING tapi broadcast belum ada (114 `broadcast_id` KOSONG; 707 broadcast `YFmbo1wSusM` oEmbed 404); rantai encoder→broadcast→live belum pernah dibuktikan untuk keduanya | P0 | OPEN — HASIL 15:00–15:10 SEBAGIAN BERHASIL (verifikasi 15:20, `~/memory/2026-11-23.md` l.1481): ensurer relink 114 15:09:44 (`VBTMKKdxWTc`) TAPI UNLISTED (oEmbed 401) → kill loop 3× + breaker TRIPPED pertama kali 15:20:09; 707 TIDAK relink (tanpa INSERT/BIND, `YFmbo1wSusM` 404); ledger tahap 2 BEKERJA; kesiapan TETAP ±65%. Lanjutan: 114 dapat broadcast PUBLIK `BzQp5x9zgAU` di VPS 8 (16:43, oEmbed 200); 707 churn broadcast (`GPC6SyIjBC0` 16:46 → `6Yy95afrjtQ` 17:02) — 707 belum terbukti live publik stabil |
+| R24 | Pemulihan 15:00 untuk 114/707 BELUM TERBUKTI — encoder STREAMING tapi broadcast belum ada (114 `broadcast_id` KOSONG; 707 broadcast `YFmbo1wSusM` oEmbed 404); rantai encoder→broadcast→live belum pernah dibuktikan untuk keduanya | P0 | OPEN — HASIL 15:00–15:10 SEBAGIAN BERHASIL (verifikasi 15:20, `~/memory/2026-11-23.md` l.1481): ensurer relink 114 15:09:44 (`VBTMKKdxWTc`) TAPI UNLISTED (oEmbed 401) → kill loop 3× + breaker TRIPPED pertama kali 15:20:09; 707 TIDAK relink (tanpa INSERT/BIND, `YFmbo1wSusM` 404); ledger tahap 2 BEKERJA; kesiapan TETAP ±65%. Lanjutan: 114 dapat broadcast PUBLIK `BzQp5x9zgAU` di VPS 8 (16:43, oEmbed 200); 707 churn broadcast (`GPC6SyIjBC0` 16:46 → `6Yy95afrjtQ` 17:02) — 707 belum terbukti live publik stabil. Update Cycle 14: 114 publik TERBUKTI (oEmbed 200); 707 tetap belum terbukti live publik stabil; R24 tetap OPEN |
 | R25 | Perbaikan schema lock `cd4fb7a` BELUM BERJALAN — commit 14:02:53, tapi restart live 13:50:05 + web 14:00:57 keduanya SEBELUM commit; kode ada di disk tapi belum aktif di service mana pun; klaim "0 DB lock" TIDAK PRESIS (5 lock 13:54:59–14:00:00) | P1 | RESOLVED (Cycle 13) — restart live 16:38:51 MENGAKTIFKAN cd4fb7a (bagian migrasi, bukan jadwal terpisah — dicatat jujur). D13 → DONE. Laju error worker turun separuh pasca-restart; DB lock masih muncul sesekali (FAILED task 4571 18:10:13, pulih 18:52) — cd4fb7a mengurangi, bukan menghilangkan |
-| R26 | CPU Master JENUH — bottleneck mengikat (load 6,60/6,11/6,42 pada 4 vCPU); ffmpeg live ~165% (2 encoder) + audio_reassembler + yt-dlp ~53%; ketidakstabilan encoder BEROTASI antar task (706→707→114) → starvation sumber daya bersama; RAM BUKAN bottleneck (3,9 GB tersedia) | P0 | OPEN — 3 stream MIGRASI ke VPS 8 (15:51–16:38); load Master TURUN DRASTIS (0,95/1,40/2,99 pukul 18:52); publish PULIH (PUBLISHED 80, FAILED 0, QUEUED 122, 18:52); bottleneck kini SEMAPHORE (20×/59 mnt vs DB lock 7×, 18:06). RTMP timeout VPS 8 TERATASI oleh f7ee5ce (→ R27); Master 3 task STOPPED serentak 17:18:57 pola B10 (→ R20) |
-| R27 | Encoder VPS 8 restart massal berulang (ke-4 ~17:46, ke-5 ~18:04, ke-6 ~18:22) — RTMP "Connection timed out" (exit 146; 15 error/19 mnt) | P0 | DIAGNOSED — MEKANISME RTMP TERATASI di VPS 8: f7ee5ce AKTIF (live restart 18:27:55, PID 56297) → RTMP timeout 0 dalam 27 mnt (vs 15/19 mnt sebelumnya) — fix TERBUKTI BEKERJA (18:52–18:54). SISA: restart ke-7 ~18:50 penyebab BUKAN RTMP timeout (belum diketahui) — OQ-059 |
-| R28 | Perbaikan sistemik `f7ee5ce` BELUM BERJALAN di Master — commit 18:33:27 (10 file: semaphore Opsi A, RTMP resilient, auto-heal, master_watchdog, DR backup/sync, remediate_duplicates) | P1 | OPEN (SEBAGIAN) — AKTIF di VPS 8 (restart 18:27:55; RTMP timeout 0/27 mnt — TERBUKTI); BELUM AKTIF di Master (web PID 4134208 sejak 17:08, live PID 4158014 sejak 17:19; layanan belum restart, 18:52) — butuh restart terencana (D15) |
-| R29 | DR backup KOSONG + watchdog VPS 8 diam — `dr_backup_20261123_155910.sqlite` 0 byte (17:02); watchdog 0 entri journal | P1 | OPEN — f7ee5ce menyertakan `dr_backup_master.sh` + `dr_sync_from_master.sh` (aktif di VPS 8 sejak 18:27:55, belum terverifikasi menghasilkan backup berisi); DR backup pertama yang berisi BELUM PERNAH terlihat |
-| R30 | URL PUBLIK MATI TOTAL — curl publik timeout 2× (20 dtk + 25 dtk), self-test Master HTTP 000 (11,2 dtk); web lokal CEPAT (0,77 dtk) + tunnel cloudflared HIDUP (PID 69061, 6 hari) | P0 | RESOLVED (Cycle 13, addendum 19:00) — tunnel DI-RESTART atas persetujuan user 19:00 (PID 69061 → 139105, 19:00:09): curl publik `/` HTTP 200 dalam 2,07 dtk; self-test Master HTTP 200 dalam 1,76 dtk; `/performance/compliance` HTTP 307 dalam 1,42 dtk. URL PUBLIK PULIH TOTAL. Pelajaran: tunnel 6 hari bisa basi tanpa error di log — restart berkala / monitoring konektivitas publik diperlukan |
+| R26 | CPU Master JENUH — bottleneck mengikat (load 6,60/6,11/6,42 pada 4 vCPU); ffmpeg live ~165% (2 encoder) + audio_reassembler + yt-dlp ~53%; ketidakstabilan encoder BEROTASI antar task (706→707→114) → starvation sumber daya bersama; RAM BUKAN bottleneck (3,9 GB tersedia) | P0 | OPEN — 3 stream MIGRASI ke VPS 8 (15:51–16:38); load Master TURUN DRASTIS (0,95/1,40/2,99 pukul 18:52); publish PULIH (PUBLISHED 80, FAILED 0, QUEUED 122, 18:52); bottleneck kini SEMAPHORE (20×/59 mnt vs DB lock 7×, 18:06). RTMP timeout VPS 8 TERATASI oleh f7ee5ce (→ R27); Master 3 task STOPPED serentak 17:18:57 pola B10 (→ R20). Update Cycle 14: f7ee5ce Opsi A kini AKTIF di Master (web 19:15, live 19:50:52, worker 20:39:14 — → R28); 21:45: 0 db-locked + 0 Traceback di 3 service (jam tenang ke-2); publish PUBLISHED 155, FAILED 1 (op 4570 db-locked 20:23:54, belum retry) |
+| R27 | Encoder VPS 8 restart massal berulang (ke-4 ~17:46, ke-5 ~18:04, ke-6 ~18:22) — RTMP "Connection timed out" (exit 146; 15 error/19 mnt) | P0 | DIAGNOSED — MEKANISME RTMP TERATASI di VPS 8: f7ee5ce AKTIF (live restart 18:27:55, PID 56297) → RTMP timeout 0 dalam 27 mnt (vs 15/19 mnt sebelumnya) — fix TERBUKTI BEKERJA (18:52–18:54). SISA: restart ke-7 ~18:50 penyebab BUKAN RTMP timeout (belum diketahui) — OQ-059; update Cycle 14: kematian massal ke-8 19:55:13–19:55:18 (706 exit 224, 114 exit 152, 707 exit 224 — BUKAN RTMP timeout 146); auto-reconnect pulih ~30 dtk (PID 81858/81892/81943); penyebab → OQ-060 (T7 prompt 19:43). RTMP timeout 2×/43 mnt pasca-f7ee5ce (vs 15×/19 mnt pra — fix bekerja tapi belum sempurna) |
+| R28 | Perbaikan sistemik `f7ee5ce` BELUM BERJALAN di Master — commit 18:33:27 (10 file: semaphore Opsi A, RTMP resilient, auto-heal, master_watchdog, DR backup/sync, remediate_duplicates) | P1 | RESOLVED (Cycle 14) — AKTIF di Master: web restart 19:15:04 (PID 168462, f7ee5ce + cea60b8), live restart 19:50:52 (PID 4158014 → 231356; auto-heal fix TERBUKTI — 3 task migrasi tetap STOPPED, 0 auto-heal di journal), worker restart 20:39:14 (PID 306566; kode f7ee5ce terkait belum-commit kini LIVE). CATATAN: flag --lane publish di worker belum terverifikasi → OQ-062 (T2 prompt 19:43). D15 → DIPUTUSKAN + DIEKSEKUSI |
+| R29 | DR backup KOSONG + watchdog VPS 8 diam — `dr_backup_20261123_155910.sqlite` 0 byte (17:02); watchdog 0 entri journal | P1 | OPEN — SEBAGIAN TERATASI (Cycle 14): file DR backup kini symlink VALID ke snapshot (bukan lagi 0 byte) — terverifikasi 19:39; DR sync BERHASIL (log 11:37 CET = 17:37 WIB, snapshot SQLite OK + workspace tersinkron 621 channel, 7,1 GB). SISA: restore drill BELUM dilakukan — RPO/RTO tetap target tanpa bukti |
+| R30 | URL PUBLIK MATI TOTAL — curl publik timeout 2× (20 dtk + 25 dtk), self-test Master HTTP 000 (11,2 dtk); web lokal CEPAT (0,77 dtk) + tunnel cloudflared HIDUP (PID 69061, 6 hari) | P0 | RESOLVED (Cycle 13, addendum 19:00) — URL PUBLIK PULIH TOTAL (curl publik `/` HTTP 200/2,07 dtk; self-test Master HTTP 200/1,76 dtk). **KOREKSI DIAGNOSIS (Cycle 14, 19:05–19:07): 'tunnel edge stale' SALAH.** Jalur sebenarnya: Internet → 103.214.112.181 (router studio, port forward) → Master:443 (Caddy) → web:8080; Quick Tunnel TIDAK di jalur `masjavastube.my.id` (bukti: URL tetap HTTP 200/0,75 dtk saat tunnel DIHENTIKAN total). Restart tunnel 19:00 = kebetulan, bukan penyebab pulih. Perbaikan yang benar: **Web Guardian v2.1 AKTIF 19:07** (cek 3 lapis 5 mnt + auto-restart Caddy; uji end-to-end 19:06 lolos). JANGAN usulkan 'restart tunnel berkala' sebagai mitigasi; bila URL publik mati lagi dan web+Caddy lokal OK → cek router studio, BUKAN tunnel |
+| R31 | UX dashboard `/live` menyesatkan untuk task migrasi — 3 kartu 'Siaran dihentikan (migrated_to_live-01)' + tombol 'Mulai Siar' aktif padahal ketiganya live di VPS 8 (screenshot MONA 19:54) | P2 | OPEN (Cycle 14) — guard migrasi f7ee5ce BEKERJA (klik MONA ditolak dengan benar — terverifikasi di kode `worker/live_supervisor.py:577-578`); tindak lanjut T6 di prompt 19:43 (badge 'LIVE di live-01', nonaktifkan tombol, backend sertakan status VPS 8) |
 
 ## Owner decision register (awal)
 
@@ -159,9 +155,10 @@ verifikasi biaya, dan pembuktian pemulihan 15:00.
 | D4 | Pembelian VPS8 ($34,67/bln cap) | DIPUTUSKAN + DIEKSEKUSI 23 Nov 14:41 WIB (owner membeli langsung; `vmi3778263`, Cloud VPS 8 (2026), EU, no setup; gerbang pembelian 06:31 SUPERSEDED) | Prompt Fase 1: `PROMPT_ANTIGRAVITY_IMPLEMENTASI_VPS8_2026-11-23.md` (14:52) |
 | D12 | Nasib slot 698 — dikembalikan (buat task live baru) atau tidak? | MENUNGGU (keputusan MONA) | MONA menghapus 698 (dikonfirmasi user 09:11); guardian loop mati 08:48; channel vault-ready |
 | D13 | Jadwal restart service untuk mengaktifkan `cd4fb7a` (perbaikan schema lock) | DIPUTUSKAN + DIEKSEKUSI 23 Nov 16:38:51 WIB (restart live, bagian migrasi — bukan jadwal terpisah, dicatat jujur) | Perbaikan aktif; R25 → RESOLVED; laju error worker turun separuh |
+| D17 | Persetujuan arsitektur multi-node v1.0 (`ARSITEKTUR_MULTI_NODE_MASJAVAS_TUBE_OS_V2.md` — DRAFT 20:02 WIB; 7 prinsip mengikat P1–P7; skema DB baru `live_nodes` + kolom lease/migrasi + `node_events`; rencana migrasi F0–F9 ~12–16 hari kerja) | MENUNGGU | 10 insiden nyata 22–23 Nov (I1–I10) memotivasi desain; 4 pertanyaan terbuka untuk owner: jumlah node docel, prep di node live vs khusus, failover otomatis vs manual, akses `/nodes` untuk operator. Dokumen ditambahkan ke repo Cycle 14. |
 | D14 | Fase 2 Antigravity (bitrate conditioner + `assigned_node_id`) | MENUNGGU | Antigravity mengklaim "siap Fase 2"; persetujuan terpisah; setelah Tahap A (RENCANA §6 D4) |
-| D15 | Jadwal restart service Master untuk mengaktifkan `f7ee5ce` (semaphore Opsi A + RTMP resilient + auto-heal + watchdog + DR) | MENUNGGU | f7ee5ce AKTIF di VPS 8 (18:27:55; RTMP timeout 0/27 mnt — TERBUKTI) tapi BELUM AKTIF di Master (R28) |
-| D16 | Restart tunnel cloudflared (URL publik mati total — koneksi edge 6 hari stale) | DIPUTUSKAN + DIEKSEKUSI 23 Nov 19:00 WIB | Restart berhasil (PID 69061 → 139105, 19:00:09); curl publik 200/2,07 dtk; URL publik PULIH TOTAL (R30 → RESOLVED) |
+| D15 | Jadwal restart service Master untuk mengaktifkan `f7ee5ce` (semaphore Opsi A + RTMP resilient + auto-heal + watchdog + DR) | DIPUTUSKAN + DIEKSEKUSI 23 Nov 19:50:52 WIB | f7ee5ce AKTIF di Master: web 19:15:04 (PID 168462), live 19:50:52 (PID 4158014 → 231356; auto-heal fix TERBUKTI), worker 20:39:14 (PID 306566). R28 → RESOLVED. CATATAN: flag --lane publish di worker belum terverifikasi → OQ-062. |
+| D16 | Restart tunnel cloudflared (URL publik mati total — koneksi edge 6 hari stale) | DIPUTUSKAN + DIEKSEKUSI 23 Nov 19:00 WIB | Restart berhasil (PID 69061 → 139105, 19:00:09); curl publik 200/2,07 dtk; URL publik PULIH TOTAL (R30 → RESOLVED). KOREKSI (Cycle 14): diagnosis 'tunnel edge stale' SALAH — tunnel tidak di jalur domain; restart 19:00 kebetulan, bukan penyebab pulih. Perbaikan yang benar: Web Guardian v2.1 aktif 19:07 |
 | D5 | Sweeper batch, TX-throttle threshold, failover live auto/manual, kepemilikan janitor, limit live final, provider Master pasca-Des | MENUNGGU (plan §10) | — |
 | D6 | Aktivasi distribusi Stage 2 live (guard 422) + peluncuran batch massal | MENUNGGU (peluncuran = user) | — |
 
@@ -199,49 +196,56 @@ verifikasi biaya, dan pembuktian pemulihan 15:00.
 
 ## Next 5 actions
 
-1. **Keputusan user D15 (MENDESAK, di luar scope cron local-only):**
-   restart service Master untuk mengaktifkan `f7ee5ce` (sudah TERBUKTI
-   di VPS 8: RTMP timeout 0/27 mnt). D16 (restart tunnel) SELESAI 19:00 —
-   URL publik pulih total (R30 RESOLVED).
-2. **Diagnosis OQ-059:** penyebab restart encoder VPS 8 ke-7 (~18:50) —
-   BUKAN RTMP timeout; apa penyebabnya (di luar scope cron; butuh SSH/log).
-3. Keputusan user D9/D10 (perbaikan Guard v2 + OQ-010 prasyarat) — menunggu.
-4. Keputusan user D12 (nasib 698) + D14 (Fase 2 Antigravity) — menunggu.
+1. **Keputusan user D9/D10 + D12/D14 + D17 (arsitektur multi-node) — menunggu.**
+   D15 SELESAI Cycle 14 (f7ee5ce aktif di Master; auto-heal fix terbukti).
+   D16 SELESAI 19:00 (dengan koreksi diagnosis — lihat R30).
+2. **Diagnosis OQ-059/OQ-060:** penyebab restart encoder VPS 8 ke-7
+   (~18:50) + ke-8 (19:55, exit 224/152) — bukan RTMP timeout;
+   investigasi T7 prompt 19:43 (di luar scope cron; butuh SSH/log).
+3. **Resolusi OQ-061:** klaim run 20:45 "LIVE DOWN di VPS 8" vs verifikasi
+   19:59 "3/3 STREAMING" — verifikasi langsung di VPS 8 / sisi YouTube
+   (monitor lane / sesi interaktif).
+4. **Verifikasi OQ-062:** flag --lane publish aktif di worker Master
+   pasca-restart 20:39:14 (PID 306566)? — T2 prompt 19:43.
 5. **V2-009 F.1 (angka panel Contabo dari user, sekali, dengan tanggal):**
    harga Master aktual + harga VPS 8 aktual/renewal + setup + kuota trafik
    + snapshot + komposisi kontrak 12 bulan $190,21 — baru setelah itu
    verdict C-1/C-2/C-4 dapat dikeluarkan (F.6). F.2–F.5 SELESAI Cycle 13
    (bukti `v2-009/`).
-6. Fase 1 VPS 8 lanjutan (lane Antigravity, di luar scope cron): verifikasi
-   backup DR berisi (> 0 byte, R29) + worker prep canary (1.5) + worker
-   prep penuh (1.6); ingestion/LoopGen BELUM pindah (0 proses di VPS 8
-   per 17:02).
-7. Eksekusi audit V2-004 (janitor) saat sesi interaktif tersedia — tiket
+6. **Perbaikan UX /live untuk task migrasi (R31, T6 prompt 19:43):** badge
+   "LIVE di live-01", nonaktifkan tombol Mulai Siar/Paksa, backend sertakan
+   status VPS 8.
+7. **Fase 1 VPS 8 lanjutan (lane Antigravity, di luar scope cron):** prep
+   worker VPS 8 (T1: 1.5 canary → 1.6 full; Stage 2 driver Master PID
+   1338969 dimatikan setelah 1.6 jalan); verifikasi backup DR berisi +
+   restore drill (R29 — file kini symlink valid, drill belum dilakukan);
+   ingestion/LoopGen BELUM pindah (0 proses di VPS 8 per 19:39).
+8. Eksekusi audit V2-004 (janitor) saat sesi interaktif tersedia — tiket
    lengkap; tangkap `deletion_audit` SEGERA (retensi belum diketahui, OQ-014).
-8. Eksekusi audit V2-005 (baseline snapshot) saat sesi interaktif tersedia —
+9. Eksekusi audit V2-005 (baseline snapshot) saat sesi interaktif tersedia —
    tiket lengkap; snapshot adalah lantai gerbang Fase 0 (rollback
    satu-metrik butuh angka acuan yang sah); baca schema dulu sebelum query
    (OQ-016/017/018).
-9. Eksekusi audit V2-006 (service inventory) saat sesi interaktif tersedia —
-   tiket lengkap; nama unit systemd dari V2-005 F.3 wajib diverifikasi dulu
-   (OQ-019); hasil V2-006 adalah input V2-007 (penulis DB, OQ-022) + V2-008
-   (worker untuk benchmark) + P3.
-10. Eksekusi audit V2-007 (schema audit — GERBANG TEKNIS) saat sesi interaktif
+10. Eksekusi audit V2-006 (service inventory) saat sesi interaktif tersedia —
+    tiket lengkap; nama unit systemd dari V2-005 F.3 wajib diverifikasi dulu
+    (OQ-019); hasil V2-006 adalah input V2-007 (penulis DB, OQ-022) + V2-008
+    (worker untuk benchmark) + P3.
+11. Eksekusi audit V2-007 (schema audit — GERBANG TEKNIS) saat sesi interaktif
     tersedia — tiket lengkap; backup konsisten DULU lalu audit dari SALINAN
     (OQ-024); gerbang menahan V2-010 sampai disetujui.
-11. Eksekusi benchmark V2-008 saat sesi interaktif tersedia — tiket lengkap;
+12. Eksekusi benchmark V2-008 saat sesi interaktif tersedia — tiket lengkap;
     ukur konsumsi aktual per worker + uji concurrency Stage 2 (1 vs 2 slot) —
     F.6 HANYA dengan materi uji ATAU persetujuan user bila menyentuh antrean
     produksi; angka concurrency final menggantikan PROPOSAL capacity model.
     R26/R27 (load Master turun drastis pasca-migrasi; RTMP VPS 8 teratasi)
     memperkuat urgensi benchmark ini sebagai pembanding pasca-canary.
-12. Eksekusi verifikasi V2-009 (pasca-beli) saat sesi interaktif tersedia —
+13. Eksekusi verifikasi V2-009 (pasca-beli) saat sesi interaktif tersedia —
     F.1 (item 5 di atas) + F.6 verdict C-1–C-5.
-13. Eksekusi desain V2-010 saat sesi interaktif tersedia — HANYA setelah
+14. Eksekusi desain V2-010 saat sesi interaktif tersedia — HANYA setelah
     V2-007 DISETUJUI (gerbang teknis keras); desain mengikuti cabang OQ-027;
     OQ-046–OQ-055 dijawab dari data V2-007 + kode; TANPA migration
     (migration = tiket L3 terpisah setelah desain disetujui user).
-14. Jawab OQ-005/006 (host benar) + OQ-011/012 + OQ-013/014/015 (saat
+15. Jawab OQ-005/006 (host benar) + OQ-011/012 + OQ-013/014/015 (saat
     eksekusi V2-004) + OQ-016/017/018 (saat eksekusi V2-005) +
     OQ-019/020/021/022/023 (saat eksekusi V2-006) + OQ-024/025/026/027/028
     (saat eksekusi V2-007) + OQ-029/030/031/032/033/034/035 (saat eksekusi
@@ -252,4 +256,6 @@ verifikasi biaya, dan pembuktian pemulihan 15:00.
     aktual VPS 8 yang dibayar — F.1) + OQ-057 (TERJAWAB SEBAGIAN Cycle 13:
     ensurer relink 114 15:09:44 YA, tapi UNLISTED; 707 TIDAK relink; ledger
     tahap 2 BEKERJA 150 unit) + OQ-058 (syarat komersial free plan
-    UptimeRobot) + OQ-059 (penyebab restart encoder VPS 8 ke-7).
+    UptimeRobot) + OQ-059 (penyebab restart encoder VPS 8 ke-7) + OQ-060
+    (penyebab exit 224/152 ke-8) + OQ-061 (konflik klaim LIVE DOWN VPS 8)
+    + OQ-062 (flag --lane publish pasca-restart worker 20:39:14).
