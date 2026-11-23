@@ -2,6 +2,7 @@
 
 **Dokumen acuan (frozen):** `MASTER_ARCHITECTURE_MASJAVAS_TUBE_OS_V2.md` (Draft Baseline),
 `IMPLEMENTATION_CHECKLIST_MASJAVAS_TUBE_OS_V2.md` (v1.0)
+**Versi:** 2.0 — V2-010 diperluas Cycle 11, 23 Nov 10:50 WIB (cron local-only) — 10/10 tiket lengkap; KOREKSI: hitung registry ticket_complete/stub diperbaiki (lihat STATUS_REGISTRY.yaml)
 **Versi:** 1.9 — V2-009 diperluas Cycle 10, 23 Nov 06:50 WIB (cron local-only)
 **Versi:** 1.8 — V2-008 diperluas Cycle 9, 23 Nov 02:50 WIB (cron local-only)
 **Versi:** 1.7 — V2-007 diperluas Cycle 8, 22 Nov 22:50 WIB (cron local-only)
@@ -3189,18 +3190,423 @@ diterima.**
 
 ---
 
-# TIKET V2-010 — DEDUPLICATION DESIGN PROPOSAL (STUB)
+# TIKET V2-010 — DEDUPLICATION DESIGN PROPOSAL
 
-**Prioritas:** P1 | **Workstream:** P3.2 (desain saja) | **Status:** NOT_STARTED
-**Dependency:** V2-007 DISETUJUI (keras — tidak bisa mulai teknis sebelumnya)
+**Judul:** Rancang `deduplication_key` (`channel_id + job_kind + generation`)
++ aturan generation + unique constraint + status aktif + lease/fencing/
+idempotency + migration plan expand-and-contract — BERDASARKAN hasil audit
+schema V2-007 yang DISETUJUI. Proposal desain + migration plan
+(backward-compatible) — TANPA eksekusi migration.
+**Prioritas:** P1 — HIGH | **Workstream:** P3.2 (desain saja)
+**Owner:** Muse (desain) — keputusan schema/migration/implementasi: user
+**Status:** NOT_STARTED (tiket lengkap — eksekusi DESAIN menunggu V2-007
+DISETUJUI; gerbang teknis keras, checklist §14)
+**Dibuat:** 22 Nov 2026 (stub) — **Diperluas:** 23 Nov 2026 10:50 WIB
+(Cycle 11, cron local-only)
+**Dependency:** V2-007 DISETUJUI (keras — tidak bisa mulai teknis
+sebelumnya; checklist l.1070); input V2-005 (baseline churn + durasi job),
+V2-006 (peta penulis DB, OQ-022), V2-008 (durasi job aktual — bila sudah
+jalan; bila belum, pakai nilai PR kontrak dengan label), API contract v1
+(`ORCHESTRATOR_API_CONTRACT_V1.md`), dokumen frozen V2.0 §8.2/§8.3/§8.4/
+§9.2/§9.3 + checklist P3.2
+**Diblokir oleh:** V2-007 belum dieksekusi/disetujui — **PERLUASAN TIKET
+INI BUKAN MULAI TEKNIS.** Menulis tiket lengkap adalah persiapan dokumen
+(seperti V2-008/V2-009 yang diperluas sebelum dependensinya dieksekusi);
+pekerjaan desain F.1–F.6 BARU boleh dimulai setelah `work_status` V2-007
+= APPROVED. Bila V2-007 menolak perluasan `operational_tasks` (OQ-027 =
+tabel baru), desain mengikuti cabang tabel-baru; bila V2-007 kondisional,
+desain mencatat cabang yang dipilih + alasan cabang lain ditolak.
 
-**Scope:** rancang `deduplication_key` (`channel_id + job_kind + generation`)
-+ aturan generation + unique constraint + status aktif, BERDASARKAN hasil
-audit schema V2-007. Proposal desain + migration plan (backward-compatible) —
-TANPA eksekusi migration.
-**Aturan checklist §14:** V2-010 belum boleh melakukan migration sebelum
-hasil V2-007 disetujui.
-**Batas:** desain + dokumen saja; JANGAN sentuh schema.
+## A. Masalah
+
+Pekerjaan terbuang akibat job SUPERSEDED: **333 SUPERSEDED vs 123
+COMPLETED dalam 7 hari (churn 66%)** — sweeper + Fleet Runner + retry
+handler + scheduler + manual trigger membuat job BARU untuk channel yang
+job-nya masih berjalan (G9, RENCANA_ORCHESTRATOR l.40/l.93). Tidak ada
+deduplication key hari ini: tidak ada yang mencegah dua job aktif untuk
+satu pekerjaan logis yang sama, tidak ada aturan generation yang
+membedakan "pekerjaan baru yang memang diperlukan" dari "retry yang salah
+dianggap job baru", dan tidak ada fencing yang mencegah hasil job lama
+menimpa hasil generation terbaru. Konsekuensi: CPU/render/ingestion
+terbakar untuk pekerjaan yang akhirnya dibuang, antrean macet oleh
+duplikat, dan metrik throughput (206 PUBLISHED/hari) dibayar dengan kerja
+tiga kali lipat.
+
+Risiko desain yang salah sama besarnya dengan tidak mendesain: checklist
+l.1070 melarang membangun "sistem antrean kedua di atas
+`operational_tasks` yang mungkin sebenarnya sudah dapat diperluas" —
+karena itu desain ini TIDAK BOLEH ditulis dari ingatan tentang schema.
+Satu-satunya input schema yang sah adalah hasil V2-007 yang disetujui
+(dump schema + jawaban perluas-vs-tabel-baru OQ-027 + peta penulis DB).
+
+**Fakta terverifikasi (bukan asumsi):**
+
+| Fakta | Nilai | Sumber |
+|---|---|---|
+| Churn | 333 SUPERSEDED vs 123 COMPLETED / 7 hari = 66% | RENCANA_ORCHESTRATOR G9 (l.40, l.93) |
+| Target churn (checklist P3.2) | SUPERSEDED turun 66% → <20% dalam window 7 hari | Checklist P3.2 acceptance |
+| Dedup key (frozen) | `channel_id + job_kind + generation`; satu job aktif per key; unique constraint mencegah dua job aktif untuk key yang sama; retry ≠ generation baru; job lama tidak boleh menimpa hasil generation terbaru | V2.0 §8.2 (5 aturan) |
+| Lease + fencing (frozen) | Lease = hak memegang pekerjaan sampai batas waktu; fencing token monotonik, naik tiap ownership berpindah; fencing WAJIB divalidasi saat worker mengirim HASIL, bukan hanya saat klaim; heartbeat tidak memperpanjang hak worker lama bila token sudah berubah | V2.0 §8.3 (+ contoh A=41 → B=42) |
+| Idempotency (frozen) | Setiap operasi berpotensi side effect punya idempotency key (`channel_id + job_id + operation_type`); hasil media: temp unik → validasi → kirim metadata → Master periksa fencing + generation → terima atomik → pindah ke final | V2.0 §8.4 |
+| Upload YouTube (frozen) | External side effect — fencing TIDAK dapat membatalkan upload yang sudah diterima YouTube; upload wajib punya operation record + reconciliation flow tersendiri | V2.0 §8.4 |
+| Model data target (frozen) | Field kepemilikan: `deduplication_key`, `generation`, `worker_id`, `lease_expires_at`, `fencing_token`, `attempt_count`, `max_attempts`, `next_retry_at`, `idempotency_key`, `release_constraint`; event `job_events`: JOB_CREATED, JOB_DEDUPLICATED, JOB_CLAIMED, JOB_STARTED, HEARTBEAT_RECEIVED, LEASE_EXPIRED, FENCING_REJECTED, JOB_COMPLETED, JOB_FAILED, RETRY_SCHEDULED, DEAD_LETTERED, CANCEL_REQUESTED, JOB_CANCELLED | V2.0 §9.2 |
+| Aturan SQLite (frozen) | WAL; transaksi pendek; claim atomik; indeks sesuai query claim dan lease; JANGAN jalankan HTTP/Google API/FFmpeg di dalam transaksi; JANGAN heartbeat menulis terlalu sering; backup konsisten | V2.0 §9.3 |
+| Migration (frozen) | Expand-and-contract: JANGAN hapus kolom lama sebelum seluruh worker + release memakai skema baru | V2.0 §9 (l.845) |
+| State machine | QUEUED, CLAIMED, RUNNING, COMPLETED, FAILED, RETRY_WAIT, CANCEL_REQUESTED, CANCELLED, DEAD_LETTER | Kontrak API §4 (state machine V2.0 §8.1) |
+| Nilai awal kontrak [PR] | Lease default 15 mnt; heartbeat worker 60 dtk; heartbeat job 120 dtk; worker STALE 3× miss (180 dtk); timeout klaim server 10 dtk; retry API maks 5× backoff + jitter; max attempts job 3; retensi idempotency key 24 jam; jam lease = jam Master (NTP); timestamp UTC ISO 8601 | Kontrak API §2.5 + §3 — SEMUA [PR], bukan hasil benchmark; nilai final ditetapkan setelah canary + V2-008 |
+| Contoh format key | `"ch-123:INGESTION:7"` (separator `:`) | Kontrak API §4 — contoh, BUKAN format final yang dikunci |
+| `job_kind` | Kosakata final MENUNGGU audit schema (V2-007); contoh V2.0: `INGESTION`; jenis lain (Stage 2, publish, live) belum distandarisasi | Kontrak API §4 (OQ-404) |
+| Durasi job (pembanding lease) | Render median 463 dtk / p90 1.396 dtk; Stage 2 12,8 dtk CPU / 100,1 dtk wall per klip | V2-005 baseline (DOCUMENTED NOT YET REVALIDATED) |
+| Gerbang | TIDAK ADA migration sebelum V2-007 disetujui; TIDAK ADA implementasi antrean kedua sebelum keputusan perluas-vs-tabel-baru | Checklist §14 + l.1070 |
+
+**Fakta yang BELUM terverifikasi (jangan diperlakukan sebagai fakta):**
+jawaban OQ-027 (perluas vs tabel baru); canonical `channel_id` yang
+stabil; kosakata `job_kind` final; himpunan status yang dihitung "aktif"
+untuk unique constraint; definisi "perubahan input" yang menaikkan
+generation per jenis job; durasi lease final; cakupan fencing token
+(per job vs global); apakah hari ini sudah ada job aktif duplikat untuk
+satu key logis yang sama (hanya bisa dijawab dari data V2-007);
+inventaris lengkap submitter job hari ini (P3.1 belum diaudit — sweeper,
+Fleet Runner, retry handler, scheduler, manual trigger); skema operation
+record upload YouTube + pemilik reconciliation.
+
+**OPEN QUESTION (ditemukan saat perluasan tiket — wajib dijawab saat eksekusi):**
+OQ-046 — canonical `channel_id` apa yang dipakai dedup key: `channel_id`
+DB apa adanya (673 baris `STAGING-SLOT-*`, 203 CONNECTED ber-ID STAGING —
+V2-004 baseline) atau bentuk kanonis lain (mis. `slot_number`, ID numerik)?
+ID harus stabil saat channel di-rename / pindah vault / re-pair — bila
+`channel_id` berubah, dedup key pecah. OQ-047 — kosakata `job_kind` final:
+jenis apa saja yang BENAR-BENAR ada di data (V2-007 Q2 `DISTINCT
+job_kind`) vs yang dipakai kode, dan bagaimana memetakan jenis lama ke
+kosakata baru tanpa memecah job berjalan? OQ-048 — status apa saja yang
+dihitung "aktif" untuk unique constraint (QUEUED + CLAIMED + RUNNING +
+RETRY_WAIT? CANCEL_REQUESTED ikut aktif atau tidak?) — dan bagaimana
+constraint ditegakkan di SQLite (unique index parsial vs tabel status
+aktif)? OQ-049 — apa yang dihitung "perubahan input" yang menaikkan
+generation, per `job_kind` (field payload mana yang dibandingkan — dan
+siapa yang membandingkannya, Master saat submit atau worker saat klaim)?
+OQ-050 — durasi lease final: apakah 15 mnt [PR] cukup untuk render p90
+1.396 dtk + antrean heartbeat, atau perlu nilai per `job_kind` (validasi
+terhadap durasi aktual V2-008)? OQ-051 — fencing token: per job (kontrak
+§4.3 [PR], mulai dari 1) atau monotonik global; bagaimana token bertahan
+saat Master restart / DB restore dari backup? OQ-052 — cabang desain
+mana yang dipakai: perluas `operational_tasks` atau tabel baru (jawaban
+V2-007 OQ-027) — dan apa konsekuensi masing-masing terhadap indeks claim,
+lock SQLite (R5), dan migrasi expand-and-contract? OQ-053 — siapa saja
+submitter job hari ini (sweeper, Fleet Runner, retry handler, scheduler,
+manual trigger, jalur lain dari peta penulis V2-006/V2-007) dan bagaimana
+masing-masing harus diubah agar melewati dedup check — apakah ada jalur
+submit yang TIDAK melewati Master (langsung INSERT ke DB)? OQ-054 —
+operation record upload YouTube: skema + siapa pemilik reconciliation +
+seberapa sering reconciliation jalan + apa yang terjadi bila upload sudah
+diterima YouTube lalu job-nya dinyatakan stale (duplikat tayang atau
+tetap satu)? OQ-055 — bagaimana migration menambahkan unique constraint
+ke tabel yang MUNGKIN sudah berisi job aktif duplikat hari ini (urutan:
+bersihkan duplikat dulu atau constraint ditunda; bagaimana mendeteksi
+duplikat dari data V2-007)?
+
+**Dua pekerjaan berbeda (jangan dicampur):**
+
+1. **Desain (tiket ini)** — rancang dedup key + generation + lease/
+   fencing/idempotency + migration plan (dokumen saja); TANPA eksekusi
+   migration, TANPA perubahan schema/kode.
+2. **Migration + implementasi** — tiket terpisah (L3), SETELAH desain
+   ini disetujui user DAN gerbang V2-007 lolos; eksekusi migration
+   mengikuti rencana expand-and-contract tiket ini + rollback-nya.
+
+## B. Target
+
+1. Canonical `channel_id` ditetapkan + dibuktikan stabil terhadap
+   rename / pindah vault / re-pair (OQ-046).
+2. Kosakata `job_kind` final ditetapkan dari data V2-007 + kode
+   (OQ-047) — lengkap dengan pemetaan jenis lama → baru.
+3. Aturan generation ditetapkan per `job_kind`: field input apa yang
+   dibandingkan, siapa yang membandingkan, kapan generation naik dan
+   kapan TIDAK (retry, heartbeat, requeue bukan generation baru)
+   (OQ-049).
+4. Format `deduplication_key` final ditetapkan (termasuk separator +
+   normalisasi — contoh kontrak `"ch-123:INGESTION:7"` dinilai, bukan
+   diterima mentah-mentah).
+5. Himpunan status "aktif" + mekanisme unique constraint ditetapkan
+   (OQ-048) — termasuk perilaku saat submit duplikat (tolak? kembalikan
+   job aktif yang sama? catat JOB_DEDUPLICATED?).
+6. Lease / heartbeat / fencing final: nilai [PR] kontrak divalidasi
+   terhadap durasi job aktual (V2-005/V2-008) atau direvisi beralasan
+   (OQ-050/OQ-051) — termasuk jam Master/NTP + perilaku saat Master
+   restart.
+7. Skema idempotency key per operasi + retensi ditetapkan (OQ: operasi
+   apa saja yang butuh key; retensi 24 jam [PR] dinilai cukup atau tidak).
+8. Desain `job_events` (audit trail) + retensi event ditetapkan.
+9. Operation record + reconciliation flow upload YouTube dirancang
+   (OQ-054) — pemilik, jadwal, dan keputusan duplikat-tayang.
+10. Migration plan expand-and-contract + rollback + test plan (uji
+    checklist P3.2: request berulang, dua scheduler bersamaan, retry,
+    generation baru, job lama terlambat selesai) + acceptance criteria
+    terukur (churn 66% → <20% / 7 hari; baseline tidak memburuk —
+    206 PUBLISHED/hari, 0 FAILED/BLOCKED, p90 30,2 mnt adalah LANTAI).
+
+## C. Prasyarat
+
+- [ ] V2-007 `work_status` = APPROVED (KERAS — gerbang teknis; cek
+      `STATUS_REGISTRY.yaml`, bukan ingatan).
+- [ ] Deliverable V2-007 dibaca: schema dump berversi + `DATABASE_WRITER_MAP_V2.md`
+      + `DATABASE_MIGRATION_PLAN_V2.md` (jawaban OQ-027 + OQ-022 + OQ-028).
+- [ ] V2-005 dibaca (baseline churn 7 hari + durasi job per jenis) sebagai
+      pembanding acceptance; V2-006 dibaca (peta penulis DB).
+- [ ] V2.0 §8.2/§8.3/§8.4/§9.2/§9.3 + checklist P3.2 + kontrak API v1
+      (§2.5, §3, §4, §4.3, §4.4) dibaca sebelum merancang.
+- [ ] Tidak ada migration/schema/kode yang berjalan bersamaan selama
+      desain (koordinasi: desain ini dokumen — tetapi bila ada lane lain
+      mengubah schema saat desain ditulis, desain bisa salah alamat).
+
+## D. Scope pemeriksaan (file/module)
+
+| # | Area | Lokasi / cara periksa |
+|---|---|---|
+| D1 | Input V2-007 | Schema dump + jawaban OQ-027 (perluas vs tabel baru) + status distinct + `DISTINCT job_kind` + indeks claim yang ada; catat cabang desain yang dipakai + alasan cabang lain ditolak |
+| D2 | Canonical channel_id | Tabel `channels` (V2-007 D4): `channel_id` vs `slot_number` vs nama; stabilitas terhadap rename/pindah vault/re-pair (insiden vault 12 Nov); putuskan bentuk kanonis (OQ-046) |
+| D3 | Submitter job hari ini | Peta penulis DB V2-006/V2-007 (OQ-022) + grep kode pembuat job (sweeper, Fleet Runner, retry handler, scheduler, manual trigger — checklist P3.1): jalur mana yang INSERT langsung ke DB tanpa lewat Master (OQ-053) |
+| D4 | Generation rules | Per `job_kind`: field payload pembanding "input berubah"; siapa membandingkan (Master saat submit); kasus batas: retry, requeue pasca-lease-expiry, cancel lalu submit ulang, input berubah saat job RUNNING |
+| D5 | Status aktif + constraint | State machine V2.0 §8.1 vs status di data (V2-007 OQ-028): himpunan aktif; mekanisme SQLite (unique index parsial / tabel aktif / trigger — PROPOSAL, nilai dari kapabilitas SQLite, bukan dari ingatan); perilaku submit duplikat + event JOB_DEDUPLICATED |
+| D6 | Lease / fencing / heartbeat | Validasi nilai [PR] kontrak §3 terhadap durasi aktual (V2-005/V2-008): lease per `job_kind` atau satu nilai; fencing per job vs global; persistensi token saat restart/restore (OQ-050/OQ-051); jam Master/NTP |
+| D7 | Idempotency | Operasi yang butuh key (submit, claim, complete, fail, release, upload); format key per operasi; retensi + penyimpanan key (tabel sendiri atau kolom job); perilaku submit ganda + complete ganda (kontrak §2.5: complete ganda mengembalikan hasil sukses yang sama) |
+| D8 | Job events | Skema `job_events` (V2.0 §9.2) + 13 event; siapa menulis event (Master saja?); retensi + volume tulis (jangan sampai event memperparah lock R5) |
+| D9 | Upload reconciliation | Operation record upload (field + status); jadwal + pemilik reconciliation; keputusan bila upload sudah diterima YouTube lalu job stale; kaitan dengan quotaExceeded (R22 — reconciliation JANGAN membakar kuota) |
+| D10 | Migration + test plan | Expand-and-contract langkah-demi-langkah (tambah kolom → dual-write/backfill → aktifkan constraint → hapus kolom lama); rollback per langkah; deteksi + pembersihan duplikat aktif yang sudah ada (OQ-055); test plan P3.2 (5 uji) + acceptance terukur |
+
+## E. Pertanyaan teknis yang harus dijawab
+
+| # | Pertanyaan | Bukti yang menjawab |
+|---|---|---|
+| Q1 | Canonical `channel_id` apa + mengapa bentuk itu stabil (OQ-046)? | D2 — bukti dari `channels` + insiden vault |
+| Q2 | Kosakata `job_kind` final apa + pemetaan jenis lama → baru (OQ-047)? | D1 + D3 — data V2-007 + grep submitter |
+| Q3 | Aturan generation per `job_kind`: field pembanding apa, siapa membandingkan, kapan naik (OQ-049)? | D4 — definisi per jenis + kasus batas |
+| Q4 | Format `deduplication_key` final + himpunan status aktif + mekanisme unique constraint + perilaku submit duplikat (OQ-048)? | D1 + D5 — keputusan + alasan SQLite |
+| Q5 | Lease / heartbeat / fencing final: nilai berapa, per `job_kind` atau satu nilai, token per job atau global, bertahan saat restart (OQ-050/OQ-051)? | D6 — validasi [PR] vs durasi aktual |
+| Q6 | Skema idempotency key per operasi + retensi + perilaku submit/complete ganda? | D7 — daftar operasi + format key |
+| Q7 | Skema `job_events` + penulis + retensi + dampak tulis terhadap lock (R5)? | D8 — volume tulis dihitung, bukan ditebak |
+| Q8 | Operation record upload + reconciliation: pemilik, jadwal, keputusan duplikat-tayang (OQ-054)? | D9 — alur reconciliation |
+| Q9 | Migration expand-and-contract + rollback per langkah + pembersihan duplikat aktif yang sudah ada (OQ-055)? | D10 + D1 — rencana langkah-demi-langkah |
+| Q10 | Test plan P3.2 + acceptance terukur (churn <20% / 7 hari; baseline lantai tidak memburuk)? | D10 — 5 uji + kriteria lulus/gagal per uji |
+
+## F. Perintah / metode desain (executable; desain dokumen — TANPA migration)
+
+**F.1 — Baca input V2-007 + tetapkan cabang desain (lokal, dokumen):**
+
+```bash
+ls ~/workspace/engineering/v2-007/ && grep -n "OQ-027\|perluas\|tabel baru" ~/workspace/engineering/v2-007/DATABASE_MIGRATION_PLAN_V2.md | head -20
+```
+
+Catat jawaban OQ-027 + kolom/indeks yang mendasarinya + status distinct +
+`DISTINCT job_kind` dari `DATABASE_SCHEMA_AUDIT_V2_*.md`. Bila V2-007
+belum menjawab OQ-027 (mis. Partial) — STOP, desain tidak boleh menebak
+cabang; catat sebagai blocker dan kembalikan ke V2-007. Tetapkan cabang
+(perluas `operational_tasks` ATAU tabel baru) + tulis alasan cabang lain
+ditolak di dokumen desain §1.
+
+**F.2 — Inventaris submitter + jalur INSERT langsung (baca kode, sesi interaktif):**
+
+```bash
+ssh -F /home/hatch/.ssh/config masjavas-vps-baru \
+  'grep -rn "INSERT INTO operational_tasks\|INSERT INTO loopgen_\|def.*submit.*job\|def.*create.*job\|sweeper\|Fleet Runner" /opt/masjavas-os --include="*.py" | grep -v tests | head -50'
+```
+
+Bila peta penulis V2-007 sudah lengkap, F.2 cukup memverifikasi dari
+peta itu (tanpa SSH baru). Catat tiap submitter: fungsi + file:baris +
+apakah melewati Master/dedup check atau INSERT langsung (OQ-053).
+Jalur INSERT langsung = temuan desain (harus dialihkan atau didokumentasikan
+sebagai pengecualian beralasan).
+
+**F.3 — Tetapkan canonical ID + `job_kind` + generation rules (lokal, dokumen):**
+
+Dari D2 + D3 + data V2-007: tulis tabel keputusan — canonical
+`channel_id` (OQ-046), kosakata `job_kind` + pemetaan lama → baru
+(OQ-047), dan per `job_kind`: field payload pembanding + siapa
+membandingkan + kasus batas (retry / requeue / cancel-ulang / input
+berubah saat RUNNING) (OQ-049). Setiap aturan WAJIB punya contoh
+konkret (mis. INGESTION generation naik bila daftar item berubah;
+tidak naik bila hanya retry).
+
+**F.4 — Rancang constraint + lease/fencing/idempotency/events (lokal, dokumen):**
+
+Tulis § desain: format key final (nilai contoh kontrak, bukan terima
+mentah); himpunan status aktif + mekanisme constraint SQLite (OQ-048);
+lease/heartbeat/fencing final dengan validasi angka terhadap durasi
+aktual V2-005/V2-008 (OQ-050/OQ-051 — bila V2-008 belum jalan, nilai
+[PR] dipertahankan dengan label PROPOSAL + syarat validasi canary);
+idempotency per operasi (OQ: format + retensi); `job_events` + estimasi
+volume tulis vs lock R5 (OQ: hitung kasar dari frekuensi job/hari,
+bukan asumsi).
+
+**F.5 — Rancang operation record + reconciliation upload (lokal, dokumen):**
+
+Dari V2.0 §8.4 + R22: skema operation record (field + status); pemilik
+reconciliation (proses/jadwal); alur saat upload sudah diterima YouTube
+lalu job stale; batasan kuota — reconciliation TIDAK BOLEH memanggil
+YouTube API per job tanpa budget (kuota 10.000 unit/hari/vault, R22).
+Bila data V2-007 tidak menyebut tabel upload — catat sebagai OQ-054
+terbuka sebagian, JANGAN karang skema tabel yang sudah ada.
+
+**F.6 — Tulis migration plan + test plan + review checklist (lokal, dokumen):**
+
+Migration expand-and-contract langkah-demi-langkah (OQ-055): urutan
+tambah kolom → dual-write/backfill → aktifkan constraint → hapus kolom
+lama; rollback per langkah; deteksi + pembersihan duplikat aktif yang
+sudah ada SEBELUM constraint diaktifkan (query deteksi dari data V2-007;
+bila data tidak ada, langkah deteksi ditulis sebagai langkah eksekusi
+yang wajib jalan dulu). Test plan P3.2 (5 uji + kriteria lulus/gagal per
+uji) + acceptance terukur (churn <20% / 7 hari; lantai baseline).
+Akhiri dengan review checklist untuk user: keputusan yang diminta
+(cabang schema, nilai lease/fencing, himpunan aktif, pemilik
+reconciliation).
+
+**DILARANG dalam tiket ini:**
+
+- Migration schema apa pun (ALTER/CREATE/DROP/unique constraint) —
+  itu eksekusi V2-010 lanjutan, setelah desain disetujui (aturan
+  checklist §14).
+- Menulis ke DB apa pun (live maupun salinan) — desain ini dokumen.
+- Mengubah kode, config, systemd, atau job.
+- Menetapkan nilai lease/fencing/idempotency sebagai FINAL tanpa
+  validasi terhadap durasi aktual (V2-005/V2-008) atau tanpa label
+  PROPOSAL + syarat validasi canary.
+- Mengarang schema tabel/kolom yang sudah ada tanpa bukti V2-007
+  (mis. mengklaim `operational_tasks` punya kolom X bila dump tidak
+  menyebutkannya).
+- Mendesain "sistem antrean kedua" (tabel jobs baru) bila V2-007
+  memutuskan perluasan — atau sebaliknya memaksakan perluasan bila
+  V2-007 memutuskan tabel baru (checklist l.1070).
+
+## G.0 — Evidence manifest (wajib diisi saat eksekusi)
+
+Setiap Q1–Q10 wajib punya satu baris manifest. Isi manifest BERSAMAAN
+dengan eksekusi, bukan di akhir — jawaban V2-007 adalah titik waktu.
+
+| Question ID | Command | Timestamp (WIB) | Exit code | Evidence | Finding | Confidence | Impact |
+|---|---|---|---|---|---|---|---|
+| Q1 | F.1 + F.3 | | | `DEDUP_DESIGN_V2-010.md` | | | |
+| Q2 | F.1 + F.2 + F.3 | | | `DEDUP_DESIGN_V2-010.md` | | | |
+| Q3 | F.3 | | | `DEDUP_DESIGN_V2-010.md` | | | |
+| Q4 | F.4 | | | `DEDUP_DESIGN_V2-010.md` | | | |
+| Q5 | F.4 + F.6 | | | `DEDUP_DESIGN_V2-010.md` | | | |
+| Q6 | F.4 | | | `DEDUP_DESIGN_V2-010.md` | | | |
+| Q7 | F.4 | | | `DEDUP_DESIGN_V2-010.md` | | | |
+| Q8 | F.5 | | | `DEDUP_DESIGN_V2-010.md` | | | |
+| Q9 | F.6 | | | `DEDUP_MIGRATION_PLAN_V2-010.md` | | | |
+| Q10 | F.6 | | | `DEDUP_TEST_PLAN_V2-010.md` | | | |
+
+Aturan manifest: sama seperti V2-001 §G.0 — `Confirmed` (bukti langsung
+dari dump V2-007 + data + grep kode), `Partial` (bukti tidak lengkap /
+hanya satu sumber), `Unknown` (tidak dapat diverifikasi + alasannya
+dicatat). `Unknown` yang eksplisit LEBIH BAIK daripada dugaan yang
+ditulis seolah fakta. Bukti TIDAK BOLEH berisi nilai kredensial.
+**Setiap keputusan desain WAJIB mencantumkan: sumber (V2-007 / V2.0 /
+kontrak / V2-005/V2-008) + label (VERIFIED FACT / DOCUMENTED FACT NOT
+YET REVALIDATED / PROPOSAL / OPEN QUESTION). Keputusan tanpa sumber =
+bukan keputusan, melainkan dugaan.**
+
+## G. Bukti yang harus dilampirkan (deliverable tiket)
+
+1. `DEDUP_DESIGN_V2-010.md` — Q1–Q8 (canonical ID + `job_kind` +
+   generation rules + format key + status aktif + constraint + lease/
+   fencing/idempotency + `job_events` + operation record upload).
+2. `DEDUP_MIGRATION_PLAN_V2-010.md` — Q9 (expand-and-contract
+   langkah-demi-langkah + rollback per langkah + pembersihan duplikat
+   aktif; RENCANA saja, BUKAN eksekusi).
+3. `DEDUP_TEST_PLAN_V2-010.md` — Q10 (5 uji P3.2 + kriteria lulus/gagal
+   per uji + acceptance terukur + cara mengukur churn 7 hari).
+4. `EVIDENCE_MANIFEST_V2-010.md` — manifest Q1–Q10 (bila dipisah dari
+   dokumen desain; bila digabung, catat di sini).
+5. Semua file di `workspace/engineering/v2-010/` (buat foldernya saat eksekusi).
+
+## H. Acceptance criteria (lulus / gagal)
+
+**LULUS bila SEMUA terpenuhi:**
+
+- [ ] Q1–Q10 terjawab dengan bukti; yang tidak bisa dijawab dicatat
+      eksplisit sebagai "TIDAK DAPAT DIVERIFIKASI + alasannya".
+- [ ] Cabang desain (perluas vs tabel baru) mengikuti jawaban V2-007
+      OQ-027 yang DISETUJUI — bukan tebakan; cabang lain tercatat
+      ditolak beserta alasannya.
+- [ ] Setiap keputusan desain punya sumber + label bukti (tanpa
+      keputusan tanpa sumber).
+- [ ] Aturan generation punya contoh konkret per `job_kind` (kapan naik,
+      kapan tidak) — bukan definisi abstrak saja.
+- [ ] Migration plan expand-and-contract + rollback per langkah +
+      langkah deteksi/pembersihan duplikat aktif SEBELUM constraint.
+- [ ] Test plan mencakup 5 uji P3.2 + acceptance terukur (churn <20% /
+      7 hari; lantai baseline 206/hari, 0 FAILED/BLOCKED, p90 30,2 mnt).
+- [ ] Nol migration, nol tulis DB, nol perubahan kode/config selama desain.
+- [ ] Review checklist untuk user lengkap (keputusan yang diminta
+      disebutkan eksplisit).
+
+**GAGAL bila salah satu terjadi:**
+
+- Desain dimulai sebelum V2-007 disetujui (gerbang teknis dilanggar).
+- Cabang desain ditebak tanpa jawaban OQ-027 (→ risiko sistem antrean
+  kedua di atas tabel yang sebenarnya bisa diperluas).
+- Canonical `channel_id` / `job_kind` / status aktif ditetapkan tanpa
+  data V2-007 (→ key pecah saat rename / jenis tak dikenal saat submit).
+- Nilai lease/fencing diklaim FINAL tanpa validasi durasi aktual.
+- Migration plan tanpa rollback per langkah atau tanpa langkah
+  pembersihan duplikat (→ constraint gagal diterapkan di data kotor).
+- Test plan tidak mengukur churn 7 hari (→ acceptance tidak teruji).
+
+## I. Dampak jika gagal / jika tiket tidak dikerjakan
+
+- Churn 66% bertahan: sepertiga lebih pekerjaan dibuang sebelum tuntas —
+  CPU/render/ingestion terbakar, antrean macet duplikat, dan VPS 8
+  dibeli untuk menampung pekerjaan yang sebenarnya tidak perlu ada
+  (biaya +$18,65/bln untuk duplikat).
+- Tanpa fencing, hasil job lama bisa menimpa hasil generation terbaru —
+  video/audio yang sudah benar tertimpa versi basi; tanpa operation
+  record, upload YouTube duplikat tidak terdeteksi (risiko tayang ganda
+  + bakar kuota, R22).
+- Tanpa desain ini, implementasi antrean (P3/P4) dibangun tanpa kontrak —
+  dua lane bisa membangun dedup yang berbeda (inkonsisten), atau
+  membangun tabel jobs kedua yang tidak pernah bisa digabung.
+- Gerbang Fase 0 (churn <20%) tidak pernah tercapai — pembelian VPS 8
+  tetap tertahan oleh purchase gate.
+
+## J. Batas tindakan yang diizinkan
+
+- **BOLEH:** semua langkah §F (baca dokumen V2-007 + frozen + kontrak;
+  F.2 baca kode read-only di sesi interaktif); menulis 4 dokumen bukti §G.
+- **TIDAK BOLEH:** migration schema apa pun; tulis DB apa pun; ubah
+  kode/config/systemd/job; eksekusi uji beban terhadap antrean produksi
+  (uji P3.2 adalah RENCANA — eksekusinya butuh tiket implementasi +
+  persetujuan user); tampilkan/simpan kredensial.
+- **Keputusan schema/migration/implementasi = USER** (L3). Tiket ini
+  hanya menyajikan desain + rencana + rekomendasi.
+
+## K. Pihak yang menyetujui langkah berikutnya
+
+| Langkah berikut | Penyetuju |
+|---|---|
+| Desain dedup ini (cabang schema, nilai lease/fencing, himpunan aktif, pemilik reconciliation) | User (review desain — keputusan tercatat di decision register) |
+| Eksekusi migration expand-and-contract | User (L3 — perubahan schema produksi; mengikuti rencana tiket ini) |
+| Implementasi claim/lease/fencing di kode (P4) | User (L3 — perubahan kode antrean; tiket implementasi terpisah) |
+| Uji P3.2 terhadap antrean produksi (bila menyentuh job nyata) | User (L3 — mengganggu antrean; jadwalkan di luar jam prime) |
+| Lanjut ke implementasi Batch 2 | Tidak butuh persetujuan baru untuk DOKUMEN; eksekusi tetap butuh persetujuan per langkah di atas |
+
+## L. Estimasi & catatan eksekusi
+
+- Estimasi: ±1–1,5 jam desain (di luar waktu tunggu persetujuan V2-007 —
+  penantian itu normal, bukan blocker; JANGAN mulai F.1 sebelum gerbang
+  lolos).
+- Jalankan dari main/side chat (bukan proactivity handoff — konsistensi
+  dengan V2-001).
+- **Baca V2-007 dulu, desain kemudian** — bila jawaban OQ-027 Partial
+  atau V2-007 belum disetujui, STOP dan catat blocker; jangan menebak cabang.
+- Bila V2-008 belum jalan saat desain ditulis, nilai [PR] kontrak
+  dipertahankan dengan label PROPOSAL + syarat "validasi di canary" —
+  JANGAN klaim nilai itu hasil benchmark.
+- Koordinasi dengan lane lain: jangan desain bersamaan dengan perubahan
+  schema oleh lane lain — beri tahu sebelum mulai.
+- Setelah tiket ini READY_FOR_REVIEW + disetujui user, Batch 1 (10/10
+  tiket lengkap) selesai di sisi DOKUMEN — eksekusi audit V2-004–V2-009
+  + desain V2-010 tetap QUEUED-FOR-INTERACTIVE sampai sesi interaktif
+  tersedia.
 
 ---
 
@@ -3219,7 +3625,7 @@ hasil V2-007 disetujui.
 | V2-007 | Database schema audit (GERBANG TEKNIS) | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 8 22 Nov 22:50 WIB; eksekusi menunggu sesi interaktif + SSH) | — |
 | V2-008 | Resource budget benchmark | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 9 23 Nov 02:50 WIB; eksekusi menunggu sesi interaktif + SSH; uji concurrency F.6 butuh materi uji ATAU persetujuan user bila menyentuh antrean produksi) | — |
 | V2-009 | VPS 8 price + storage cost verification (GERBANG BIAYA) | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 10 23 Nov 06:50 WIB; eksekusi menunggu sesi interaktif + angka panel Contabo dari user — TIDAK butuh SSH; JANGAN coba browser task untuk panel, Turnstile terbukti memblokir) | — |
-| V2-010 | Deduplication design proposal | P1 | NOT_STARTED (stub, menunggu V2-007) | — |
+| V2-010 | Deduplication design proposal | P1 | NOT_STARTED (tiket lengkap, diperluas Cycle 11 23 Nov 10:50 WIB; eksekusi DESAIN menunggu V2-007 DISETUJUI — gerbang teknis keras; TANPA migration) | — |
 
 **Urutan eksekusi yang disarankan:** V2-001 → V2-002 → V2-003/V2-004/V2-005/
 V2-006 paralel (jalur audit teknis + operasional) → V2-007 → V2-008 + V2-009
