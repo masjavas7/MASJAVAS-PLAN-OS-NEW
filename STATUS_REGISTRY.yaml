@@ -14,8 +14,8 @@
 # Keterbatasan bukti dicatat di field limitation, BUKAN di nama status.
 
 version: "1.0"
-updated: "2026-11-23T06:50:00+07:00"
-updated_by: "Autonomous Readiness Cycle 10 (cron local-only)"
+updated: "2026-11-23T10:50:00+07:00"
+updated_by: "Autonomous Readiness Cycle 11 (cron local-only)"
 overall_readiness: NOT_READY
 overall_readiness_reason: "Batch 1: 1 EXECUTED (dengan keterbatasan bukti) + 2 READY_FOR_REVIEW dari 10; gerbang V2-007 + V2-009 belum lolos; harga Master + VPS 8 belum terverifikasi panel; biaya storage/backup belum dihitung; D9/D10 menunggu user."
 
@@ -101,8 +101,9 @@ tickets:
   V2-010:
     title: "Dedup design"
     priority: P1
-    ticket_status: STUB
+    ticket_status: COMPLETE
     work_status: NOT_STARTED
+    note: "Tiket diperluas ke format 15 elemen (Cycle 11, 23 Nov 10:50). Eksekusi DESAIN QUEUED-FOR-INTERACTIVE — menunggu V2-007 DISETUJUI (gerbang teknis keras, checklist §14); TANPA migration. Desain mengikuti cabang OQ-027 V2-007; OQ-046–OQ-055 baru (canonical channel_id / kosakata job_kind / status aktif + constraint / generation per kind / lease final / fencing scope / cabang perluas-vs-tabel-baru / submitter + INSERT langsung / operation record upload / pembersihan duplikat aktif). Batch 1 kini 10/10 tiket lengkap di sisi dokumen."
 
 gates:
   V2-007_technical_gate:
@@ -131,9 +132,15 @@ gates:
 counts:
   # Angka "3/10" yang lama mencampur EXECUTED + READY_FOR_REVIEW.
   # Hitung per status agar tidak menyesatkan:
+  # KOREKSI Cycle 11: ticket_complete/stub dihitung ulang dari nilai
+  # per-tiket (yaml.safe_load): sebelum koreksi counts menyebut 8/2
+  # padahal nilai per-tiket sudah 9 COMPLETE + 1 STUB sejak Cycle 10
+  # (selisih 1 terbawa dari salah hitung Cycle 9: "6 -> 7" + "6 -> 4").
+  # Nilai per-tiket selalu benar — registry tetap sumber status resmi
+  # di level tiket; field counts ini kini direkonsiliasi dengannya.
   executed: 1
   executed_with_limitation: 1
   ready_for_review: 2
   not_started: 7
-  ticket_complete: 8
-  ticket_stub: 2
+  ticket_complete: 10
+  ticket_stub: 0
