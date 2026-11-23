@@ -1,12 +1,12 @@
 # ENGINEERING READINESS DASHBOARD — MASJAVAS TUBE OS
 
-**Terakhir diperbarui:** 23 Nov 2026, 18:50 WIB (Cycle 13: hasil 15:00
-SEBAGIAN BERHASIL — R24/OQ-057; R25 RESOLVED (cd4fb7a aktif 16:38:51);
-R27–R30 baru (RTMP VPS 8 teratasi f7ee5ce; f7ee5ce belum aktif di Master;
-DR backup 0 byte; URL publik mati — tunnel stale); D13 DONE + D15/D16
-baru; V2-009 F.2–F.5 dikerjakan — storage $0 DB-only, TCO MINIMUM
-$34,77–$34,86 LEBIH cap tipis; kesiapan gerbang TETAP ±65% per laporan
-15:20 — belum dinilai ulang pasca-18:52)
+**Terakhir diperbarui:** 23 Nov 2026, 19:00 WIB (Cycle 13 + addendum:
+R30 RESOLVED + D16 DIEKSEKUSI — tunnel di-restart 19:00, URL publik pulih;
+sebelumnya 18:50: hasil 15:00 SEBAGIAN BERHASIL — R24/OQ-057; R25 RESOLVED
+(cd4fb7a aktif 16:38:51); R27–R30 baru; D13 DONE + D15/D16 baru; V2-009
+F.2–F.5 dikerjakan — storage $0 DB-only, TCO MINIMUM $34,77–$34,86 LEBIH
+cap tipis; kesiapan gerbang TETAP ±65% per laporan 15:20 — belum dinilai
+ulang pasca-18:52)
 **Sumber:** `AUTONOMOUS_WORK_LOG.md`, `BATCH1_EXECUTION_TICKETS_V2.md`,
 dokumen frozen V2.0, bukti audit V2-001.
 **Sumber status resmi:** `STATUS_REGISTRY.yaml` — bila ada perbedaan
@@ -26,8 +26,9 @@ owner, D4 DIPUTUSKAN**; **3 stream MIGRASI ke VPS 8 (15:51–16:38, Master 0
 live)**; hasil 15:00 SEBAGIAN BERHASIL (R24: 114 relink tapi UNLISTED +
 kill loop; 707 tanpa relink; ledger tahap 2 BEKERJA; kesiapan TETAP ±65%
 per laporan 15:20); **f7ee5ce AKTIF di VPS 8 (18:27:55 — RTMP timeout 0/27
-mnt, TERBUKTI) tapi BELUM AKTIF di Master (R28/D15)**; **URL PUBLIK MATI
-(tunnel edge stale 6 hari — R30/D16)**; V2-009 F.2–F.5 dikerjakan Cycle 13
+mnt, TERBUKTI) tapi BELUM AKTIF di Master (R28/D15)**; **URL PUBLIK sempat
+MATI (tunnel edge stale 6 hari — R30, PULIH TOTAL 19:00 via restart tunnel,
+D16 DIEKSEKUSI)**; V2-009 F.2–F.5 dikerjakan Cycle 13
 (storage $0 DB-only; TCO MINIMUM $34,77–$34,86 — LEBIH cap $0,10–$0,19;
 verdict C-1/C-2/C-4 tetap TIDAK DAPAT DINILAI — F.1 menunggu user);
 keputusan provider KEIN ditutup atas asumsi owner tanpa bukti live; risiko
@@ -141,7 +142,7 @@ verifikasi biaya, dan pembuktian pemulihan 15:00.
 | R27 | Encoder VPS 8 restart massal berulang (ke-4 ~17:46, ke-5 ~18:04, ke-6 ~18:22) — RTMP "Connection timed out" (exit 146; 15 error/19 mnt) | P0 | DIAGNOSED — MEKANISME RTMP TERATASI di VPS 8: f7ee5ce AKTIF (live restart 18:27:55, PID 56297) → RTMP timeout 0 dalam 27 mnt (vs 15/19 mnt sebelumnya) — fix TERBUKTI BEKERJA (18:52–18:54). SISA: restart ke-7 ~18:50 penyebab BUKAN RTMP timeout (belum diketahui) — OQ-059 |
 | R28 | Perbaikan sistemik `f7ee5ce` BELUM BERJALAN di Master — commit 18:33:27 (10 file: semaphore Opsi A, RTMP resilient, auto-heal, master_watchdog, DR backup/sync, remediate_duplicates) | P1 | OPEN (SEBAGIAN) — AKTIF di VPS 8 (restart 18:27:55; RTMP timeout 0/27 mnt — TERBUKTI); BELUM AKTIF di Master (web PID 4134208 sejak 17:08, live PID 4158014 sejak 17:19; layanan belum restart, 18:52) — butuh restart terencana (D15) |
 | R29 | DR backup KOSONG + watchdog VPS 8 diam — `dr_backup_20261123_155910.sqlite` 0 byte (17:02); watchdog 0 entri journal | P1 | OPEN — f7ee5ce menyertakan `dr_backup_master.sh` + `dr_sync_from_master.sh` (aktif di VPS 8 sejak 18:27:55, belum terverifikasi menghasilkan backup berisi); DR backup pertama yang berisi BELUM PERNAH terlihat |
-| R30 | URL PUBLIK MATI TOTAL — curl publik timeout 2× (20 dtk + 25 dtk), self-test Master HTTP 000 (11,2 dtk); web lokal CEPAT (0,77 dtk) + tunnel cloudflared HIDUP (PID 69061, 6 hari) | P0 | OPEN — DIAGNOSIS (18:52–18:54): koneksi edge tunnel 6 hari sudah basi (stale); log `/var/log/cloudflared.log` TIDAK ADA; koneksi lokal Recv-Q 550 byte. Perlu restart tunnel service (L3 — D16) |
+| R30 | URL PUBLIK MATI TOTAL — curl publik timeout 2× (20 dtk + 25 dtk), self-test Master HTTP 000 (11,2 dtk); web lokal CEPAT (0,77 dtk) + tunnel cloudflared HIDUP (PID 69061, 6 hari) | P0 | RESOLVED (Cycle 13, addendum 19:00) — tunnel DI-RESTART atas persetujuan user 19:00 (PID 69061 → 139105, 19:00:09): curl publik `/` HTTP 200 dalam 2,07 dtk; self-test Master HTTP 200 dalam 1,76 dtk; `/performance/compliance` HTTP 307 dalam 1,42 dtk. URL PUBLIK PULIH TOTAL. Pelajaran: tunnel 6 hari bisa basi tanpa error di log — restart berkala / monitoring konektivitas publik diperlukan |
 
 ## Owner decision register (awal)
 
@@ -160,7 +161,7 @@ verifikasi biaya, dan pembuktian pemulihan 15:00.
 | D13 | Jadwal restart service untuk mengaktifkan `cd4fb7a` (perbaikan schema lock) | DIPUTUSKAN + DIEKSEKUSI 23 Nov 16:38:51 WIB (restart live, bagian migrasi — bukan jadwal terpisah, dicatat jujur) | Perbaikan aktif; R25 → RESOLVED; laju error worker turun separuh |
 | D14 | Fase 2 Antigravity (bitrate conditioner + `assigned_node_id`) | MENUNGGU | Antigravity mengklaim "siap Fase 2"; persetujuan terpisah; setelah Tahap A (RENCANA §6 D4) |
 | D15 | Jadwal restart service Master untuk mengaktifkan `f7ee5ce` (semaphore Opsi A + RTMP resilient + auto-heal + watchdog + DR) | MENUNGGU | f7ee5ce AKTIF di VPS 8 (18:27:55; RTMP timeout 0/27 mnt — TERBUKTI) tapi BELUM AKTIF di Master (R28) |
-| D16 | Restart tunnel cloudflared (URL publik mati total — koneksi edge 6 hari stale) | MENUNGGU | Web lokal cepat (0,77 dtk) tapi curl publik timeout 2× (18:52–18:54); restart tunnel = L3 (R30) |
+| D16 | Restart tunnel cloudflared (URL publik mati total — koneksi edge 6 hari stale) | DIPUTUSKAN + DIEKSEKUSI 23 Nov 19:00 WIB | Restart berhasil (PID 69061 → 139105, 19:00:09); curl publik 200/2,07 dtk; URL publik PULIH TOTAL (R30 → RESOLVED) |
 | D5 | Sweeper batch, TX-throttle threshold, failover live auto/manual, kepemilikan janitor, limit live final, provider Master pasca-Des | MENUNGGU (plan §10) | — |
 | D6 | Aktivasi distribusi Stage 2 live (guard 422) + peluncuran batch massal | MENUNGGU (peluncuran = user) | — |
 
@@ -198,11 +199,10 @@ verifikasi biaya, dan pembuktian pemulihan 15:00.
 
 ## Next 5 actions
 
-1. **Keputusan user D15 + D16 (MENDESAK, di luar scope cron local-only):**
-   D15 restart service Master untuk mengaktifkan `f7ee5ce` (sudah TERBUKTI
-   di VPS 8: RTMP timeout 0/27 mnt); D16 restart tunnel cloudflared (URL
-   publik mati total — web lokal 0,77 dtk, curl publik timeout 2×).
-   Keduanya L3 — butuh persetujuan + jendela.
+1. **Keputusan user D15 (MENDESAK, di luar scope cron local-only):**
+   restart service Master untuk mengaktifkan `f7ee5ce` (sudah TERBUKTI
+   di VPS 8: RTMP timeout 0/27 mnt). D16 (restart tunnel) SELESAI 19:00 —
+   URL publik pulih total (R30 RESOLVED).
 2. **Diagnosis OQ-059:** penyebab restart encoder VPS 8 ke-7 (~18:50) —
    BUKAN RTMP timeout; apa penyebabnya (di luar scope cron; butuh SSH/log).
 3. Keputusan user D9/D10 (perbaikan Guard v2 + OQ-010 prasyarat) — menunggu.
