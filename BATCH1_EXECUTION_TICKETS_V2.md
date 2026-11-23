@@ -2,6 +2,7 @@
 
 **Dokumen acuan (frozen):** `MASTER_ARCHITECTURE_MASJAVAS_TUBE_OS_V2.md` (Draft Baseline),
 `IMPLEMENTATION_CHECKLIST_MASJAVAS_TUBE_OS_V2.md` (v1.0)
+**Versi:** 2.1 — V2-009 addendum Cycle 12, 23 Nov 14:50 WIB (cron local-only) — VPS 8 dibeli owner 14:41 sebelum verifikasi selesai; V2-009 menjadi verifikasi pasca-beli
 **Versi:** 2.0 — V2-010 diperluas Cycle 11, 23 Nov 10:50 WIB (cron local-only) — 10/10 tiket lengkap; KOREKSI: hitung registry ticket_complete/stub diperbaiki (lihat STATUS_REGISTRY.yaml)
 **Versi:** 1.9 — V2-009 diperluas Cycle 10, 23 Nov 06:50 WIB (cron local-only)
 **Versi:** 1.8 — V2-008 diperluas Cycle 9, 23 Nov 02:50 WIB (cron local-only)
@@ -2730,6 +2731,16 @@ verdict gerbang biaya C-1–C-5 (lolos / gagal / tidak dapat dinilai)
 (verifikasi + hitung ulang) — angka panel: user
 **Status:** NOT_STARTED (tiket lengkap — eksekusi menunggu sesi interaktif
 + angka panel dari user; TIDAK butuh SSH)
+**ADDENDUM Cycle 12 (23 Nov 2026, 14:50 WIB, cron local-only):** VPS 8 DIBELI
+owner 14:41 WIB (`vmi3778263`, Cloud VPS 8 (2026), EU, no setup) SEBELUM
+verifikasi ini selesai — gerbang pembelian 06:31 SUPERSEDED oleh keputusan
+langsung owner (D4 DIPUTUSKAN; "lanjut fase berikutnya tanpa menunggu").
+Tiket ini TIDAK dibatalkan: verifikasi berlanjut sebagai verifikasi
+PASCA-BELI (harga aktual panel yang dibayar + harga Master + renewal +
+storage $0). Verdict C-1–C-5 kini menilai apakah pembelian yang sudah
+terjadi muat cap $34,67/bln (cap = seluruh TCO) dan apa yang harus direvisi
+bila tidak. F.1 (daftar periksa angka panel) tetap diminta sekali dari user;
+F.2–F.5 dapat dikerjakan dulu sebagai tugas lokal.
 **Dibuat:** 22 Nov 2026 (stub) — **Diperluas:** 23 Nov 2026 06:50 WIB
 (Cycle 10, cron local-only)
 **Dependency:** panel Contabo (harga Master + VPS 8 + kuota trafik +
