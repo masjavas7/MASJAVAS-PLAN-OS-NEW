@@ -28,6 +28,7 @@ sampai semua gerbang lolos.
   prinsip desain, modal semua worker, arsitektur target, phasing +
   gerbang verifikasi (Fase 0 $0 → Fase 1 VPS 8 → Fase 2 box ke-3),
   biaya, risiko, keputusan yang dibutuhkan.
+- `ARSITEKTUR_MULTI_NODE_MASJAVAS_TUBE_OS_V2.md` — desain arsitektur multi-node v1.0 (DRAFT, 23 Nov 2026, menunggu persetujuan owner): 10 insiden nyata 22–23 Nov → 7 prinsip mengikat (satu sumber kebenaran Master DB, penugasan eksplisit, lease, mutasi via API, fail-safe, teramati, agnostik-node); skema DB baru (`live_nodes`, kolom lease/migrasi, `node_events`); rencana migrasi F0–F9 (~12–16 hari kerja); 4 pertanyaan terbuka untuk owner.
 - `MASTER_ARCHITECTURE_MASJAVAS_TUBE_OS_V2.md` — baseline arsitektur
   V2.0 (DRAFT BASELINE, beku): topologi dua-node, orkestrasi API +
   SQLite, kepemilikan job, retry, isolasi sumber daya, backup/DR,
