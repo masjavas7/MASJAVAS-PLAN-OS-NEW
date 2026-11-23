@@ -1,6 +1,6 @@
 # ENGINEERING READINESS DASHBOARD — MASJAVAS TUBE OS
 
-**Terakhir diperbarui:** 23 Nov 2026, 10:50 WIB (Cycle 11: tiket V2-010 diperluas ke format lengkap — Batch 1 kini 10/10 tiket lengkap di sisi dokumen; eksekusi desain V2-010 menunggu V2-007 DISETUJUI; KOREKSI hitung registry: ticket_complete/stub 8/2 → 10/0, nilai per-tiket selalu benar)
+**Terakhir diperbarui:** 23 Nov 2026, 14:50 WIB (Cycle 12: VPS 8 DIORDER owner 14:41 — D4 DIPUTUSKAN, gerbang pembelian 06:31 SUPERSEDED; R22/R23 diperbarui; R24–R26 baru; D12–D14 baru; kesiapan gerbang ±65% (14:16); penentu 15:00–15:10)
 **Sumber:** `AUTONOMOUS_WORK_LOG.md`, `BATCH1_EXECUTION_TICKETS_V2.md`,
 dokumen frozen V2.0, bukti audit V2-001.
 **Sumber status resmi:** `STATUS_REGISTRY.yaml` — bila ada perbedaan
@@ -13,15 +13,16 @@ ASSUMPTION / PROPOSAL / OPEN QUESTION / OWNER DECISION REQUIRED.
 **Alasan:** Batch 1: 1 EXECUTED (V2-001 — dengan KOREKSI: auditnya di
 host yang salah, lihat R15; bukti tidak berlaku untuk target) + 2
 READY_FOR_REVIEW (V2-002 + V2-003) dari 10; **10/10 tiket kini lengkap
-di sisi dokumen** (V2-010 diperluas Cycle 11 23 Nov 10:50 WIB — eksekusi
-desainnya menunggu V2-007 DISETUJUI, gerbang teknis keras; TANPA
-migration);
-gerbang biaya V2-009 belum dibuka (harga Master/VPS8 + storage belum
+di sisi dokumen** (eksekusi desain V2-010 menunggu V2-007 DISETUJUI,
+gerbang teknis keras; TANPA migration); **VPS 8 DIBELI owner 23 Nov 14:41
+(`vmi3778263`) — gerbang pembelian 06:31 SUPERSEDED oleh keputusan langsung
+owner, D4 DIPUTUSKAN**; kesiapan gerbang ±65% (14:16, naik dari ±40%
+13:32) — penentu 15:00–15:10 WIB (relink 114/707 + ledger tahap 2);
+V2-009 kini verifikasi PASCA-BELI (harga aktual panel + storage belum
 terverifikasi); keputusan provider KEIN ditutup atas asumsi owner tanpa
-bukti live; runbook VPS8 + acceptance + rollback belum ada; risiko
-split-brain box lama (R14) sudah RESOLVED 07:05 WIB. Fondasi dokumen
-(arsitektur + checklist frozen) kuat — yang kurang adalah bukti eksekusi
-dan verifikasi biaya.
+bukti live; risiko split-brain box lama (R14) sudah RESOLVED 07:05 WIB.
+Fondasi dokumen (arsitektur + checklist frozen) kuat — yang kurang adalah
+bukti eksekusi, verifikasi biaya, dan pembuktian pemulihan 15:00.
 
 ## VPS8 purchase-readiness gate (§10)
 
@@ -40,7 +41,7 @@ dan verifikasi biaya.
 | Item | Status |
 |---|---|
 | VPS specifications verified | NOT READY (spes Contabo VPS 8 dari listing — belum verifikasi panel) |
-| Price verified from provider source | NOT READY (Master ±$16,02 = ESTIMASI; VPS8 $18,65 belum verifikasi panel; cap $34,67/bln mengikat) |
+| Price verified from provider source | NOT READY (Master ±$16,02 = ESTIMASI; VPS8 $18,65 listing belum verifikasi panel; cap $34,67/bln mengikat — pembelian SUDAH terjadi 14:41 atas keputusan owner, V2-009 kini verifikasi pasca-beli) |
 | Storage and backup costs calculated | NOT READY (provider + retensi belum dipilih) |
 | Network assumptions documented | READY WITH ACCEPTED RISKS (model TX 70% port di V2.0; pengukuran Master 91–93% port 500 Mbps terverifikasi) |
 | Firewall and private connectivity plan ready | NOT READY |
@@ -75,7 +76,7 @@ dan verifikasi biaya.
 | A | Production stabilization | IN_PROGRESS | V2-002 + V2-003 READY_FOR_REVIEW; V2-004 tiket lengkap (Cycle 5), menunggu eksekusi; P1–P16 terdokumentasi |
 | B | KEIN fallback readiness | IN_PROGRESS | V2-001 EXECUTED dengan keterbatasan bukti (audit di host salah; Q5/Q6 ditutup atas asumsi owner 06:55 — bukan bukti live) |
 | C | Orchestrator & job lifecycle | NOT_STARTED | Desain di V2.0 + orchestrator doc; kontrak API detail belum ditulis |
-| D | VPS8 infrastructure readiness | NOT_STARTED | Plan VPS8 + rancangan 2 VPS ada; runbook belum ada |
+| D | VPS8 infrastructure readiness | IN_PROGRESS | VPS 8 DIBELI owner 14:41 (`vmi3778263`, Cloud VPS 8, EU, no setup); Fase 1 (setup + Tailscale + deploy live + canary 706 dulu) dijalankan lane Antigravity via prompt 14:52 — di luar scope cron local-only; program memantau, tidak mengeksekusi; runbook + acceptance + rollback sudah ada sebagai dokumen |
 | E | Backup, monitoring, recovery | NOT_STARTED | Arah di V2.0 §12–§13; rencana detail belum ada |
 | F | Deployment & release mgmt | NOT_STARTED | Manifest rilis di V2.0; rencana detail belum ada |
 | G | Security & access control | NOT_STARTED | — |
@@ -121,8 +122,11 @@ dan verifikasi biaya.
 | R19 | Orphan 706 mengudara TANPA AUDIO ±17 jam (pipe tanpa feeder sejak restart 14:42; bitrate tetap HEALTHY sehingga tak terdeteksi) | P1 | RESOLVED (restart manual 08:10:28 — audio mengalir, feeder 19,4 MB) |
 | R20 | Live MATI MASSAL 22 Nov 14:47 (4 stream/21 dtk) + pemulihan tidak andal (reconnect gagal DB-lock; status desync; 706 tanpa reconnect; encoder ganda 707; relay task mati; supervisor "hard exiting") | P0 | OPEN — mekanisme TERBUKTI 15:30 (overwrite stale-`now` daemon vs supervisor; health check STREAMING-only); live PULIH 15:16 (4/4 STREAMING, audio terverifikasi 15:29) tapi TIDAK STABIL (sentinel ghost-kill 114 2×; 3 proses pemulihan berpacu; encoder ganda 114; fix sentinel belum ter-deploy) |
 | R21 | Relink publik gagal di UI ("Failed to fetch") + sentinel BUTA (bot-check) membunuh siaran sehat tiap ±4 mnt (RIFFORA tayang 19:00:32–19:04:40 lalu dibunuh sentinel) | P0 | OPEN — diagnosis SELESAI 19:08 (panggilan YouTube sinkron membekukan worker 60–120 dtk; probe kena LOGIN_REQUIRED; relink tanpa pemanggil otonom); perbaikan menunggu keputusan owner |
-| R22 | Kuota YouTube API 3 vault live HABIS (±21:25 22 Nov) dibakar lingkaran kill-relink; keempat live GELAP di YouTube sejak ±21:30 meski dashboard STREAMING | P0 | OPEN — REM DI-DEPLOY 03:53 23 Nov (commit 96e5ee4; kill buta 0/10 mnt; 114 dibunuh 2× atas sinyal offline positif lalu pulih); ensurer tanpa pemicu berkala → 706/707/698 butuh 1 restart pasca-reset; cron pemulihan 15:10 WIB dijadwalkan; reset kuota 15:00 WIB |
-| R23 | Slot 698 (RUANGIRAMA) DIHAPUS 06:06 WIB 23 Nov (stop manual + DELETE, IP 103.214.112.181; asal penghapusan BELUM terkonfirmasi) — guardian terus mencoba membangkitkannya tiap 30 dtk | P1 | OPEN — sumber: MEMORY.md 23 Nov ~06:31 WIB (lane live-monitor); perlu konfirmasi siapa/apa yang menghapus + apakah loop revive guardian membakar kuota; siaran gelap sampai reset kuota 15:00 WIB. CATATAN POSITIF: reaper encoder ganda commit 33f1c15 TERVERIFIKASI bekerja (sensus 06:48: tepat 3 encoder, 0 duplikat) — duplikat encoder bukan lagi masalah aktif |
+| R22 | Kuota YouTube API 3 vault live HABIS (±21:25 22 Nov) dibakar lingkaran kill-relink; keempat live GELAP di YouTube sejak ±21:30 meski dashboard STREAMING | P0 | OPEN — REM DI-DEPLOY 03:53 23 Nov (commit 96e5ee4); lingkaran kill BERHENTI (0 kill sejak 12:39, total 757; monitor 14:39). Periodic ensurer ADA (`live_supervisor.py:1912`, 5 call site) → 114/707 seharusnya auto-relink 15:00 TANPA intervensi; cron pemulihan 15:10 menjadi verifikasi saja; ledger tahap 2 belum terverifikasi (penentu 15:00–15:10, R24) |
+| R23 | Slot 698 (RUANGIRAMA) DIHAPUS 06:06 WIB 23 Nov (stop manual + DELETE, IP 103.214.112.181) — guardian mencoba membangkitkannya tiap 30 dtk | P1 | RESOLVED (asal + loop) / OPEN (nasib) — ASAL TERKONFIRMASI: MONA yang menghapus, dikonfirmasi user 09:11 ("mona yang hapus"); guardian loop MATI sejak restart live 08:48 (KONTEKS_MASALAH_TERBARU §3.4). SISA: task baru belum dibuat — menunggu keputusan MONA (D12). CATATAN POSITIF: reaper encoder ganda commit 33f1c15 TERVERIFIKASI bekerja (sensus 06:48: tepat 3 encoder, 0 duplikat) — duplikat encoder bukan lagi masalah aktif |
+| R24 | Pemulihan 15:00 untuk 114/707 BELUM TERBUKTI — encoder STREAMING tapi broadcast belum ada (114 `broadcast_id` KOSONG; 707 broadcast `YFmbo1wSusM` oEmbed 404); rantai encoder→broadcast→live belum pernah dibuktikan untuk keduanya | P0 | OPEN — penentu gerbang (kesiapan ±65% → ±75–80% bila berhasil, → ±50% bila gagal); label "Mengudara (RTMP Ingest)" menyesatkan; periodic ensurer diharapkan auto-relink 15:00; verifikasi 15:00–15:10 |
+| R25 | Perbaikan schema lock `cd4fb7a` BELUM BERJALAN — commit 14:02:53, tapi restart live 13:50:05 + web 14:00:57 keduanya SEBELUM commit; kode ada di disk tapi belum aktif di service mana pun; klaim "0 DB lock" TIDAK PRESIS (5 lock 13:54:59–14:00:00) | P1 | OPEN — butuh restart service terencana + persetujuan owner (D13, tenggat 24 jam); observasi 2 jam pasca-restart untuk membuktikan 0 FAILED semaphore baru |
+| R26 | CPU Master JENUH — bottleneck mengikat (load 6,60/6,11/6,42 pada 4 vCPU); ffmpeg live ~165% (2 encoder) + audio_reassembler + yt-dlp ~53%; ketidakstabilan encoder BEROTASI antar task (706→707→114) → starvation sumber daya bersama; RAM BUKAN bottleneck (3,9 GB tersedia) | P0 | OPEN — menjelaskan kematian encoder berulang (R2/B10) + WEB DOWN 13:48–13:55 (web hidup tapi tak merespons ±7 mnt; restart 13:50 tidak memulihkan; live 0 stream); VPS 8 Fase 1 (offload live + prep) berjalan via Antigravity; mekanisme B10 tetap belum terpecahkan |
 
 ## Owner decision register (awal)
 
@@ -136,7 +140,10 @@ dan verifikasi biaya.
 | D10 | OQ-010 — siapa men-set flag `LIVE_GUARD_V2_ENABLED=false` + CPU 90 di `.env`, dan mengapa (prasyarat V2-003-R1) | MENUNGGU | `.env` diubah 21 Nov 17:58 |
 | D2 | Pilot DeepInfra 3 varian (Rp 800) | MENUNGGU (ditawarkan 18 Nov) | — |
 | D3 | D1 proxy residential (WaroengProxy Rp 10 rb/GB, uji 1 GB) | DITUNDA user 20 Nov — jangan tanya ulang | — |
-| D4 | Pembelian VPS8 ($34,67/bln cap) | MENUNGGU gerbang (Fase 0 + demand + harga terverifikasi) | — |
+| D4 | Pembelian VPS8 ($34,67/bln cap) | DIPUTUSKAN + DIEKSEKUSI 23 Nov 14:41 WIB (owner membeli langsung; `vmi3778263`, Cloud VPS 8 (2026), EU, no setup; gerbang pembelian 06:31 SUPERSEDED) | Prompt Fase 1: `PROMPT_ANTIGRAVITY_IMPLEMENTASI_VPS8_2026-11-23.md` (14:52) |
+| D12 | Nasib slot 698 — dikembalikan (buat task live baru) atau tidak? | MENUNGGU (keputusan MONA) | MONA menghapus 698 (dikonfirmasi user 09:11); guardian loop mati 08:48; channel vault-ready |
+| D13 | Jadwal restart service untuk mengaktifkan `cd4fb7a` (perbaikan schema lock) | MENUNGGU | Perbaikan ada di disk, belum berjalan; tenggat 24 jam (RENCANA §6 D3) |
+| D14 | Fase 2 Antigravity (bitrate conditioner + `assigned_node_id`) | MENUNGGU | Antigravity mengklaim "siap Fase 2"; persetujuan terpisah; setelah Tahap A (RENCANA §6 D4) |
 | D5 | Sweeper batch, TX-throttle threshold, failover live auto/manual, kepemilikan janitor, limit live final, provider Master pasca-Des | MENUNGGU (plan §10) | — |
 | D6 | Aktivasi distribusi Stage 2 live (guard 422) + peluncuran batch massal | MENUNGGU (peluncuran = user) | — |
 
@@ -169,14 +176,57 @@ dan verifikasi biaya.
 
 ## Next 5 actions
 
-1. Keputusan user D9/D10 (perbaikan Guard v2 + OQ-010 prasyarat) — menunggu.
-2. Observasi 24 jam pasca-deploy R3–R8 iterasi 2 (kematian 114, watchdog 10 dtk, refresh token, alert R7) — berjalan.
-3. Eksekusi audit V2-004 (janitor) saat sesi interaktif tersedia — tiket lengkap; tangkap `deletion_audit` SEGERA (retensi belum diketahui, OQ-014).
-4. Eksekusi audit V2-005 (baseline snapshot) saat sesi interaktif tersedia — tiket lengkap; snapshot adalah lantai gerbang Fase 0 (rollback satu-metrik butuh angka acuan yang sah); baca schema dulu sebelum query (OQ-016/017/018).
-5. Eksekusi audit V2-006 (service inventory) saat sesi interaktif tersedia — tiket lengkap; nama unit systemd dari V2-005 F.3 wajib diverifikasi dulu (OQ-019) agar perintah V2-005 F.3 tidak mengembalikan nol; hasil V2-006 adalah input V2-007 (penulis DB, OQ-022) + V2-008 (worker untuk benchmark) + P3.
-6. Eksekusi audit V2-007 (schema audit — GERBANG TEKNIS) saat sesi interaktif tersedia — tiket lengkap; backup konsisten DULU lalu audit dari SALINAN (OQ-024: jalur tulis-live `init_schema()` belum terbukti aman); gerbang menahan V2-010 sampai disetujui.
-7. Eksekusi benchmark V2-008 saat sesi interaktif tersedia — tiket lengkap; ukur konsumsi aktual per worker + uji concurrency Stage 2 (1 vs 2 slot) — F.6 HANYA dengan materi uji ATAU persetujuan user bila menyentuh antrean produksi; angka concurrency final menggantikan PROPOSAL capacity model.
-8. Eksekusi desain V2-010 saat sesi interaktif tersedia — HANYA setelah V2-007 DISETUJUI (gerbang teknis keras); desain mengikuti cabang OQ-027; OQ-046–OQ-055 dijawab dari data V2-007 + kode; TANPA migration (migration = tiket L3 terpisah setelah desain disetujui user).
-9. Jawab OQ-005/006 (host benar) + OQ-011/012 + OQ-013/014/015 (saat eksekusi V2-004) + OQ-016/017/018 (saat eksekusi V2-005) + OQ-019/020/021/022/023 (saat eksekusi V2-006) + OQ-024/025/026/027/028 (saat eksekusi V2-007) + OQ-029/030/031/032/033/034/035 (saat eksekusi V2-008) + OQ-036/037/038/039/040/041/042/043/044/045 (saat eksekusi V2-009) + OQ-046/047/048/049/050/051/052/053/054/055 (saat eksekusi desain V2-010).
-9. Eksekusi V2-009 saat sesi interaktif tersedia — minta angka panel Contabo dari user (daftar periksa F.1, sekali, dengan tanggal); F.2–F.5 (quote storage + volume backup + hitung ulang TCO) dapat dikerjakan dulu bila F.1 menunggu; verdict C-1–C-5 menentukan apakah pembelian muat cap $34,67/bln.
-10. Konfirmasi R23 (slot 698 dihapus 06:06 — siapa/apa yang menghapus; apakah loop revive guardian tiap 30 dtk membakar kuota) — temuan lane live-monitor 23 Nov ~06:31 WIB; eskalasi ke owner bila penghapusan tidak disengaja.
+1. **Verifikasi 15:00–15:10 WIB (PENENTU, di luar scope cron local-only):**
+   114/707 live di YouTube via periodic ensurer + ledger tahap 2 mencatat
+   INSERT/BIND/TRANSITION (R24). Bila berhasil → kesiapan ±75–80%; bila
+   relink gagal → kembali ±50% + diagnosis sebelum canary 114/707.
+   Cron 15:10 kini verifikasi saja (bukan pemulihan).
+2. Keputusan user D9/D10 (perbaikan Guard v2 + OQ-010 prasyarat) — menunggu.
+3. Keputusan user D12 (nasib 698) + D13 (jadwal restart `cd4fb7a`) + D14
+   (Fase 2 Antigravity) — menunggu.
+4. Fase 1 VPS 8 (lane Antigravity, prompt 14:52 — di luar scope cron):
+   setup + Tailscale → deploy live → canary 706 dulu → 114/707 SETELAH
+   15:00 → DR replica + watchdog → worker prep canary → worker prep penuh.
+   Program memantau via log + monitor, tidak mengeksekusi. JANGAN sentuh
+   Master 15:00–15:15.
+5. Eksekusi audit V2-004 (janitor) saat sesi interaktif tersedia — tiket
+   lengkap; tangkap `deletion_audit` SEGERA (retensi belum diketahui, OQ-014).
+6. Eksekusi audit V2-005 (baseline snapshot) saat sesi interaktif tersedia —
+   tiket lengkap; snapshot adalah lantai gerbang Fase 0 (rollback
+   satu-metrik butuh angka acuan yang sah); baca schema dulu sebelum query
+   (OQ-016/017/018).
+7. Eksekusi audit V2-006 (service inventory) saat sesi interaktif tersedia —
+   tiket lengkap; nama unit systemd dari V2-005 F.3 wajib diverifikasi dulu
+   (OQ-019); hasil V2-006 adalah input V2-007 (penulis DB, OQ-022) + V2-008
+   (worker untuk benchmark) + P3.
+8. Eksekusi audit V2-007 (schema audit — GERBANG TEKNIS) saat sesi interaktif
+   tersedia — tiket lengkap; backup konsisten DULU lalu audit dari SALINAN
+   (OQ-024); gerbang menahan V2-010 sampai disetujui.
+9. Eksekusi benchmark V2-008 saat sesi interaktif tersedia — tiket lengkap;
+   ukur konsumsi aktual per worker + uji concurrency Stage 2 (1 vs 2 slot) —
+   F.6 HANYA dengan materi uji ATAU persetujuan user bila menyentuh antrean
+   produksi; angka concurrency final menggantikan PROPOSAL capacity model.
+   R26 (CPU Master jenuh, load 6,6/4 vCPU) memperkuat urgensi benchmark ini
+   sebagai pembanding pasca-canary.
+10. Eksekusi verifikasi V2-009 saat sesi interaktif tersedia — kini
+    verifikasi PASCA-BELI: minta angka panel Contabo dari user (daftar
+    periksa F.1, sekali, dengan tanggal — harga aktual VPS 8 yang dibayar +
+    harga Master + renewal); F.2–F.5 (quote storage + volume backup +
+    hitung ulang TCO) dapat dikerjakan dulu; verdict C-1–C-5 kini menilai
+    apakah pembelian yang sudah terjadi muat cap $34,67/bln dan apa yang
+    harus direvisi bila tidak.
+11. Eksekusi desain V2-010 saat sesi interaktif tersedia — HANYA setelah
+    V2-007 DISETUJUI (gerbang teknis keras); desain mengikuti cabang OQ-027;
+    OQ-046–OQ-055 dijawab dari data V2-007 + kode; TANPA migration
+    (migration = tiket L3 terpisah setelah desain disetujui user).
+12. Jawab OQ-005/006 (host benar) + OQ-011/012 + OQ-013/014/015 (saat
+    eksekusi V2-004) + OQ-016/017/018 (saat eksekusi V2-005) +
+    OQ-019/020/021/022/023 (saat eksekusi V2-006) + OQ-024/025/026/027/028
+    (saat eksekusi V2-007) + OQ-029/030/031/032/033/034/035 (saat eksekusi
+    V2-008) + OQ-036/037/038/039/040/041/042/043/044/045 (saat eksekusi
+    V2-009) + OQ-046/047/048/049/050/051/052/053/054/055 (saat eksekusi
+    desain V2-010).
+13. V2-009 F.2–F.5 dapat dikerjakan sebagai tugas lokal siklus berikut
+    (quote storage/domain/monitoring dari sumber publik + hitung volume
+    backup + hitung ulang TCO dengan label DF/ESTIMASI) — verdict C-1/C-2/C-4
+    tetap "TIDAK DAPAT DINILAI" sampai angka panel F.1 tiba.
