@@ -2,6 +2,7 @@
 
 **Dokumen acuan (frozen):** `MASTER_ARCHITECTURE_MASJAVAS_TUBE_OS_V2.md` (Draft Baseline),
 `IMPLEMENTATION_CHECKLIST_MASJAVAS_TUBE_OS_V2.md` (v1.0)
+**Versi:** 2.2 — V2-009 F.2–F.5 dikerjakan Cycle 13, 23 Nov 18:50 WIB (cron local-only) — quote storage/domain/monitoring + volume backup + hitung ulang TCO; verdict C-1/C-2/C-4 tetap TIDAK DAPAT DINILAI (F.1 menunggu user)
 **Versi:** 2.1 — V2-009 addendum Cycle 12, 23 Nov 14:50 WIB (cron local-only) — VPS 8 dibeli owner 14:41 sebelum verifikasi selesai; V2-009 menjadi verifikasi pasca-beli
 **Versi:** 2.0 — V2-010 diperluas Cycle 11, 23 Nov 10:50 WIB (cron local-only) — 10/10 tiket lengkap; KOREKSI: hitung registry ticket_complete/stub diperbaiki (lihat STATUS_REGISTRY.yaml)
 **Versi:** 1.9 — V2-009 diperluas Cycle 10, 23 Nov 06:50 WIB (cron local-only)
@@ -2741,6 +2742,22 @@ storage $0). Verdict C-1–C-5 kini menilai apakah pembelian yang sudah
 terjadi muat cap $34,67/bln (cap = seluruh TCO) dan apa yang harus direvisi
 bila tidak. F.1 (daftar periksa angka panel) tetap diminta sekali dari user;
 F.2–F.5 dapat dikerjakan dulu sebagai tugas lokal.
+**ADDENDUM Cycle 13 (23 Nov 2026, 18:50 WIB, cron local-only):** F.2–F.5
+DIKERJAKAN (bukti: `v2-009/COST_VERIFICATION_V2-009_2026-11-23.md` +
+`v2-009/TCO_RECALCULATION_V2-009_2026-11-23.md`; manifest G.0 Q4–Q8
+terisi, Q9/Q10 dicatat). Temuan: storage off-site $0/bulan untuk volume
+DB-only 1,53 GB (free tier R2/B2, 10 GB); Wasabi DITOLAK (minimum
+$7,99/bulan); domain $0,10–$0,19/bulan (harga pasar — registrar tak
+diketahui); monitoring $0 (free tier; OQ-058 baru: syarat komersial
+UptimeRobot disengketakan sumber); snapshot $0 (termasuk paket);
+Auto Backup BELUM DIHITUNG. Hitung ulang TCO: MINIMUM $34,77–$34,86
+(LEBIH cap $0,10–$0,19 — domain saja memecah MINIMUM tipis); EXPECTED
+$36,27–$36,36; WORST $39,74–$39,83; kontrak-12 EXPECTED $33,47–$33,56
+(satu-satunya varian di bawah cap). Komposisi $190,21: aritmetika
+konsisten (12 × $15,85 = $190,20, selisih $0,01 pembulatan) — BUKAN bukti
+komposisi. Verdict C-1/C-2/C-4 tetap TIDAK DAPAT DINILAI (F.1 menunggu
+user); C-3 sebagian ternilai (DB-only $0). Tiket tetap NOT_STARTED
+(eksekusi penuh menunggu F.1 + F.6).
 **Dibuat:** 22 Nov 2026 (stub) — **Diperluas:** 23 Nov 2026 06:50 WIB
 (Cycle 10, cron local-only)
 **Dependency:** panel Contabo (harga Master + VPS 8 + kuota trafik +
@@ -3066,13 +3083,13 @@ dengan eksekusi, bukan di akhir — harga panel berubah.
 | Q1 | F.1 | | | `COST_VERIFICATION_V2-009_<tanggal>.md` | | | |
 | Q2 | F.1 | | | `COST_VERIFICATION_V2-009_<tanggal>.md` | | | |
 | Q3 | F.1 | | | `COST_VERIFICATION_V2-009_<tanggal>.md` | | | |
-| Q4 | F.2 | | | `COST_VERIFICATION_V2-009_<tanggal>.md` | | | |
-| Q5 | F.3 | | | `COST_VERIFICATION_V2-009_<tanggal>.md` | | | |
-| Q6 | F.4 | | | `COST_VERIFICATION_V2-009_<tanggal>.md` | | | |
-| Q7 | F.2 + F.4 | | | `COST_VERIFICATION_V2-009_<tanggal>.md` | | | |
-| Q8 | F.4 | | | `TCO_RECALCULATION_V2-009_<tanggal>.md` | | | |
-| Q9 | F.6 | | | `COST_VERIFICATION_V2-009_<tanggal>.md` | | | |
-| Q10 | F.5 | | | `COST_VERIFICATION_V2-009_<tanggal>.md` | | | |
+| Q4 | F.2 | 23 Nov 18:50 | 0 | `COST_VERIFICATION_V2-009_2026-11-23.md` §1 | R2 $0,015/GB-bln + 10 GB gratis, egress $0; B2 $0,00695/GB-bln + 10 GB gratis, egress gratis s.d. 3× tersimpan; Wasabi $7,99/TB-bln + minimum 1 TB (DITOLAK untuk volume ini); Contabo object storage $2,99/250 GB (sekunder) | Confirmed (R2/B2/Wasabi dari halaman resmi; Contabo sekunder) | OQ-039 terjawab |
+| Q5 | F.3 | 23 Nov 18:50 | 0 | `COST_VERIFICATION_V2-009_2026-11-23.md` §4 | Volume DB-only 1,53 GB (12 salinan × 118 MB + Litestream); staging + DR + pertumbuhan BELUM DIUKUR | Partial | OQ-041 terjawab sebagian |
+| Q6 | F.4 | 23 Nov 18:50 | 0 | `COST_VERIFICATION_V2-009_2026-11-23.md` §5 | Storage off-site $0,00/bln (R2/B2 free tier); snapshot $0 (termasuk paket); Auto Backup BELUM DIHITUNG | Partial | OQ-042 terjawab YA (DB-only) |
+| Q7 | F.2 + F.4 | 23 Nov 18:50 | 0 | `COST_VERIFICATION_V2-009_2026-11-23.md` §2–§3 | Domain $0,10–$0,19/bln (harga pasar; registrar tak diketahui); monitoring $0 (free tier; OQ-058 baru: sengketa syarat komersial UptimeRobot) | Partial | OQ-040/OQ-045 terjawab sebagian |
+| Q8 | F.4 | 23 Nov 18:50 | 0 | `TCO_RECALCULATION_V2-009_2026-11-23.md` | MINIMUM $34,77–$34,86 (LEBIH cap $0,10–$0,19); EXPECTED $36,27–$36,36; WORST $39,74–$39,83; kontrak-12 EXPECTED $33,47–$33,56 (di bawah cap) — semua dengan harga infra ESTIMASI/DF | Partial | C-4 tetap TIDAK DAPAT DINILAI (F.1 pending) |
+| Q9 | F.6 | | | `COST_VERIFICATION_V2-009_2026-11-23.md` §8 | Verdict C-1–C-5 BELUM dikeluarkan (F.6 menunggu F.1); C-3 sebagian ternilai (DB-only $0) | Unknown | Gerbang biaya tetap terbuka |
+| Q10 | F.5 | 23 Nov 18:50 | 0 | `COST_VERIFICATION_V2-009_2026-11-23.md` §6 | 12 × $15,85 = $190,20 vs $190,21 (selisih $0,01 pembulatan) — aritmetika konsisten, BUKAN bukti komposisi | Partial | OQ-043 tetap terbuka |
 
 Aturan manifest: sama seperti V2-001 §G.0 — `Confirmed` (angka primer
 dari panel/quote resmi + tanggal), `Partial` (satu komponen belum
