@@ -1,5 +1,9 @@
 # MASJAVAS OWNER DECISION REGISTER — MASJAVAS TUBE OS V2
 
+**Versi:** 1.2 — 23 Nov 2026, 18:50 WIB (Cycle 13: D13 DIPUTUSKAN +
+DIEKSEKUSI 16:38:51 (cd4fb7a aktif); D15 + D16 baru (restart Master f7ee5ce
++ restart tunnel); STORAGE diperbarui (V2-009 F.2–F.5); ringkasan
+DIPUTUSKAN 5 → 6, MENUNGGU 28 → 29).
 **Versi:** 1.1 — 23 Nov 2026, 14:50 WIB (Cycle 12: D4 DIPUTUSKAN +
 dieksekusi owner 14:41; D12–D14 baru dari RENCANA_KEDEPAN §6; pemetaan
 nomor RENCANA D1–D6 dicatat — JANGAN disamakan dengan nomor register ini).
@@ -32,7 +36,9 @@ dilabeli).
 | D3 | D1 proxy residential (WaroengProxy Rp 10.000/GB, uji 1 GB) | MENUNGGU | Ditunda user 20 Nov 2026 | **Jangan tanya ulang** (aturan eksplisit). Dahono 407 terbukti sisi provider (21 Nov). Alternatif belum diuji |
 | D4 | Pembelian VPS 8 (cap $34,67/bln mengikat) | DIPUTUSKAN + DIEKSEKUSI | Dibeli owner 23 Nov 2026 14:41 WIB | Screenshot panel Contabo: `vmi3778263` — Cloud VPS 8 (2026), Running, EU/Hub Europe, no setup. Gerbang pembelian 06:31 SUPERSEDED oleh keputusan langsung owner ("lanjut fase berikutnya tanpa menunggu"). Prompt implementasi Fase 1: `PROMPT_ANTIGRAVITY_IMPLEMENTASI_VPS8_2026-11-23.md` (14:52; canary 706 dulu, 114/707 SETELAH 15:00; JANGAN sentuh Master 15:00–15:15). IP publik TIDAK dicatat di dokumen program (lihat MEMORY.md). Verifikasi harga aktual panel + storage $0 tetap terbuka (V2-009, kini verifikasi pasca-beli) |
 | D12 | Nasib slot 698 — dikembalikan (buat task live baru) atau tidak? | MENUNGGU | — | MONA menghapus 698 (dikonfirmasi user 09:11, "mona yang hapus"); guardian loop mati sejak restart live 08:48; channel vault-ready (vault MV-E02321CFBE9C3F73); keputusan MONA (RENCANA §6 D2 — nomor RENCANA, bukan register) |
-| D13 | Jadwal restart service untuk mengaktifkan `cd4fb7a` (perbaikan schema lock) | MENUNGGU | — | Perbaikan ada di disk tapi belum berjalan (restart live 13:50:05 + web 14:00:57 sebelum commit 14:02:53); tenggat 24 jam (RENCANA §6 D3 — nomor RENCANA, bukan register) |
+| D13 | Jadwal restart service untuk mengaktifkan `cd4fb7a` (perbaikan schema lock) | DIPUTUSKAN + DIEKSEKUSI | Dieksekusi 23 Nov 16:38:51 WIB (restart live, sebagai bagian migrasi) | Restart live 16:38:51 MENGAKTIFKAN cd4fb7a (MEMORY.md 16:27–16:41) — bukan jadwal terpisah seperti rencana awal, dicatat jujur. R25 → RESOLVED. Observasi: laju error worker turun separuh pasca-restart |
+| D15 | Jadwal restart service Master untuk mengaktifkan `f7ee5ce` (perbaikan sistemik: semaphore Opsi A + RTMP resilient + auto-heal + watchdog + DR) | MENUNGGU | — | f7ee5ce AKTIF di VPS 8 (restart live 18:27:55; RTMP timeout 0/27 mnt — TERBUKTI) tapi BELUM AKTIF di Master (web PID 4134208 sejak 17:08, live PID 4158014 sejak 17:19). Restart Master = L3, butuh persetujuan + jendela (R28) |
+| D16 | Restart tunnel cloudflared (URL publik mati total — koneksi edge 6 hari stale) | MENUNGGU | — | Web lokal cepat (0,77 dtk) tapi curl publik timeout 2× + self-test Master HTTP 000 (18:52–18:54); tunnel PID 69061 hidup tapi log `/var/log/cloudflared.log` TIDAK ADA. Restart tunnel = L3, butuh persetujuan user (R30) |
 | D14 | Fase 2 Antigravity (bitrate conditioner + `assigned_node_id`) | MENUNGGU | — | Antigravity mengklaim "siap Fase 2"; owner belum menyetujui; persetujuan terpisah; setelah Tahap A (RENCANA §6 D4 — nomor RENCANA, bukan register) |
 | D5 | Bundle PLAN §10 #4–#7: sweeper batch, ambang TX-throttle, failover live auto/manual, kepemilikan janitor, limit live final, provider Master pasca-Des | MENUNGGU | — | Rincian per item di §2 (PLAN10-4 s.d. PLAN10-7) |
 | D6 | Aktivasi distribusi Stage 2 live (guard 422) + peluncuran batch massal | MENUNGGU | — | Peluncuran = keputusan user semata. CATATAN: distribusi live Stage 2 tercatat AKTIF sejak 19 Nov 11:08 (DOCUMENTED FACT NOT YET REVALIDATED — ALIGNMENT_SYNTHESIS); keputusan guard-422 perlu re-review |
@@ -79,7 +85,7 @@ RENCANA-D3 = D13; RENCANA-D4 = D14; RENCANA-D5 = D9; RENCANA-D6 = STORAGE
 |---|---|---|---|---|
 | V2-002-R2 | Audit ulang KEIN di host benar (re-audit V2-001) | DITOLAK | 22 Nov 06:55 + 07:03 WIB | User menolak 2× ("lewati kein", "KEIN tetap dilewati"). JANGAN tawarkan lagi kecuali user mengangkatnya |
 | TR-720p | Trade-off 720p vs 1080p untuk live (VPS 8 muat 134 stream @720p vs 70 @1080p; 50 channel muat VPS 6 total $26,01/bln) | MENUNGGU | Diajukan user 21 Nov 2026 | 1080p untuk semua tetap keputusan berlaku (DOCUMENTED FACT NOT YET REVALIDATED — MEMORY.md). Angka 720p adalah opsi terbuka, bukan keputusan |
-| STORAGE | Provider + retensi storage off-site (Litestream/Restic) | MENUNGGU | — | Biaya BELUM DIHITUNG (V2-009). RPO ≤5 mnt / RTO ≤30 mnt adalah TARGET yang harus dibuktikan restore drill, bukan janji |
+| STORAGE | Provider + retensi storage off-site (Litestream/Restic) | MENUNGGU | — | Biaya SEBAGIAN DIHITUNG Cycle 13 (23 Nov 18:50): quote R2 $0,015/GB-bln + 10 GB gratis; B2 $0,00695/GB-bln + 10 GB gratis; Wasabi DITOLAK (minimum $7,99/bln); volume DB-only 1,53 GB → storage $0/bln (free tier); domain $0,10–$0,19/bln (harga pasar); monitoring $0; snapshot $0; TCO dihitung ulang (MINIMUM $34,77–$34,86 — LEBIH cap tipis). F.1 (angka panel) + keputusan provider + retensi final tetap menunggu. RPO ≤5 mnt / RTO ≤30 mnt adalah TARGET yang harus dibuktikan restore drill, bukan janji |
 | KONTRAK-12 | Kontrak 12 bulan VPS 8 (total $31,87/bln, bayar di muka $190,21) | MENUNGGU | — | PLAN §7: putuskan setelah model terbukti (bulanan dulu) |
 | OMNI-600 | Paket Google Omni API Generate Video (Unlimited 1 bulan, maks 1 paralel, Rp 600.000 + bonus API Image Unlimited) | MENUNGGU | Dievaluasi user 21 Nov 2026 | Belum ada keputusan pembelian (DOCUMENTED FACT NOT YET REVALIDATED — MEMORY.md) |
 | KEIN-IMG | Harga KEIN IMAGE per gambar + apakah boleh paralel (kini serial 78,7 dtk/gambar) | MENUNGGU | — | Tanyakan ke owner KEIN (rekomendasi BIAYA doc). Harga/gambar TIDAK DIKETAHUI |
@@ -90,11 +96,12 @@ RENCANA-D3 = D13; RENCANA-D4 = D14; RENCANA-D5 = D9; RENCANA-D6 = STORAGE
 
 | Status | Jumlah | ID |
 |---|---|---|
-| DIPUTUSKAN | 5 (+2 sebagian) | D4, D7, D8, D11, TCO-1; EV6-2 (rencana saja — bentuk deploy menunggu), EV6-8 (P16 saja — P15 menunggu) |
-| MENUNGGU | 28 | D2, D3, D5, D6, D9, D10, D12, D13, D14, PLAN10-1 s.d. PLAN10-7, EV6-1, EV6-3 s.d. EV6-7, TR-720p, STORAGE, KONTRAK-12, OMNI-600, KEIN-IMG, WEB-RESTART |
+| DIPUTUSKAN | 6 (+2 sebagian) | D4, D7, D8, D11, D13, TCO-1; EV6-2 (rencana saja — bentuk deploy menunggu), EV6-8 (P16 saja — P15 menunggu) |
+| MENUNGGU | 29 | D2, D3, D5, D6, D9, D10, D12, D14, D15, D16, PLAN10-1 s.d. PLAN10-7, EV6-1, EV6-3 s.d. EV6-7, TR-720p, STORAGE, KONTRAK-12, OMNI-600, KEIN-IMG, WEB-RESTART |
 | DITUTUP | 1 | D1 |
 | DITOLAK | 1 | V2-002-R2 |
 
 Keputusan paling mendesak menurut program (PROPOSAL, bukan keputusan user):
-D9/D10 (Guard v2 — prasyarat proteksi live), D12/D13 (nasib 698 + restart
-`cd4fb7a`), PLAN10-2 (Fase 0 $0), EV6-4 (diagnosa P2).
+D9/D10 (Guard v2 — prasyarat proteksi live), D12/D15/D16 (nasib 698 +
+restart Master f7ee5ce + restart tunnel — ketiganya baru/mendesak),
+PLAN10-2 (Fase 0 $0), EV6-4 (diagnosa P2).
