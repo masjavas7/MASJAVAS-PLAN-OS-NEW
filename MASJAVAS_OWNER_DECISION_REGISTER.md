@@ -1,5 +1,6 @@
 # MASJAVAS OWNER DECISION REGISTER — MASJAVAS TUBE OS V2
 
+**Versi:** 1.3 — 23 Nov 2026, 22:50 WIB (Cycle 14: D15 DIPUTUSKAN + DIEKSEKUSI 19:50:52 (f7ee5ce aktif di Master, auto-heal fix terbukti); D16 dikoreksi (diagnosis tunnel SALAH — Web Guardian v2.1 aktif 19:07); D17 baru (arsitektur multi-node v1.0 DRAFT menunggu persetujuan); ringkasan DIPUTUSKAN 7 → 8, MENUNGGU 28 → 28).
 **Versi:** 1.2 — 23 Nov 2026, 18:50 WIB (Cycle 13: D13 DIPUTUSKAN +
 DIEKSEKUSI 16:38:51 (cd4fb7a aktif); D15 + D16 baru (restart Master f7ee5ce
 + restart tunnel); STORAGE diperbarui (V2-009 F.2–F.5); ringkasan
@@ -37,8 +38,9 @@ dilabeli).
 | D4 | Pembelian VPS 8 (cap $34,67/bln mengikat) | DIPUTUSKAN + DIEKSEKUSI | Dibeli owner 23 Nov 2026 14:41 WIB | Screenshot panel Contabo: `vmi3778263` — Cloud VPS 8 (2026), Running, EU/Hub Europe, no setup. Gerbang pembelian 06:31 SUPERSEDED oleh keputusan langsung owner ("lanjut fase berikutnya tanpa menunggu"). Prompt implementasi Fase 1: `PROMPT_ANTIGRAVITY_IMPLEMENTASI_VPS8_2026-11-23.md` (14:52; canary 706 dulu, 114/707 SETELAH 15:00; JANGAN sentuh Master 15:00–15:15). IP publik TIDAK dicatat di dokumen program (lihat MEMORY.md). Verifikasi harga aktual panel + storage $0 tetap terbuka (V2-009, kini verifikasi pasca-beli) |
 | D12 | Nasib slot 698 — dikembalikan (buat task live baru) atau tidak? | MENUNGGU | — | MONA menghapus 698 (dikonfirmasi user 09:11, "mona yang hapus"); guardian loop mati sejak restart live 08:48; channel vault-ready (vault MV-E02321CFBE9C3F73); keputusan MONA (RENCANA §6 D2 — nomor RENCANA, bukan register) |
 | D13 | Jadwal restart service untuk mengaktifkan `cd4fb7a` (perbaikan schema lock) | DIPUTUSKAN + DIEKSEKUSI | Dieksekusi 23 Nov 16:38:51 WIB (restart live, sebagai bagian migrasi) | Restart live 16:38:51 MENGAKTIFKAN cd4fb7a (MEMORY.md 16:27–16:41) — bukan jadwal terpisah seperti rencana awal, dicatat jujur. R25 → RESOLVED. Observasi: laju error worker turun separuh pasca-restart |
-| D15 | Jadwal restart service Master untuk mengaktifkan `f7ee5ce` (perbaikan sistemik: semaphore Opsi A + RTMP resilient + auto-heal + watchdog + DR) | MENUNGGU | — | f7ee5ce AKTIF di VPS 8 (restart live 18:27:55; RTMP timeout 0/27 mnt — TERBUKTI) tapi BELUM AKTIF di Master (web PID 4134208 sejak 17:08, live PID 4158014 sejak 17:19). Restart Master = L3, butuh persetujuan + jendela (R28) |
-| D16 | Restart tunnel cloudflared (URL publik mati total — koneksi edge 6 hari stale) | DIPUTUSKAN + DIEKSEKUSI | Dieksekusi 23 Nov 19:00 WIB | Restart berhasil (PID 69061 → 139105, 19:00:09); curl publik `/` HTTP 200/2,07 dtk; self-test Master HTTP 200/1,76 dtk; URL publik PULIH TOTAL. R30 → RESOLVED. Pelajaran: tunnel 6 hari bisa basi tanpa error di log |
+| D15 | Jadwal restart service Master untuk mengaktifkan `f7ee5ce` (perbaikan sistemik: semaphore Opsi A + RTMP resilient + auto-heal + watchdog + DR) | DIPUTUSKAN + DIEKSEKUSI | Dieksekusi 23 Nov 19:50:52 WIB (restart live, via prompt 19:43 T3 + lane Antigravity) | f7ee5ce AKTIF di Master: web 19:15:04 (PID 168462), live 19:50:52 (PID 4158014 → 231356; auto-heal fix TERBUKTI — 3 task migrasi tetap STOPPED, 0 auto-heal di journal), worker 20:39:14 (PID 306566; kode terkait belum-commit kini LIVE). R28 → RESOLVED. CATATAN: flag --lane publish di worker belum terverifikasi → OQ-062 (T2 prompt 19:43). |
+| D16 | Restart tunnel cloudflared (URL publik mati total — koneksi edge 6 hari stale) | DIPUTUSKAN + DIEKSEKUSI | Dieksekusi 23 Nov 19:00 WIB | Restart berhasil (PID 69061 → 139105, 19:00:09); curl publik `/` HTTP 200/2,07 dtk; self-test Master HTTP 200/1,76 dtk; URL publik PULIH TOTAL. R30 → RESOLVED. KOREKSI (Cycle 14, 19:05–19:07): diagnosis 'tunnel edge stale' SALAH — tunnel tidak di jalur domain (bukti: URL tetap HTTP 200/0,75 dtk saat tunnel DIHENTIKAN total); restart 19:00 kebetulan, bukan penyebab pulih. D16 tetap tercatat sebagai tindakan yang dilakukan atas persetujuan user. Perbaikan yang benar: Web Guardian v2.1 AKTIF 19:07 (cek 3 lapis 5 mnt + auto-restart Caddy; uji end-to-end 19:06 lolos). |
+| D17 | Persetujuan arsitektur multi-node v1.0 (`ARSITEKTUR_MULTI_NODE_MASJAVAS_TUBE_OS_V2.md` — DRAFT 20:02 WIB; 7 prinsip mengikat P1–P7; skema DB baru `live_nodes` + kolom lease/migrasi + `node_events`; rencana migrasi F0–F9 ~12–16 hari kerja) | MENUNGGU | — | 10 insiden nyata 22–23 Nov (I1–I10) memotivasi desain; 4 pertanyaan terbuka untuk owner: jumlah node docel, prep di node live vs khusus, failover otomatis vs manual, akses `/nodes` untuk operator. Dokumen ditambahkan ke repo Cycle 14. |
 | D14 | Fase 2 Antigravity (bitrate conditioner + `assigned_node_id`) | MENUNGGU | — | Antigravity mengklaim "siap Fase 2"; owner belum menyetujui; persetujuan terpisah; setelah Tahap A (RENCANA §6 D4 — nomor RENCANA, bukan register) |
 | D5 | Bundle PLAN §10 #4–#7: sweeper batch, ambang TX-throttle, failover live auto/manual, kepemilikan janitor, limit live final, provider Master pasca-Des | MENUNGGU | — | Rincian per item di §2 (PLAN10-4 s.d. PLAN10-7) |
 | D6 | Aktivasi distribusi Stage 2 live (guard 422) + peluncuran batch massal | MENUNGGU | — | Peluncuran = keputusan user semata. CATATAN: distribusi live Stage 2 tercatat AKTIF sejak 19 Nov 11:08 (DOCUMENTED FACT NOT YET REVALIDATED — ALIGNMENT_SYNTHESIS); keputusan guard-422 perlu re-review |
@@ -96,11 +98,11 @@ RENCANA-D3 = D13; RENCANA-D4 = D14; RENCANA-D5 = D9; RENCANA-D6 = STORAGE
 
 | Status | Jumlah | ID |
 |---|---|---|
-| DIPUTUSKAN | 7 (+2 sebagian) | D4, D7, D8, D11, D13, D16, TCO-1; EV6-2 (rencana saja — bentuk deploy menunggu), EV6-8 (P16 saja — P15 menunggu) |
-| MENUNGGU | 28 | D2, D3, D5, D6, D9, D10, D12, D14, D15, PLAN10-1 s.d. PLAN10-7, EV6-1, EV6-3 s.d. EV6-7, TR-720p, STORAGE, KONTRAK-12, OMNI-600, KEIN-IMG, WEB-RESTART |
+| DIPUTUSKAN | 8 (+2 sebagian) | D4, D7, D8, D11, D13, D15, D16, TCO-1; EV6-2 (rencana saja — bentuk deploy menunggu), EV6-8 (P16 saja — P15 menunggu) |
+| MENUNGGU | 28 | D2, D3, D5, D6, D9, D10, D12, D14, D17, PLAN10-1 s.d. PLAN10-7, EV6-1, EV6-3 s.d. EV6-7, TR-720p, STORAGE, KONTRAK-12, OMNI-600, KEIN-IMG, WEB-RESTART |
 | DITUTUP | 1 | D1 |
 | DITOLAK | 1 | V2-002-R2 |
 
 Keputusan paling mendesak menurut program (PROPOSAL, bukan keputusan user):
-D9/D10 (Guard v2 — prasyarat proteksi live), D12/D15 (nasib 698 +
-restart Master f7ee5ce), PLAN10-2 (Fase 0 $0), EV6-4 (diagnosa P2).
+D9/D10 (Guard v2 — prasyarat proteksi live), D12/D17 (nasib 698 +
+arsitektur multi-node), PLAN10-2 (Fase 0 $0), EV6-4 (diagnosa P2).
