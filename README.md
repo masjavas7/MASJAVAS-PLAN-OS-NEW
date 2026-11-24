@@ -167,6 +167,20 @@ sampai semua gerbang lolos.
   klasifikasi + QA jev-1.14.0, B3 UI manajemen agent (budget cap,
   kill switch, OWNER-only); Fase C (tulis ke YouTube) TETAP DITAHAN
   (D20).
+- `DESAIN_PEMILIH_VPS_LIVE_2026-11-24.md` — desain pemilih VPS saat
+  start live (24 Nov 2026, 14:17): modal pemilih + skor kesehatan
+  0–100 (headroom CPU 35, headroom stream 25, stabilitas 20, jaringan
+  10, kesegaran data 10), ambang ≥80 DIREKOMENDASIKAN / 50–79 bisa
+  dipakai / <50 hindari / OFFLINE terkunci, default "Otomatis (paling
+  sehat)"; Fase A terimplementasi commit `66b3ec7` (14:21–14:38,
+  `GET /api/live/nodes`, 17/17 tes) — telemetri node pulih (R42).
+- `DESAIN_NOTIFIKASI_LIVE_PROFESIONAL_2026-11-24.md` — desain
+  notifikasi live profesional (24 Nov 2026, 14:29): ganti ~62
+  `alert()`/`confirm()` di `live_dashboard.html`/`live_create.html`
+  dengan toast progres + modal konfirmasi bermerek + badge LIVE;
+  terimplementasi commit `b63b733` (14:29–14:43, 62→0, JS 6/6,
+  render 200); 2 bug pra-eksis ditemukan (escapeHtml undefined,
+  logo.svg 403 — R46).
 
 ## Ringkasan arsitektur target
 
