@@ -1,5 +1,6 @@
 # MASJAVAS OWNER DECISION REGISTER — MASJAVAS TUBE OS V2
 
+**Versi:** 1.4 — 24 Nov 2026, 06:50 WIB (Cycle 16: D18 baru (instruksi 5 fase Antigravity — dokumen 06:20, menunggu diteruskan); AUDIT-REPACK baru (desain audit & repackaging v1.1 DRAFT — K-1 s.d. K-7 menunggu); ringkasan MENUNGGU 28 → 30).
 **Versi:** 1.3 — 23 Nov 2026, 22:50 WIB (Cycle 14: D15 DIPUTUSKAN + DIEKSEKUSI 19:50:52 (f7ee5ce aktif di Master, auto-heal fix terbukti); D16 dikoreksi (diagnosis tunnel SALAH — Web Guardian v2.1 aktif 19:07); D17 baru (arsitektur multi-node v1.0 DRAFT menunggu persetujuan); ringkasan DIPUTUSKAN 7 → 8, MENUNGGU 28 → 28).
 **Versi:** 1.2 — 23 Nov 2026, 18:50 WIB (Cycle 13: D13 DIPUTUSKAN +
 DIEKSEKUSI 16:38:51 (cd4fb7a aktif); D15 + D16 baru (restart Master f7ee5ce
@@ -41,6 +42,7 @@ dilabeli).
 | D15 | Jadwal restart service Master untuk mengaktifkan `f7ee5ce` (perbaikan sistemik: semaphore Opsi A + RTMP resilient + auto-heal + watchdog + DR) | DIPUTUSKAN + DIEKSEKUSI | Dieksekusi 23 Nov 19:50:52 WIB (restart live, via prompt 19:43 T3 + lane Antigravity) | f7ee5ce AKTIF di Master: web 19:15:04 (PID 168462), live 19:50:52 (PID 4158014 → 231356; auto-heal fix TERBUKTI — 3 task migrasi tetap STOPPED, 0 auto-heal di journal), worker 20:39:14 (PID 306566; kode terkait belum-commit kini LIVE). R28 → RESOLVED. CATATAN: flag --lane publish di worker belum terverifikasi → OQ-062 (T2 prompt 19:43). |
 | D16 | Restart tunnel cloudflared (URL publik mati total — koneksi edge 6 hari stale) | DIPUTUSKAN + DIEKSEKUSI | Dieksekusi 23 Nov 19:00 WIB | Restart berhasil (PID 69061 → 139105, 19:00:09); curl publik `/` HTTP 200/2,07 dtk; self-test Master HTTP 200/1,76 dtk; URL publik PULIH TOTAL. R30 → RESOLVED. KOREKSI (Cycle 14, 19:05–19:07): diagnosis 'tunnel edge stale' SALAH — tunnel tidak di jalur domain (bukti: URL tetap HTTP 200/0,75 dtk saat tunnel DIHENTIKAN total); restart 19:00 kebetulan, bukan penyebab pulih. D16 tetap tercatat sebagai tindakan yang dilakukan atas persetujuan user. Perbaikan yang benar: Web Guardian v2.1 AKTIF 19:07 (cek 3 lapis 5 mnt + auto-restart Caddy; uji end-to-end 19:06 lolos). |
 | D17 | Persetujuan arsitektur multi-node v1.0 (`ARSITEKTUR_MULTI_NODE_MASJAVAS_TUBE_OS_V2.md` — DRAFT 20:02 WIB; 7 prinsip mengikat P1–P7; skema DB baru `live_nodes` + kolom lease/migrasi + `node_events`; rencana migrasi F0–F9 ~12–16 hari kerja) | MENUNGGU | — | 10 insiden nyata 22–23 Nov (I1–I10) memotivasi desain; 4 pertanyaan terbuka untuk owner: jumlah node docel, prep di node live vs khusus, failover otomatis vs manual, akses `/nodes` untuk operator. Dokumen ditambahkan ke repo Cycle 14. |
+| D18 | Instruksi 5 fase Antigravity (dokumen `KONTEKS_PROBLEM_SOLUSI_INSTRUKSI_ANTIGRAVITY_2026-11-24.md` 06:20 — 3 P0 + 4 P1 + 9 P2, Fase 0 Diagnosis 6 jam → Fase 4 Hutang teknis, 7 larangan) — diteruskan ke Antigravity? | MENUNGGU | — | Dokumen siap diteruskan user apa adanya; commit 2161d7b (06:30:54) PERSIS perbaikan P0-1 dokumen — apakah Antigravity bekerja dari dokumen ini BELUM ada bukti (UNKNOWN). |
 | D14 | Fase 2 Antigravity (bitrate conditioner + `assigned_node_id`) | MENUNGGU | — | Antigravity mengklaim "siap Fase 2"; owner belum menyetujui; persetujuan terpisah; setelah Tahap A (RENCANA §6 D4 — nomor RENCANA, bukan register) |
 | D5 | Bundle PLAN §10 #4–#7: sweeper batch, ambang TX-throttle, failover live auto/manual, kepemilikan janitor, limit live final, provider Master pasca-Des | MENUNGGU | — | Rincian per item di §2 (PLAN10-4 s.d. PLAN10-7) |
 | D6 | Aktivasi distribusi Stage 2 live (guard 422) + peluncuran batch massal | MENUNGGU | — | Peluncuran = keputusan user semata. CATATAN: distribusi live Stage 2 tercatat AKTIF sejak 19 Nov 11:08 (DOCUMENTED FACT NOT YET REVALIDATED — ALIGNMENT_SYNTHESIS); keputusan guard-422 perlu re-review |
@@ -93,16 +95,19 @@ RENCANA-D3 = D13; RENCANA-D4 = D14; RENCANA-D5 = D9; RENCANA-D6 = STORAGE
 | KEIN-IMG | Harga KEIN IMAGE per gambar + apakah boleh paralel (kini serial 78,7 dtk/gambar) | MENUNGGU | — | Tanyakan ke owner KEIN (rekomendasi BIAYA doc). Harga/gambar TIDAK DIKETAHUI |
 | WEB-RESTART | Restart `masjavas-os-web.service` agar R5 berlaku untuk start via API (proses web masih kode lama) | MENUNGGU | — | Follow-up `v2-002/ENCODER114_FIX_REPORT.md`; jadwalkan di jendela maintenance berikutnya |
 | TCO-1 | Cakupan cap $34,67/bln: seluruh TCO (infrastruktur + storage + backup + domain + layanan) | DIPUTUSKAN | 22 Nov 13:13 WIB | User memilih "Cap untuk seluruh TCO" (widget, sprint audit). Konsekuensi: infrastruktur saja sudah $34,67 → storage/backup harus $0 atau infrastruktur direvisi; skenario expected/worst TCO melebihi cap |
+| AUDIT-REPACK | Desain fitur audit & repackaging video terbit v1.1 (DRAFT — 763 baris, 13 bab): worker `masjavas-audit`, triase A/B/C/D, anggaran 5.000–10.000 unit/hari, fase 0 audit-only → pilot → GO/NO-GO | MENUNGGU | — | Persetujuan desain + keputusan K-1 s.d. K-7 (anggaran kuota, ambang GO/NO-GO, review manual/otomatis, nasib channel HENTIKAN, gaya thumbnail, siapa membangun, diagnosis 497 channel belum publish). Mekanisme 're-index boost' TIDAK ADA (penilaian Muse, diterima user 06:43). Dokumen: `DESAIN_FITUR_AUDIT_REPACKAGING_VIDEO_2026-11-24.md` (v1.0 06:46 → v1.1 06:50). |
 
 ## 5. Ringkasan status
 
 | Status | Jumlah | ID |
 |---|---|---|
 | DIPUTUSKAN | 8 (+2 sebagian) | D4, D7, D8, D11, D13, D15, D16, TCO-1; EV6-2 (rencana saja — bentuk deploy menunggu), EV6-8 (P16 saja — P15 menunggu) |
-| MENUNGGU | 28 | D2, D3, D5, D6, D9, D10, D12, D14, D17, PLAN10-1 s.d. PLAN10-7, EV6-1, EV6-3 s.d. EV6-7, TR-720p, STORAGE, KONTRAK-12, OMNI-600, KEIN-IMG, WEB-RESTART |
+| MENUNGGU | 30 | D2, D3, D5, D6, D9, D10, D12, D14, D17, D18, PLAN10-1 s.d. PLAN10-7, EV6-1, EV6-3 s.d. EV6-7, TR-720p, STORAGE, KONTRAK-12, OMNI-600, KEIN-IMG, WEB-RESTART, AUDIT-REPACK |
 | DITUTUP | 1 | D1 |
 | DITOLAK | 1 | V2-002-R2 |
 
 Keputusan paling mendesak menurut program (PROPOSAL, bukan keputusan user):
 D9/D10 (Guard v2 — prasyarat proteksi live), D12/D17 (nasib 698 +
-arsitektur multi-node), PLAN10-2 (Fase 0 $0), EV6-4 (diagnosa P2).
+arsitektur multi-node), D18 (instruksi 5 fase Antigravity — diteruskan?),
+AUDIT-REPACK (desain v1.1 + K-1 s.d. K-7), PLAN10-2 (Fase 0 $0),
+EV6-4 (diagnosa P2).
