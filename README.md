@@ -37,7 +37,7 @@ sampai semua gerbang lolos.
   eksekusi V2.0 (beku): track P0–P10, dependency order, template
   tiket V2-XXX, Batch 1 V2-001–V2-010.
 - `BATCH1_EXECUTION_TICKETS_V2.md` — tiket eksekusi Batch 1
-  (V2-001–V2-010, format 15 elemen; tiket V2-001–V2-004 lengkap —
+  (V2-001–V2-010, format 15 elemen; 10/10 tiket lengkap di sisi dokumen —
   status eksekusi di `STATUS_REGISTRY.yaml`).
 - `STATUS_REGISTRY.yaml` — SATU-SATUNYA sumber status resmi tiket +
   gerbang. `ticket_status` (tiket lengkap/stub) dipisah dari
@@ -57,6 +57,12 @@ sampai semua gerbang lolos.
 - `RIWAYAT_PEMBAHASAN_DAN_LANGKAH.md` — riwayat pembahasan program
   readiness 22 Nov 2026: timeline, pembahasan per topik, keputusan
   owner D1–D11, langkah berikut, dan yang ditolak (agar tak diulang).
+- `KONTEKS_PROBLEM_SOLUSI_INSTRUKSI_ANTIGRAVITY_2026-11-24.md` — konteks
+  + masalah + solusi + instruksi untuk agen Antigravity (24 Nov 2026,
+  06:20): skor soliditas aplikasi 75/100, 3 P0 + 4 P1 + 9 P2 dengan
+  kriteria penerimaan terukur, 7 ide, instruksi 5 fase (Diagnosis 6 jam
+  → Hulu 24 jam → Live 48 jam → Pengerasan 72 jam → Hutang teknis) +
+  7 larangan; status: siap diteruskan owner (D18).
 
 ### Runbook VPS 8
 
@@ -119,6 +125,29 @@ sampai semua gerbang lolos.
   produksi per fase.
 - `MASJAVAS_DEPENDENCY_GRAPH.md` — diagram dependensi (mermaid) +
   propagasi kegagalan.
+- `SARAN_PERBAIKAN_INGESTION_PARALEL_VPS8_2026-11-24.md` — analisa +
+  8 saran perbaikan ingestion (24 Nov 2026, 04:45): throttle autopilot
+  kedaluwarsa, governor mengerem, QA Stage 2 makan ~3,1 core; langkah
+  1–4 sudah diimplementasikan + terverifikasi 04:47–05:22 (PENDING
+  43→39, Ingestion Steps ~17/mnt).
+- `ANALISA_BOTTLENECK_L5_JANITOR_2026-11-24.md` — analisa bottleneck
+  janitor L5 (24 Nov 2026, 04:00): kenapa disk hampir penuh
+  (126 GB/145 GB); dua penyebab + ralat owner L5/L6.
+- `ANALISA_WORKFLOW_BOTTLENECK_MULTINODE_2026-11-24.md` — analisa
+  workflow + bottleneck multi-node (24 Nov 2026, 04:15): penempatan
+  file Master vs VPS 8; premis owner sebagian benar, sebagian belum
+  terjadi.
+- `DESAIN_COCKPIT_SENTINEL_NODE_2026-11-24.md` — desain Cockpit
+  Sentinel 6-Lane sadar-node + janitor otonom (24 Nov 2026, 03:47):
+  panel `/telemetry` menampilkan VPS tempat kerja + janitor otonom.
+- `DESAIN_TELEMETRY_WORKER_VPS8_2026-11-24.md` — desain perbaikan
+  telemetry (24 Nov 2026, 03:30): `/telemetry` memantau worker +
+  kinerja VPS 8.
+- `DESAIN_FITUR_AUDIT_REPACKAGING_VIDEO_2026-11-24.md` — desain fitur
+  audit & repackaging video terbit (DRAFT v1.1, 24 Nov 2026, 06:50):
+  worker `masjavas-audit`, triase A/B/C/D, audit bertingkat hemat kuota
+  (~2.000–3.000 unit/bulan), 12 bottleneck (§13); menunggu persetujuan
+  + keputusan K-1 s.d. K-7 (AUDIT-REPACK).
 
 ## Ringkasan arsitektur target
 
