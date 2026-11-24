@@ -148,6 +148,25 @@ sampai semua gerbang lolos.
   worker `masjavas-audit`, triase A/B/C/D, audit bertingkat hemat kuota
   (~2.000–3.000 unit/bulan), 12 bottleneck (§13); menunggu persetujuan
   + keputusan K-1 s.d. K-7 (AUDIT-REPACK).
+- `ANALISA_FITUR_AUDIT_INSTRUKSI_ANTIGRAVITY_2026-11-24.md` — analisa
+  fitur audit Fase 0 yang sudah live + instruksi perbaikan untuk
+  Antigravity (24 Nov 2026, 07:41): temuan P0-1 (CTR fabrikasi),
+  P0-2 (split-brain VPS 8), P1-1 (API tanpa auth), P1-2, P1-3,
+  P2-1 s.d. P2-7 — masing-masing bukti + dampak + perbaikan +
+  kriteria penerimaan; larangan: JANGAN bangun Fase 1 sebelum K-1–K-7
+  (→ R40).
+- `INSTRUKSI_LANGGRAPH_ANTIGRAVITY_2026-11-24.md` — instruksi Pilot
+  Fase A LangGraph untuk Antigravity (24 Nov 2026, 08:08–08:30):
+  StateGraph deterministik + checkpoint SQLite + HITL, read-only,
+  0 LLM, Rp 0; kriteria penerimaan K-1 s.d. K-7; prasyarat mengikat
+  P0-1 + P0-2 hijau sebelum run live pertama; Fase B/C DITAHAN
+  (D19).
+- `INSTRUKSI_AGENT_AI_SUMOPOD_ANTIGRAVITY_2026-11-24.md` — instruksi
+  implementasi Fase B agent AI Sumopod (24 Nov 2026, 09:30): B1 agent
+  metadata (gpt-4o-mini, prompt diperkeras terverifikasi), B2
+  klasifikasi + QA jev-1.14.0, B3 UI manajemen agent (budget cap,
+  kill switch, OWNER-only); Fase C (tulis ke YouTube) TETAP DITAHAN
+  (D20).
 
 ## Ringkasan arsitektur target
 
