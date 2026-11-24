@@ -2,6 +2,7 @@
 
 **Dokumen acuan (frozen):** `MASTER_ARCHITECTURE_MASJAVAS_TUBE_OS_V2.md` (Draft Baseline),
 `IMPLEMENTATION_CHECKLIST_MASJAVAS_TUBE_OS_V2.md` (v1.0)
+**Versi:** 2.4 — Addendum V2-008 Cycle 16, 24 Nov 06:50 WIB (cron local-only) — governor dinamis prep_worker.py SUPERSEDED --ingestion-jobs 4; Guard 1 bypass terverifikasi utuh di HEAD 52e74db; F.6 wajib ukur mode ECO/TURBO/BALANCED; OQ-068 baru
 **Versi:** 2.3 — OQ-058 TERJAWAB Cycle 15, 24 Nov 02:50 WIB (cron local-only) — UptimeRobot free plan BOLEH komersial per ToS/vendor help 28 Sep 2026; monitoring $0 tetap berlaku; manifest G.0 Q7 diperbarui
 **Versi:** 2.2 — V2-009 F.2–F.5 dikerjakan Cycle 13, 23 Nov 18:50 WIB (cron local-only) — quote storage/domain/monitoring + volume backup + hitung ulang TCO; verdict C-1/C-2/C-4 tetap TIDAK DAPAT DINILAI (F.1 menunggu user)
 **Versi:** 2.1 — V2-009 addendum Cycle 12, 23 Nov 14:50 WIB (cron local-only) — VPS 8 dibeli owner 14:41 sebelum verifikasi selesai; V2-009 menjadi verifikasi pasca-beli
@@ -2718,6 +2719,32 @@ tidak dapat dibandingkan.**
   restart supervisor / deployment / audit — beri tahu sebelum mulai.
 - Benchmark ini adalah versi pertama yang berversi; benchmark
   berikutnya memakai nama file tanggal baru (jangan timpa file ini).
+
+**ADDENDUM Cycle 16 (24 Nov 2026, 06:50 WIB, cron local-only):** Kendali
+konkurensi ingestion PINDAH dari flag `--ingestion-jobs` ke governor
+dinamis di `prep_worker.py` (ECO / load1 >7,4: ingestion 2; TURBO /
+load1 <6,8: ingestion 6; BALANCED: ingestion 4 + stage2 3) — nilai saat
+ini sama (4, mode BALANCED) tapi kendali sudah pindah ke governor;
+`--ingestion-jobs 4` SUPERSEDED sebagai parameter pengendali.
+Konkurensi EFEKTIF terukur adalah 2 job selama live stream berjalan
+(Guard 2 proteksi live, sengaja tidak disentuh — laporan akhir subagent
+05:22, terverifikasi: siklus pertama 12 langkah vs 6 sebelumnya = 2×,
+bukan 4×). **Guard 1 bypass UTUH** (baris 6171/6174 masih ada di HEAD
+52e74db — verifikasi 06:14–06:16); commit `b917ad1` hanya mengubah
+`heal_failed_ingestion_jobs` (perluas pola STALE% + resume BLOCKED
+sentinel) + memanggilnya tiap siklus. Implementasi langkah 1–4
+(04:47–05:22, subagent; throttle autopilot dihapus, nice live/encoder
+-10, cap QA Stage 2 = 1 konkuren via `core/loopgen/ffmpeg_skill.py`,
+`--ingestion-jobs 4`) TERBUKTI bekerja: Ingestion Steps 2/mnt →
+2,8/mnt → 6/mnt (b41beaf) → 9,6/mnt (06:10) → ~17/mnt (06:40);
+PENDING 43 → 39 (06:10, pertama kali bergerak); COMPLETED 152 → 157;
+load VPS 8 12–15,8 → 2,6–4,4. **Konsekuensi untuk tiket ini:** F.6
+wajib mengukur mode governor (ECO/TURBO/BALANCED) + ambang load1
+7,4/6,8, bukan hanya flag `--ingestion-jobs`; verifikasi Guard 1
+bypass + prioritas live tetap dihormati di tiap mode; angka
+concurrency final tetap PROPOSAL sampai benchmark ini jalan. OQ-068
+BARU (verifikasi perilaku governor dinamis terhadap Guard 1 bypass +
+prioritas live — dijawab Q9/Q10 saat eksekusi).
 
 ---
 
