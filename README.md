@@ -300,6 +300,27 @@ live). Thumb-pilot 15:21: anomali kuota kini 3/4 vault (48/284/270);
 --days DIABAIKAN mode sync-only (kode l.1337); keputusan user menunggu
 (a/b); cron 26 Nov 15:10 WIB.
 
+### Dokumen baru Cycle 25 (25 Nov 2026, 18:50 WIB)
+
+- Rekonsiliasi § scale-up TCO SELESAI — `MASJAVAS_TCO_MODEL.md` v1.1
+  §7 (cap = maks ~16–19 stream; 50 = 3 box $71,97; 100 = 6 box
+  $127,92; 696 = 35–41 box $668–$781; OQ-TCO-5/6 baru) +
+  `VPS8_RESOURCE_CAPACITY_MODEL.md` v1.1 (KOREKSI M8 — §3.1/§7.2
+  SUPERSEDED) + addendum KOREKSI M8 di
+  `RENCANA_PERBAIKAN_LIVE_STREAMING_2026-11-25_FINAL.md` (angka §4/§5
+  SUPERSEDED; dokumen yang disetujui user tidak ditulis ulang) +
+  `MASJAVAS_COST_REGISTER.md` v1.3 (rujuk TCO §7). Tidak ada dokumen
+  baru siklus ini — hanya rekonsiliasi + pencatatan perkembangan
+  15:30–18:50: E1 timer DB-maintenance run pertama SUCCEEDED 16:30
+  (E1 TERBUKTI LIVE); VPS 8 HEAD `3fd6a42` + restart live 17:46:55
+  (relink-S3 + S-11 + S-06 LIVE di VPS 8; 088 mengudara lagi 17:48:49);
+  312 pelanggaran FK terkarakterisasi (pembersihan butuh keputusan
+  owner); koordinator audit+Hermes SELESAI 18:45 (pilot 8 channel;
+  K-1..K-7 MENUNGGU owner; Hermes bot 404, token baru menunggu owner);
+  DOKUMEN SERAH TERIMA HERMES dibuat 18:50 (menunggu bot/token);
+  Stage 2 MERAH berlanjut (DONE 1405, tertua 49,3 jam; #542 ~57j);
+  publish 147/FAILED 1 (18:45). Kesiapan gerbang TETAP ±65%.
+
 ## Ringkasan arsitektur target
 
 - **Master** (Contabo, 4 vCPU): control plane + publish + prep (sementara).
