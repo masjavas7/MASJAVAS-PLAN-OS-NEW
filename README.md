@@ -209,6 +209,47 @@ sampai semua gerbang lolos.
   2 dari 4 sumber SUDAH 1080p (label DB salah); VPS 8 JENUH saat
   rencana dibuat (load 14,3/8, 13 kematian encoder/jam).
 
+### Dokumen baru Cycle 23 (25 Nov 2026, 10:50 WIB)
+
+- `DIAGNOSIS_FITUR_LIVE_STREAMING.md` — diagnosis fitur live
+  streaming pasca-Fase 3 + pasca-D1–D6 (375 baris): 8/8 STREAMING,
+  3 stream BISU (NO 114, 88, 34), relay HLS 0/6, A2 blokir E5.
+- `RENCANA_PERBAIKAN_LIVE_STREAMING_2026-11-25_FINAL.md` —
+  rencana FINAL perbaikan live streaming (197 baris, disetujui
+  user 09:24): urutan A2 → A3 → A1 per distribusi terukur; cap
+  $34,67/bln hanya cukup sampai 50 stream (D28).
+- `PROMPT_AGENT_IMPLEMENTASI_LIVE_STREAMING_2026-11-25_FINAL.md`
+  — prompt agen implementasi FINAL (103 baris, disetujui 09:24);
+  Fase 0 berjalan: A3 `51a7824`, A1 `7826bbb`, A2 `6dc5ad7`,
+  E4 `7f4f13e` — SEMUA belum aktif (D28).
+- `FASE0_BASELINE_2026-11-25.md` — baseline Fase 0 (09:30–09:48,
+  hanya-baca): 8/8 STREAMING, publish 30/0, load VPS 8 7,39/7,37/7,29.
+- `DIAGNOSIS_MONA_LIVE_MANUAL_DAN_AUDIO_GDRIVE.md` — diagnosis
+  MONA 698 + audio GDrive (07:59–08:10): tugas live GDrive di VPS 8
+  WAJIB pre-copy sebelum Start; 698 LIVE 09:03 (D32).
+- `ADENDUM_EDIT_METADATA_LIVE.md` — adendum edit metadata live:
+  3 celah terverifikasi (pesan sukses PALSU, sinkron tertunda
+  tidak pernah diulang, edit deskripsi tertunda HILANG TOTAL).
+- `RENCANA_PERBAIKAN_LIVE_STREAMING_2026-11-25_v2.md` +
+  `PROMPT_AGENT_IMPLEMENTASI_LIVE_STREAMING_2026-11-25_v2.md` —
+  revisi v2 rencana + prompt (disetujui user 09:14; digantikan FINAL).
+- `LAPORAN_PAIRING_PRIORITAS_2026-11-25.md` — laporan pairing
+  prioritas: CONNECTED 245, UNPAIRED 462 (459 tanpa vault);
+  60 vault, 2 over-cap, 54 slot kosong (Fase 3.1).
+- `SPESIFIKASI_MONITORING_PAIRING_MINGGUAN.md` — spesifikasi
+  monitoring pairing mingguan (Fase 3.1).
+- `ALERT_CRON_SPECS_3.6.md` + `PANDUAN_UPTIMEROBOT_HEARTBEAT_3.6.md`
+  — 3 spesifikasi alert cron + panduan UptimeRobot heartbeat (Fase 3.6).
+- `PAKET_KEPUTUSAN_FASE_C_2026-11-25.md` — paket keputusan Fase C:
+  98 eligible, 10/batch, 4.900 unit; Fase C apply BELUM ADA KODE.
+- `PROTOKOL_VERIFIKASI_CHECKPOINT_19_00_2026-11-25.md` — protokol
+  verifikasi checkpoint 19:00 (audit timer berjalan 01:00 WIB,
+  bukan 19:00 WIB — R51).
+
+Catatan: `LAPORAN_ATRIBUSI_PUSH_REBASE_2026-11-25.md` DITAHAN dari
+repo publik — memuat IP publik operator; butuh keputusan owner/redaksi
+sebelum dipublikasikan (R57–R61 baru, D28–D32 baru, lihat dashboard).
+
 ## Ringkasan arsitektur target
 
 - **Master** (Contabo, 4 vCPU): control plane + publish + prep (sementara).
