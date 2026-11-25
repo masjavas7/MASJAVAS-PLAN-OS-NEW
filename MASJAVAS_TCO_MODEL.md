@@ -1,7 +1,10 @@
 # MODEL TOTAL COST OF OWNERSHIP (TCO) — MASJAVAS TUBE OS V2
 
-**Versi:** 1.1 — 25 Nov 2026, 18:50 WIB (Cycle 25: tambah §7 scale-up
-pasca-M8; §3 rujuk §7; OQ-TCO-5/6 baru).
+**Versi:** 1.2 — 25 Nov 2026, 22:50 WIB (Cycle 26: §7.7 verdict
+diagnosis M8 (drift waktu) + D84 TETAP 2 box; OQ-TCO-5 TERJAWAB
+(lantai 0,175 TETAP, hitung ulang §7.2 TIDAK dipicu); OQ-TCO-6
+TERJAWAB SEBAGIAN (kerja terhantar naik 4,38→4,66 core/dtk);
+§7.4 Opsi 1 dikoreksi ke angka terukur).
 **Versi:** 1.0 — 22 Nov 2026, 13:05 WIB (sprint item #7).
 **Sumber:** `PLAN_PENAMBAHAN_VPS8_2026-11-22.md` §7,
 `MASJAVAS_COST_REGISTER.md`, `ENGINEERING_READINESS_DASHBOARD.md`.
@@ -205,7 +208,10 @@ Sensitivitas ini BUKAN rekomendasi mengambil kontrak.
    22 Nov 13:13 WIB: cap mencakup SELURUH TCO.
 10. Keputusan owner soal cadangan 10% [PR] (terima / ubah / tolak).
 11. Rekonsiliasi §7 scale-up pasca-M8 — SELESAI Cycle 25
-    (25 Nov 18:50 WIB); hitung ulang bila OQ-TCO-5/6 terjawab.
+    (25 Nov 18:50 WIB); OQ-TCO-5 TERJAWAB Cycle 26 (lantai 0,175
+    TETAP — hitung ulang §7.2 TIDAK dipicu, lihat §7.7);
+    OQ-TCO-6 TERJAWAB SEBAGIAN Cycle 26 (verifikasi independen
+    rasio host tetap menunggu).
 
 ## 6. Pertanyaan terbuka
 
@@ -238,13 +244,13 @@ penuh. Storage/domain per box tambahan BELUM DIHITUNG.
 
 | Asumsi | Nilai | Label |
 |---|---|---|
-| Biaya per stream, AAC-copy (steady-state, NO 88) | 0,175 core (feeder 0,055 + encoder 0,120) | DOCUMENTED (30 interval/33,5 mnt, delta-ticks /proc; M8 §1 + §4) |
+| Biaya per stream, AAC-copy (steady-state, NO 88) | 0,175 core (feeder 0,055 + encoder 0,120) | DOCUMENTED (30 interval/33,5 mnt, delta-ticks /proc; M8 §1 + §4). **KOREKSI Cycle 26:** 0,175 adalah LANTAI PERENCANAAN, bukan laju tetap — laju per-stream BERGANTUNG JENDELA WAKTU (siang ~0,12–0,13; sore/malam ~0,16–0,17; lihat §7.7). Klaim per-stream tanpa jendela waktu MENYESATKAN. |
 | Mean armada era AAC-copy (estimasi, bila semua stream pindah) | ~0,18–0,20 core/stream | DOCUMENTED (M8 §4.1 — 088 adalah kasus termurah; BUKAN angka terukur armada) |
 | Supervisor live per box | 0,18 core | DOCUMENTED (M8 §1.1) |
 | Kapasitas terpakai per box | 3,0–3,5 core (70% dari 4,3–5,0 core/dtk yang terhantar) | DOCUMENTED (M8 §5–§6; rasio penghantaran host 0,53–0,62, bisa berubah menurut waktu/host — verifikasi independen disarankan sebelum jadi konstanta) |
 | Harga box live (VPS 8, bulanan) | $18,65/bln incl. pajak | DF (listing; belum verifikasi panel — V2-009 F.1) |
 | Harga Master | $16,02/bln incl. pajak | ESTIMASI (belum verifikasi panel) |
-| Ambang M8 0,15 core/stream | BELUM diputuskan (D34 MENUNGGU) | OWNER DECISION REQUIRED — anggaran realistis per M8 §6(b) adalah ~0,17–0,18 |
+| Ambang M8 0,15 core/stream | BELUM diputuskan (D34 MENUNGGU) | OWNER DECISION REQUIRED — anggaran realistis per M8 §6(b) adalah ~0,17–0,18. **Update Cycle 26:** D84 DIPUTUSKAN 20:54 — TETAP 2 box (Master + VPS 8) sampai aplikasi solid 100%; opsi 3 box ($71,97/bln) DITUNDA, bukan ditolak selamanya; cap $34,67/bln TETAP mengikat; dalam cap ≈ 17–20 stream. D34 (revisi ambang) tetap MENUNGGU. |
 
 ### 7.2 Tabel milestone (biaya infrastruktur saja)
 
@@ -286,13 +292,20 @@ Perhitungan: $/bln = $16,02 + N × $18,65 (N = jumlah box live).
 ### 7.4 Sensitivitas: apa yang bisa mengubah tabel ini
 
 - **Opsi 1 (hapus feeder; encoder baca prebuilt langsung):**
-  harapan −0,055/stream → ~0,12. Pada 0,12: 50 stream = 6,0 +
-  0,36–0,54 = 6,36–6,54 core → 2 box (bila kapasitas 3,5) atau
-  3 box (bila 3,0) → $53,32–$71,97/bln — MASIH di atas cap.
-  Opsi 1 TIDAK mengembalikan 50-dalam-cap; ia hanya menurunkan
-  3 box → 2–3 box. Status: koordinator Opsi 5+1 berjalan (D33);
-  Opsi 1 belum ada bukti jalan (Cycle 24).
-  [PROPOSAL — aritmetika dari asumsi M8, bukan pengukuran baru]
+  TERUKUR 2 jam penuh (Tuas 1, 17:54–19:54, 25 sampel): M1–M7
+  LOLOS, **M8 mean 0,1637 core — GAGAL vs ambang 0,15**
+  (18/24 interval di atas; paruh-1 0,1554 → paruh-2 0,1721).
+  Hemat feeder ~0,055 kotor, tapi hemat BERSIH hanya ~0,011
+  karena laju encoder sendiri naik ~0,044 dalam jendela yang
+  sama (total feeder-based 0,1746 vs Opsi 1 0,1637). Verdict
+  diagnosis (§7.7): 0,1637 adalah laju AMBIENT sore/malam,
+  BUKAN sifat tetap Opsi 1 — konfigurasi SAMA terukur 0,124
+  (15:19–15:42) dan 0,146 (19:55–20:57). Pada 0,1637: 50 stream
+  = 8,19 + supervisor ≈ 8,4 core → 3 box ($71,97/bln) — MASIH
+  di atas cap; Opsi 1 TIDAK mengembalikan 50-dalam-cap.
+  [DOCUMENTED — Tuas 1 + diagnosis M8, Cycle 26; "harapan
+  ~0,12" Cycle 25 kini diketahui sebagai mean jendela
+  pagi/siang, BUKAN lantai produksi]
 - **Opsi 5 (uji diskriminan klon encoder 60 dtk):** SELESAI
   14:53:48–14:54:48, 0,1291 (ENC 0,0672 + FEED 0,0619) — uji
   60 detik, BUKAN angka produksi; jangan dipakai sebagai
@@ -323,10 +336,78 @@ adalah keputusan anggaran baru, bukan optimasi dalam cap.
 
 ### 7.6 Pertanyaan terbuka baru
 
-5. **[OQ-TCO-5 — BARU Cycle 25]** Apakah hasil Opsi 1 / Opsi 5
-   mengubah lantai per-stream 0,175? (Jawaban menunggu koordinator
-   Opsi 5+1; bila Opsi 1 lolos ≤0,15, hitung ulang §7.2.)
-6. **[OQ-TCO-6 — BARU Cycle 25]** Berapa rasio penghantaran host
-   VPS 8 yang sebenarnya dalam jangka panjang (0,53–0,62 terukur
-   1 jendela 33,5 mnt — butuh verifikasi independen via grafik
-   Contabo / uji beban box kosong, BUKAN VPS 8 live)?
+5. **[OQ-TCO-5 — TERJAWAB Cycle 26]** Apakah hasil Opsi 1 /
+   Opsi 5 mengubah lantai per-stream 0,175? **TIDAK.** Opsi 1
+   terukur 2 jam penuh mean 0,1637 (GAGAL ≤0,15); diagnosis
+   membuktikan 0,1637 adalah laju ambient sore/malam, bukan
+   sifat tetap Opsi 1 — konfigurasi sama terukur 0,124
+   (15:19–15:42) dan 0,146 (19:55–20:57). Lantai realistis
+   sore/malam ≈ 0,16–0,17/stream; mean 2 jam ≤0,15 tidak
+   tercapai di jendela sore/malam. Lantai perencanaan 0,175 di
+   §7.2 **TETAP**; hitung ulang §7.2 TIDAK dipicu. Opsi 5
+   0,1291 tetap uji 60 dtk, BUKAN angka produksi. (Lihat §7.7.)
+6. **[OQ-TCO-6 — TERJAWAB SEBAGIAN Cycle 26]** Berapa rasio
+   penghantaran host VPS 8 yang sebenarnya dalam jangka panjang
+   (0,53–0,62 terukur 1 jendela 33,5 mnt)? Diagnosis M8: kerja
+   yang dihantar justru NAIK 4,38 → 4,66 core/dtk sore/malam —
+   yang berubah adalah efisiensi per wakeup, BUKAN kapasitas
+   (angka tick-delivery /proc/stat hanya bukti pendukung);
+   korelasi M8–load NEGATIF −0,399. Verifikasi independen via
+   grafik Contabo / uji beban box kosong **tetap menunggu**
+   sebelum rasio ini jadi konstanta.
+
+### 7.7 Verdict diagnosis M8 + D84 (Cycle 26 — 25 Nov 2026, ~20:54 WIB)
+
+Sumber: `~/memory/2026-11-25.md` (laporan koordinator ~20:10 +
+laporan soliditas ~20:50 + diagnosis selisih M8). Diagnosis
+dilakukan sesi lain (koordinator D33); siklus ini hanya
+merekonsiliasi hasilnya ke model biaya.
+
+**Verdict: selisih +36% (0,120 → 0,1637) = DRIFT WAKTU, bukan
+efek konfigurasi.** Laju instan encoder 088 sudah 0,1459
+(15:42) dan 0,1447 (17:54) — identik; tidak ada lompatan saat
+pencabutan broadcast (15:30), relink (17:18), restart
+supervisor #7 (17:46:55), maupun ganti broadcast/RTMP.
+Kenaikan 0,145 → ~0,17 terjadi 18:00–19:30 tanpa perubahan
+konfigurasi, lalu turun ke 0,146 (19:55–20:57). "A2 = 0,120"
+adalah mean jendela pagi/siang; "Tuas 1 = 0,1637" adalah mean
+jendela sore/malam — membandingkan keduanya mengacaukan drift
+waktu dengan perubahan konfigurasi.
+
+- **H1 umur proses: TERTOLAK.** Proses muda justru LEBIH
+  TINGGI (0,145 umur 6 mnt vs 0,128 kumulatif umur 26 mnt);
+  laju TURUN ke 0,146 saat proses menua; hanya ramp-up menit
+  pertama nyata.
+- **H2 RTMP/TCP komponen dominan: TERKONFIRMASI** (thread
+  mux0:flv = 62% CPU encoder; stime 73–76%) tapi penyebab
+  kenaikan TAK TERBUKTI (koneksi 088 normal: RTT 14,26 ms,
+  retrans 0,37%; tanpa step saat ganti broadcast/RTMP).
+- **H3 fase konten: TERTOLAK definitif** (loop 60 dtk, file
+  SAMA semua pengukuran, mtime 24 Nov 23:07; interval 300 dtk
+  = tepat 5 loop; `-c:v copy` tidak decode).
+- **H4 (BARU) host/penjadwalan berubah menurut waktu:
+  TERKONFIRMASI sebagai penjelasan terbaik** (SEMUA encoder +
+  supervisor ikut naik sore/malam: PCM 0,26–0,37 → 0,29–0,46;
+  supervisor 0,181 → 0,255; korelasi M8–load NEGATIF −0,399).
+  Caveat: angka tick-delivery /proc/stat hanya bukti
+  pendukung — yang berubah efisiensi per wakeup, bukan
+  kapasitas (kerja dihantar justru naik 4,38 → 4,66 core/dtk).
+
+**Konsekuensi untuk model ini:**
+
+- Lantai perencanaan **0,175 core/stream TETAP** (§7.2 tidak
+  dihitung ulang). Lantai realistis sore/malam ≈ 0,16–0,17;
+  pagi/siang ≈ 0,12–0,13. Setiap klaim per-stream WAJIB
+  menyebut jendela waktunya — tanpa itu, angka tidak dapat
+  dibandingkan.
+- Opsi 1 menghemat feeder ~0,055 kotor, bersih ~0,011 dalam
+  jendela yang sama. Pada 0,1637, 50 stream tetap 3 box
+  ($71,97/bln). Cabang 50-stream tetap di tangan owner.
+- **D84 (owner, ~20:54 WIB): TETAP 2 BOX** (Master + VPS 8)
+  sampai aplikasi solid 100%. Opsi 3 box ($71,97/bln)
+  DITUNDA — bukan ditolak selamanya, tapi tidak sekarang.
+  Cap $34,67/bln TETAP mengikat; dalam cap ≈ 17–20 stream.
+- Ambang 0,15 TIDAK diubah (D34 tetap MENUNGGU). Bila
+  diagnosis lanjutan menemukan penyebab drift dan angka
+  membaik, cabang 50-stream bisa dibuka lagi — tetap tidak
+  ada box ke-3 sebelum solid 100%.
