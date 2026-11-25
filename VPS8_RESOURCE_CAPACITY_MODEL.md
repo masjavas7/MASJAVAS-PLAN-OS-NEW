@@ -1,6 +1,9 @@
 # MODEL KAPASITAS SUMBER DAYA VPS 8 — MASJAVAS TUBE OS V2
 
 **Status:** DRAFT — model perencanaan, BUKAN konfigurasi produksi.
+**Versi:** 1.1 — 25 Nov 2026, 18:50 WIB (Cycle 25: + KOREKSI M8 —
+angka live/kapasitas §1/§2/§3.1/§7.2/§7.3 SUPERSEDED; otoritas
+biaya scale-up kini `MASJAVAS_TCO_MODEL.md` §7).
 **Versi:** 1.0 — 22 Nov 2026.
 **Ruang lingkup:** box VPS 8 / Live-01 (Contabo Core: 8 vCPU, 24 GB
 RAM, 300 GB disk, port 600 Mbit/s). Fokus: CPU — dimensi yang paling
@@ -10,6 +13,51 @@ ketat. RAM, disk, dan jaringan dicakup singkat di §2.
 `v2-003/GUARD_RECOMMENDATIONS_V2-003.md`, `STATUS_REGISTRY.yaml`,
 `MASJAVAS_COST_REGISTER.md`.
 **Item sprint:** Repository Engineering Audit Sprint, P0 #2 (F3).
+
+## KOREKSI M8 — 25 Nov 2026, 14:51 WIB (Cycle 24–25; diagnosis `DIAGNOSIS_M8_2026-11-25.md`)
+
+**Yang gugur (terukur, bukan asumsi):** A2 prebuilt terukur
+**0,1746 core/stream** (feeder 0,0548 + encoder 0,1199; 30 interval/
+33,5 mnt, delta-ticks /proc), bukan ≤0,07; VPS 8 hanya menghantar
+**~4,3–5,0 core/dtk** (vCPU 55–62 ticks/dtk, rasio 0,53–0,62,
+steal=0), bukan 8,0 — kapasitas terpakai **3,0–3,5 core/box**
+(70% dari yang terhantar), bukan 5,6.
+
+**Bagian model ini yang SUPERSEDED (angka lama dipertahankan di
+bawah sebagai riwayat — JANGAN dipakai untuk perencanaan):**
+- §1 ringkasan ("≈7 core dari 8 vCPU → headroom ±1 core") —
+  total box terukur saat ini (live + supervisor + builder) sudah
+  ≈3,9–4,4 core/dtk pada kapasitas terhantar 4,3–5,0; box jenuh
+  pada kapasitas YANG TERHANTAR, bukan setengah-menganggur.
+- §2 baris CPU ("8 vCPU, puncak ≈7 core, headroom ±1") —
+  kapasitas efektif ≈4,3–5,0 core/dtk; headroom harus dihitung
+  dari 3,0–3,5 terpakai, bukan dari 8 nominal.
+- §3.1 baris Live ("±0,07 core @2 stream → ±1,75 core @50 stream;
+  puncak 2 core") — angka benar: 50 stream ≈ **9,3 core all-in**
+  (8,75 + supervisor per box), bukan 2,0.
+- §3.1 baris TOTAL ("±2,5 core (50 stream + prep penuh)" /
+  "≈7 core (dengan cap §5)") — 50 stream + prep penuh TIDAK
+  muat di 1 box; total 50 stream saja ≈9,3 core.
+- §7.2 ("Live 50 stream 2,0; total ≈7,4 core; headroom ±0,6") —
+  total yang benar ≈9,3 core live saja (belum prep); headroom
+  pada 1 box = NEGATIF untuk 50 stream.
+- §7.3 ("total ≈8,8 core > 8 vCPU" TANPA cap) — ambang
+  overcommit harus dibaca terhadap kapasitas TERHANTAR
+  (~4,3–5,0), bukan 8 nominal; skenario tanpa cap jauh lebih
+  buruk dari yang tertulis.
+- **Yang TIDAK gugur:** angka Stage 2 (0,13 core/slot), reassemble
+  (0,9 core/job), ingestion (±0), dan struktur cap/admission
+  (§5–§6) — ketiganya bukan objek M8 dan tetap berlaku sampai
+  V2-008 mengukurnya.
+
+**Otoritas biaya scale-up kini:** `MASJAVAS_TCO_MODEL.md` §7
+(Cycle 25): cap = maks ~16–19 stream; 50 = 3 box $71,97;
+100 = 6 box $127,92; 696 = 35–41 box $668–$781.
+**Tindak lanjut:** revisi penuh model ini (v2.0) menjadi tugas
+siklus berikut SETELAH hasil Opsi 1/Opsi 5 + V2-008; sampai
+saat itu, §3.1/§7.2/§7.3 di bawah dibaca sebagai RIWAYAT, bukan
+perencanaan. Pertanyaan terbuka: OQ-TCO-6 (rasio penghantaran
+host jangka panjang — butuh verifikasi independen).
 
 ## Legenda label klaim
 
@@ -78,6 +126,11 @@ direvisi — catat sebagai [OQ-201].
 ## 3. Budget CPU per workload
 
 ### 3.1 Tabel budget
+
+> **SUPERSEDED — KOREKSI M8 (Cycle 25).** Baris Live + TOTAL di
+> bawah ini riwayat (v1.0); angka perencanaan kini di TCO §7.
+> Baris Stage 2 / reassemble / ingestion tetap berlaku sampai
+> V2-008.
 
 | Workload | Rata-rata | Puncak | Basis angka | Label |
 |---|---|---|---|---|
@@ -294,6 +347,10 @@ Headroom ±6,5 core. Box nyaris idle — ini kondisi Fase 1.3–1.5
 (canary). Tidak ada risiko kapasitas pada tahap ini.
 
 ### 7.2 Beban puncak yang direncanakan (50 stream, prep penuh, cap ditegakkan)
+
+> **SUPERSEDED — KOREKSI M8 (Cycle 25).** Tabel ini riwayat
+> (v1.0): live 50 stream yang benar ≈9,3 core all-in; 50 stream
+> + prep penuh TIDAK muat di 1 box. Lihat TCO §7.
 
 | Workload | CPU |
 |---|---|
