@@ -250,15 +250,243 @@ STATUS 07:00 WIB: item 1–6 SELESAI + TERVERIFIKASI (lihat §0.6); item 7–9 T
   Master sudah di d5e4764 (disk mendahului kode jalan b6ceb80 sebanyak
   6 commit incl. live-edit/GUI lane migrasi) — restart web/worker
   Master berikutnya akan memuat commit-commit itu.
-- FASE 1 BERJALAN (mandat lanjutan 06:39): worker B10 selesai +
-  terverifikasi (d5e4764, deploy menunggu persetujuan); worker audit
-  1.2 CTR + 1.3 governor kuota di-spawn 07:00, masih berjalan
-  (kode+tes, tanpa deploy/restart).
+- FASE 1 SELESAI (kode+tes+deploy): B10 IPv4 d5e4764 TER-DEPLOY +
+  aktif (7/7 RTMP IPv4); audit 1.2/1.3 8fdfcbb terverifikasi 16/16
+  (run live 19:00 malam ini). 1.1 Stage 2 = lane migrasi (e1ae9d0,
+  ter-deploy 07:22). 1.4 B10 = observasi pasca-fix. LANJUT FASE 2
+  (2.1–2.5) — worker di-spawn setelah pembukuan ini.
   Lane chat migrasi (JANGAN duplikasi): watchdog progres encoder,
   ingat penolakan embed, re-manifest cepat, diagnosis+perbaikan Stage 2,
   fitur edit jadwal live.
 - Skor solid: BELUM diukur ulang — live belum bisa naik selama klaster
   B10 masih jalan; ukur ulang setelah fix IPv4 ter-deploy + observasi.
+- INSIDEN PUBLISH 07:06 (lantai 0 FAILED jebol 1x): task 5142 NO 267
+  (Rock Kenangan) FAILED "database is locked" di transisi
+  DOWNLOADING_ASSETS→RENDERING (belum ada video, kuota direfund via
+  release_quota_units). AKAR: "database is locked" TIDAK ADA di daftar
+  transient _is_infra (worker/autonomous_daemon.py:1201-1205) sehingga
+  auto-retry 1x tidak terpicu. Cakupan 25 Nov: 27 error lock (web 22,
+  worker 3, live 2); lock dipegang 10–30+ dtk (UPDATE retry koordinator
+  gagal timeout 30 dtk, sukses timeout 90 dtk). RETRY MANUAL SELESAI:
+  backup pre5142retry + UPDATE → QUEUED/AUTO_RETRY, jadwal 07:19:27 WIB
+  (replikasi persis jalur auto-retry kode). Fix kelas → Fase 2.5
+  (tambah "database is locked" ke _is_infra + audit penulis DB).
+- INSIDEN KE-2 07:15: task 5196 NO 42 FAILED "database is locked" —
+  TAPI video SUDAH terbit 07:10:44 (ID f45aF9sRBng; bukti: log PUBLISHED
+  + ledger VIDEO_INSERT 07:07:24 + thumbnail 07:10:43 + youtu.be 303).
+  Gagalnya di tulis status PASCA-upload. DIPULIHKAN 07:27: backup +
+  UPDATE → PUBLISHED (tanpa upload ulang, hindari duplikat) + entri
+  log MANUAL_RECOVERY (tertulis 2x — percobaan pertama terputus broken
+  pipe tapi ternyata sudah jalan; pelajaran: broken pipe ≠ gagal,
+  selalu cek state sebelum ulangi; UPDATE berguard, append log belum).
+  FAILED hari ini kembali 0; PUBLISHED 12 (07:30). Vault NO 42
+  (MV-4375018191F9F7AC): used 3.300 = 5196 (1.650, terpakai sah) +
+  5078 (1.650, reserve bocor? — 5078 di-heal ke QUEUED tanpa release;
+  verifikasi ke Fase 2.5).
+- RESTART 07:21:08 (worker+live Master) + 07:22:42 (live+prep VPS 8)
+  = AKTIVASI 4 FIX LANE MIGRASI yang DISETUJUI user di chat migrasi
+  (watchdog ed81681, embed d5c8e8c, re-manifest 1188e9b, Stage 2
+  e1ae9d0) — BUKAN restart liar. Atribusi terverifikasi: sudo log
+  ubuntu `systemctl restart masjavas-os-worker.service
+  masjavas-live.service` 07:21:08 + MEMORY.md chat migrasi. Dampak:
+  4 tugas + 1 job ingestion di-heal ke QUEUED (5078 RENDERING dll.);
+  harmonizer 07:21:55 selaraskan 241 saluran; quotaExceeded sync
+  3 channel 07:22:32 (vault habis, non-fatal). "Klaster 07:23"
+  yang sempat tercatat = FASE RECOVERY restart ini, BUKAN klaster B10
+  (koreksi: jangan hitung sebagai kematian B10).
+- FIX IPv4 B10 TER-DEPLOY + AKTIF + **TERVERIFIKASI HILANGKAN KLASTER**:
+  d5e4764 ancestor HEAD 23de8d1; ss 07:28: 7/7 RTMP IPv4
+  (142.251.x.x / 192.178.183.134), 0 IPv6; 7/7 STREAMING. OBSERVASI
+  30 MNT 07:52: **0 PRE-MORTEM non-orphan** sejak restart 07:22:42
+  (~3,3 siklus klaster — pola lama akan membunuh ~15 encoder),
+  0 RTMP IPv6, load 5,91. Klaster B10 DINYATAKAN HILANG. KOREKSI
+  atas §0.6: "klaster 07:23" bukan klaster (recovery restart).
+  Sinyal campuran lane migrasi (645 EOF audio/FIFO vs 034 Connection
+  reset) TIDAK terwujud pasca-fix — 645 selamat 30 mnt; EOF
+  kemungkinan gejala sekunder stall yang sama, bukan mekanisme ke-2
+  (tetap pantau; bila 645 mati sendiri di masa depan, selidiki lagi).
+- FASE 1.2/1.3 SELESAI + TERVERIFIKASI: commit 8fdfcbb (CTR nyata
+  dari metrik reach Analytics + governor 1000 unit/vault/hari-PT,
+  per-call check, marker AUDIT_CAP/AUDIT_QUOTA_EXCEEDED; 5 file,
+  914+/79-). Tes baru 16/16 SAYA jalankan ulang (pytest Master —
+  pytest TIDAK ADA di VPS 8); regresi tetangga 12 lolos + 2 gagal
+  PRE-EXISTING (gagal juga di commit induk d5e4764, dibuktikan via
+  worktree). Diagnosis: CTR di-hardcode 0 (7027a7f) setelah fabrikasi
+  views*22/0.0455 (5191621) dihapus. Ledger: audit hanya ~1–5 unit/
+  vault (BUKAN pencuri kuota — hipotesis audit-makan-kuota GUGUR).
+  Run audit 19:00 malam ini = verifikasi live (timer oneshot pakai
+  kode baru tanpa restart).
+- HISTOGRAM JADWAL 07:25 (198 QUEUED): 07–13: 61 tugas; gap 14–15
+  (jendela reset PST 15:00); 16–23: 137 tugas; hanya 3 tepat 19:30.
+  Proyeksi kasar: pagi feasible (~9,4/jam vs kapasitas ~12,8/jam);
+  sore butuh ~17/jam (di atas kapasitas) → hari ini kemungkinan
+  ~170–200 PUBLISHED (bisa di bawah lantai 206 — proyeksi, bukan
+  pasti; kapasitas kasar 3 slot × ~14 mnt/tugas).
+- CATATAN: unit file prep di disk CPUQuota=400% adalah NILAI ASLI
+  (bukan perubahan tak teratribusi) — efektif 200% berasal dari
+  drop-in system.control item 4. Checkout Master kini 776648a
+  (lane live-edit commit cepat); kode jalan worker/live = 23de8d1
+  (restart 07:21), web = b6ceb80 (restart 06:17; UI live-edit belum
+  aktif — keputusan lane migrasi).
+
+### 0.7 Verifikasi Fase 2 per 25 Nov ~08:00 WIB (terverifikasi koordinator)
+
+- 2.1 + 2.2 DITERIMA — commit `e17a6c0` (10 file, +1095/−52),
+  tes baru 13/13 + 18/18 saya jalankan ulang (Master, pytest).
+  2.1: hitungan offline kini di-reset saat UNVERIFIED (cacat lama:
+  False→UNVERIFIED→False tetap membunuh) + logging terstruktur
+  probe/kill; breaker TIDAK dilonggarkan. 2.2: healer ingestion
+  ternyata TIDAK PERNAH JALAN sejak 23 Nov 20:39 — worker Master
+  `--lane publish`, tick healer mensyaratkan lane all/ingestion
+  (0 baris `[Failed Retry Healer]` di journal sejak 24 Nov).
+  Tick healer + deficit sweeper kini tanpa gate lane (DB-only).
+  #409 (FAILED, attempts=0) auto-retry pasca-aktivasi; #542
+  (COMPLETED_PARTIAL, UNPAIRED) bukan kandidat healer — jalur
+  sweeper/pairing. Protokol verifikasi 7 hari:
+  `docs/engineering/PROTOKOL_VERIFIKASI_SENTINEL_2_1.md`.
+- 2.5 DITERIMA — commit `0eb8bab` (13 file, +833/−246), tes baru
+  12/12 saya jalankan ulang. "database is locked" masuk `_is_infra`
+  + retry decorator lintas proses + release/reconcile ber-retry.
+  KOREKSI: heal SUDAH me-release reservasi via
+  `reconcile_vault_quota_with_ledger` — hipotesis bocor 5078
+  terkoreksi (celahnya: reconcile sendiri tanpa retry).
+  Skrip patch idempotent: `engineering/scripts/patch_dblock_fase25.py`.
+- 2 GAGAL `TestHealerBlockedResume` (celah_abc) TERBUKTI
+  pre-existing — gagal identik di worktree induk e17a6c0
+  (b2bbe2d). 2 gagal `test_live_fase_s_sentinel` di checkout
+  Master disebabkan PERUBAHAN TAK TER-COMMIT lane live-edit
+  (lolos di worktree segar HEAD 8c58229) — BUKAN regresi Fase 2;
+  lane live-edit wajib memperbaiki sebelum commit.
+- 2.3 + 2.4 DITERIMA 08:27 WIB (worker pengganti, 5 commit:
+  `1523da1` F1+F2a+F2b, `9bb9f1e` F3+F6, `f1f3e90` F4+F5,
+  `f9bb5bf` 2.4, `edbeb1f` fix F6) — tes baru 22/22 saya jalankan
+  ulang. AKAR CELAH AUDIO: janitor hapus audio in-flight —
+  terbukti deletion_audit NO 422: 11 file
+  JANITOR_UNPAIRED_QUARANTINE_CLEAN 05:08:33 + WORKSPACE_PRUNE_6H
+  05:36:43 saat job masih stage AUDIO; hardlink pool warisi mtime
+  lama (21–23 Nov) → janitor TTL 1 jam hapus. Fix: touch mtime
+  saat materialize, janitor lindungi job RUNNING, self-heal
+  re-materialisasi, sweeper smallest-gap-first, status baru
+  SKIPPED_VIDEO_MISSING (audio-murni 18/hari, bukan 30).
+  Bonus: NameError `settings` di prune 6H (skip-check tak pernah
+  jalan) diperbaiki. Koreksi topologi: risiko kini lebih rendah
+  (ingestion di prep_worker VPS 8 tanpa janitor sejak 07:21),
+  tapi unit repo tanpa `--lane` akan kembalikan lane ALL bila
+  reinstall. 2.4: R52 kedaluwarsa — semua service sudah systemd
+  kecuali hermes-bridge Restart=on-failure; HANYA 1 detached:
+  PID 1338969 `/tmp/stage2-driver-continuous.py` (6d17h, CPU
+  1:36, IDLE — kemungkinan superseded; keputusan RETIRE vs
+  REVIVE di keranjang). 6 gagal tes lain terbukti pre-existing
+  (worktree 36d1288). Temuan #3 (crash `athrow` slot 405/409)
+  belum terpin — perlu reproduksi, tidak ditebak.
+  **FASE 2 LENGKAP (kode+tes): 2.1, 2.2, 2.3, 2.4, 2.5 semua
+  DITERIMA.** Deploy gabung keranjang Fase 2.
+- Keranjang persetujuan Fase 2 (belum dieksekusi): Master pull +
+  restart web+worker (2.1/2.2/2.5) + kedua node pull + restart
+  live (sentinel + live_quota_guard). Verifikasi pasca-aktivasi:
+  journal `[Failed Retry Healer]` muncul; #409 FAILED→PENDING
+  ≤1 jam; grep "database is locked" target 0 (7 hari).
+- pytest 9.2.0 kini TERPASANG JUGA di VPS 8 (diinstal worker
+  audit) — catatan AGENTS.md sudah dikoreksi.
+
+### 0.8 Verifikasi Fase 3 per 25 Nov ~08:50 WIB (terverifikasi koordinator)
+
+- 3.1 + 3.7 DITERIMA — tanpa commit repo (skrip + laporan workspace).
+  3.1: CONNECTED 243/UNPAIRED 464; AZIZ 240 (51,7% backlog); 460/464
+  UNPAIRED tanpa vault (hanya 3–4 P1 siap pairing); 60 vault, 2 over-cap
+  (6 ch), 54 slot kosong (~2,8 minggu pada +20/minggu). Widget cocok;
+  fallback hardcode 327 usang (dashboard.html:177). Generator +
+  daftar prioritas + spek monitoring mingguan di workspace/engineering/.
+  3.7: PELAKU TERIDENTIFIKASI — lane Gravity ("Gravity PC executor",
+  javaswahid <dev@masjavas.com>, PC 180.254.108.116 via SSH root):
+  15 commit rebase 04:56:40–41 committer javaswahid, reflog push
+  04:57:01, receive.denyCurrentBranch=updateInstead, sesi SSH tutup
+  tepat detik push; diff ecde0ef↔87ab7cea kosong (no-op isi).
+- 3.2 DITERIMA — commit `668130c` (5 file, 742+/3−), tes 49/49
+  saya jalankan ulang (13 baru + 36 regresi). Pilot judul 5/5 +
+  QA 18/20 bersih (DB temp, Rp 20,52; 2 flag false positive angka
+  judul lagu). Guard double-submit (409 + idempotent + kunci UI).
+  **Fase C apply: TIDAK ADA KODENYA** (grep nol); rollback tak lengkap
+  (old_description kosong 102/102, tanpa kolom old_tags, thumbnail
+  backup 0/102). Paket keputusan Fase C (98 eligible, 10/batch,
+  4.900 unit) di workspace. Produksi tak tersentuh (DRAFT tetap 102).
+- 3.3 DITERIMA — commit `1005ced` (9 file, +1286/−21), tes 77/77
+  saya jalankan ulang (20 baru + 57 regresi). F4 prelive + HITL-2 +
+  F5 handoff (gate default OFF; graph Fase 1 tak diubah). Koreksi
+  data: event 20 CANDIDATE + 1 SCHEDULED + 1 REJECTED (bukan 21
+  SCHEDULED — seed 24 Nov me-reset state); 4 event malam ini belum
+  punya pack/schedule 25 Nov + media 63 pending. Aktivasi butuh:
+  keputusan F4, channel event (masih TBD) + stream key + sesi Master.
+- 3.4 DITERIMA — commit `4d680b3` (6 file baru, 1.956 baris, 0 file
+  existing diubah), tes 52/52 baru + 294/294 regresi -k hermes
+  saya jalankan ulang. Konsumen inbox dibangun, loop TIDAK
+  diregistrasi di api/main.py (aktivasi menunggu owner). Dogfood 5
+  dokumen pilot lolos validator. Uji live-staging cabut key BLOKIR
+  (butuh key uji + jendela 30 mnt); verdict pilot menunggu owner.
+  Koreksi: hermes_tasks kosong dijelaskan penghapusan Fase 0.3
+  (backup 05:21 ada), bukan misteri. DB live: mode manual, key VALID
+  (60 model), inbox 1 DRAFT / 0 APPROVED.
+- 3.5 DITERIMA — commit `c724c3a` (26 file), tes pemindai 3/3
+  saya jalankan ulang. 0 rahasia aktif di working tree.
+  **5 PIN operator TERBUKTI SAMA dengan produksi** (hash cocok —
+  verifikasi independen, hanya boolean dicetak) → wajib rotasi.
+  PAT lama MASIH AKTIF (histori ecae97e) sampai user cabut.
+  Proposal deploy key SSH di docs/DEPLOY_KEY_SSH_PROPOSAL.md.
+- 3.6 DITERIMA — tanpa commit repo (skrip workspace). Restore drill
+  PASS (saya run ulang: 5,5 dtk, integrity ok, 12 tabel cocok,
+  FK 312 pra-eksis). 3 alert siap (disk/kuota/ghost-kill, spek cron)
+  + panduan UptimeRobot (/healthz 200). Temuan: sentinel_kill_history
+  live berisi 29 baris ID uji (kill_at 05:36–07:54 WIB — koreksi klaim
+  worker 08:26–08:28), tulisan tes era Fase 2.1 ke DB live; backup
+  04:25 = 0 baris (terkonfirmasi). Dampak fungsional NIHIL (query
+  per-task_id) tapi perlu dibersihkan (tulis DB → keranjang).
+- Crash athrow TERPIN — commit `87e3837` (tes regresi 5/5 saya
+  jalankan ulang) + `05b9380` (koreksi hitungan). Mekanisme TERBUKTI:
+  retry loop cea60b8 yield 2× pasca-athrow (RuntimeError menutupi
+  lock asli). Fix e14e6e2 SUDAH LIVE (0 athrow 25 Nov; lock 88×
+  tanpa athrow). Tanpa aksi baru.
+- Checkpoint 19:00/19:30 SIAP — skrip verify_audit_1900.py (8 cek)
+  + verify_task_5142.py (5 cek) + protokol; saya run ulang --pre
+  (exit 0) + --dry-run (5 FAIL tepat: C2/C3/C4/C5/C7). **GAP-1:
+  timer audit 18:00 UTC = 01:00 WIB — TIDAK ada run 19:00 WIB**
+  tanpa trigger manual (POST /api/audit/run-phase0 OWNER atau
+  systemctl start). 5142 QUEUED, jadwal live 20:00 (harmonizer
+  geser 19:30→19:35→20:00), verdict 20:30. Cron verifikasi one-time
+  dibuat: 19:05/19:20 audit, 20:00/20:30 5142 (goal-owned).
+- **KOREKSI AKTIVASI — guard 3.2 SUDAH LIVE di web Master:**
+  reflog Master 08:19–08:42 hanya commit (TANPA checkout) — pin
+  173adec hanya berlaku di merge VPS 8; restart web 08:40:19 memuat
+  working tree c724c3a (668130c commit 08:39:33). Kalender F4/F5
+  TIDAK aktif (kalender-web VPS 8 pin 173adec); konsumen Hermes
+  TIDAK aktif (belum diregistrasi). Bukti perilaku 409 belum
+  teramati (butuh 2 run bersamaan).
+- Restart gabungan SELESAI + TERVERIFIKASI parent 08:50 (kedua node;
+  VPS 8 live 1743566 restart 08:43:30, prep 08:44:16): 7/7 STREAMING
+  + 7 RTMP, GDRIVE_URL aktif (MONA bisa Start #1795570268004),
+  publish 26/0 (5254 slot 472 sempat FAILED 08:36 'token tidak
+  ditemukan', pulih PUBLISHED 08:45 via retry operator), Stage 2
+  DONE 1395. Caveat: load VPS 8 10,46/7,62/7,34 (load1 di atas
+  8 core) pasca-restart.
+- **FASE 3 LENGKAP (kode+tes): 3.1–3.7 + athrow + checkpoint semua
+  DITERIMA.** Total tes baru Fase 3: 20 (3.3) + 13 (3.2) + 52 (3.4) +
+  3 (3.5) + 5 (athrow) = 93, semua hijau di verifikasi independen
+  (+ 77/49/294 regresi tetangga).
+- Keranjang persetujuan Fase 3 (gabung keranjang berjalan; belum
+  dieksekusi): (a) cabut PAT lama + rotasi 5 PIN operator (USER-only);
+  (b) denyCurrentBranch updateInstead→refuse (L3); (c) penetapan vault
+  460 ch + pipeline vault baru + target mingguan + cron monitoring
+  pairing; (d) 6 keputusan Fase C + bangun applyer/snapshot/rollback
+  (L3, 1–2 hari); (e) keputusan F4 + channel event + stream key/sesi;
+  (f) aktivasi konsumen Hermes + restart web + uji live cabut-key
+  (key uji + jendela 30 mnt) + verdict pilot; (g) keputusan deploy key
+  SSH; (h) 3 cron alert + drill bulanan + akun UptimeRobot;
+  (i) bersihkan 29 baris uji sentinel_kill_history + 312 orphan FK;
+  (j) trigger manual audit 19:00 ATAU geser checkpoint ke 01:00
+  26 Nov; (k) seed Kalender jangan reset state event (perbaikan kecil);
+  (l) bersihkan 87 baris CTR fabrikasi video_audit. Tetap parkir:
+  item 7–9 (1080p, akar readonly, URL relay 034), RETIRE vs REVIVE
+  stage2-driver (unit systemd sudah ada di repo, commit 08:21:06),
+  D1–D6 (belum ditulis, butuh restart aktivasi tersendiri).
 
 ## 1. Status awal (terverifikasi 04:35–05:02 WIB)
 
@@ -467,6 +695,13 @@ Skor diukur ulang setelah tiap fase dari data live, dengan rubrik yang sama
 - Bukti: presence diperbaiki (`d8af0ba`); `save_bg_job` cacat yang sama;
   ledger audit gagal tulis readonly; batch 100 mati total karena
   `record_usage` di luar try/except (sudah diperbaiki di B2).
+  BUKTI BARU 25 Nov 07:06: task 5142 NO 267 FAILED "database is locked"
+  (transisi DOWNLOADING_ASSETS→RENDERING); 27 error lock hari itu
+  (web 22, worker 3, live 2); lock dipegang 10–30+ dtk. Titik awal
+  konkret: tambah "database is locked" ke daftar transient _is_infra
+  (worker/autonomous_daemon.py:1201-1205) agar auto-retry 1x berlaku;
+  verifikasi update_task_status tahan lock (retry internal) agar
+  re-queue tidak gagal diam-diam (except: pass).
 - Target: 0 "database is locked" di log web/worker/live selama 7 hari
   (kecuali transient startup); semua tulis DB dari event loop dipindah
   off-loop atau ber-retry.
@@ -475,7 +710,7 @@ Skor diukur ulang setelah tiap fase dari data live, dengan rubrik yang sama
   (tulis <2 detik saat DB terkunci).
 - Verifikasi: grep log 7 hari; tes regresi hijau.
 
-## 7. Fase 3 — P2 (2–4 minggu) — DITUNDA sampai livestreaming beres (perintah 05:30)
+## 7. Fase 3 — P2 (2–4 minggu) — SELESAI kode+tes 25 Nov ~08:50 (verifikasi §0.8); aktivasi menunggu keputusan user
 
 ### 3.1 Pairing 466 channel UNPAIRED — Operator + Muse, berkelanjutan
 - Bukti: CONNECTED 241/707 (34%).
