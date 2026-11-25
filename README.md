@@ -279,11 +279,26 @@ owner/redaksi sebelum dipublikasikan): `PROMPT_CHAT_UTAMA_PERBAIKAN_
 NONSTOP_SOLID_100_2026-11-25.md` (dokumen kanonis mandat D33, memuat IP
 publik Master) + `PROGRESS_IMPLEMENTASI_LIVE_STREAMING.md` (memuat IP
 publik Master + IP publik operator). KOREKSI mengikat siklus ini:
-angka ghost-kill 785 TANPA SUMBER di DB/kode (berhenti kutip sebagai
-fakta keras); klaim "TERBANTAH" Hermes soal PIN salah sasaran (rotasi
-tetap diperlukan; rotasi PIN OWNER-ONLY per aturan 15:03).
-R62–R67 baru, D33–D34 baru, OQ-101–OQ-105 baru (OQ-105 TERJAWAB,
-OQ-099 + OQ-056 TERJAWAB SEBAGIAN).
+angka ghost-kill 785 BENAR sebagai total historis beku (journal Master
+22 Nov 19:08 → 24 Nov 17:39, 785 baris "Menghentikan ghost process",
+terverifikasi ulang via journalctl ~15:30; DB kosong = kondisi yang
+diharapkan — kutipan benar di R41; pernyataan awal siklus "785 TANPA
+SUMBER" DITARIK); klaim "TERBANTAH" Hermes soal PIN salah sasaran
+(rotasi tetap diperlukan; rotasi PIN OWNER-ONLY per aturan 15:03).
+R62–R67 baru, D33–D34 baru, OQ-101–OQ-105 baru (OQ-105 TERJAWAB —
+sumber = journal, bukan DB/kode; OQ-099 + OQ-056 TERJAWAB SEBAGIAN).
+Gelombang 1 SELESAI ~15:30 (Opsi 5 0,1291; M8 replikasi 0,1784; CTR
+dibersihkan 87 baris, bukti live tertunda; R61 eksposur Tailnet-only,
+penutupan L3; S-01 rollout 85 key, bulk-create dilarang; 707 F5 belum
+terverifikasi server; publish 96/1). Gelombang 2 Fase 1 SELESAI ~15:27
+(S-06 lock 177/hari, 0 bukti gagal publish → L3 Opsi C; S-07 klaim
+kadaluwarsa, throttle sudah live 2bad441; S-08 plafon ~250 render/hari,
+bottleneck hari ini bahan bukan render; S-09 Gemini ~2–3%, bukan
+bottleneck; S-10 N+1 81% jinak; DB 164,7 MiB, ~500 MB ±17 Des, 312
+pelanggaran FK; semua perbaikan struktural = L3; HEAD 8b3e622 Opsi 1
+live). Thumb-pilot 15:21: anomali kuota kini 3/4 vault (48/284/270);
+--days DIABAIKAN mode sync-only (kode l.1337); keputusan user menunggu
+(a/b); cron 26 Nov 15:10 WIB.
 
 ## Ringkasan arsitektur target
 
