@@ -1,6 +1,11 @@
 # MODEL KAPASITAS SUMBER DAYA VPS 8 — MASJAVAS TUBE OS V2
 
 **Status:** DRAFT — model perencanaan, BUKAN konfigurasi produksi.
+**Versi:** 1.2 — 25 Nov 2026, 22:50 WIB (Cycle 26: + verdict
+drift waktu M8 — laju per-stream BERGANTUNG JENDELA WAKTU
+(siang ~0,12–0,13; sore/malam ~0,16–0,17); lantai perencanaan
+0,175 TETAP; OQ-TCO-5 TERJAWAB, OQ-TCO-6 TERJAWAB SEBAGIAN;
+revisi penuh v2.0 tetap menunggu V2-008).
 **Versi:** 1.1 — 25 Nov 2026, 18:50 WIB (Cycle 25: + KOREKSI M8 —
 angka live/kapasitas §1/§2/§3.1/§7.2/§7.3 SUPERSEDED; otoritas
 biaya scale-up kini `MASJAVAS_TCO_MODEL.md` §7).
@@ -58,6 +63,42 @@ siklus berikut SETELAH hasil Opsi 1/Opsi 5 + V2-008; sampai
 saat itu, §3.1/§7.2/§7.3 di bawah dibaca sebagai RIWAYAT, bukan
 perencanaan. Pertanyaan terbuka: OQ-TCO-6 (rasio penghantaran
 host jangka panjang — butuh verifikasi independen).
+
+## KOREKSI M8 — LANJUTAN (Cycle 26: verdict drift waktu, 25 Nov ~20:54 WIB)
+
+Sumber: diagnosis selisih M8 sesi koordinator D33 (laporan
+~20:10 + soliditas ~20:50, `~/memory/2026-11-25.md`).
+
+**Verdict: selisih +36% (0,120 → 0,1637) = DRIFT WAKTU, bukan
+efek konfigurasi.** "A2 = 0,120" = mean jendela pagi/siang;
+"Tuas 1 = 0,1637" = mean jendela sore/malam. Laju instan 088
+sudah 0,1459 (15:42) dan 0,1447 (17:54) — identik; kenaikan
+0,145 → ~0,17 terjadi 18:00–19:30 tanpa perubahan konfigurasi,
+lalu turun ke 0,146 (19:55–20:57). H1 umur proses TERTOLAK;
+H2 RTMP/TCP dominan TERKONFIRMASI (mux0:flv 62% CPU) tapi
+penyebab kenaikan TAK TERBUKTI; H3 fase konten TERTOLAK
+definitif; H4 host/penjadwalan berubah menurut waktu
+TERKONFIRMASI sebagai penjelasan terbaik (semua encoder +
+supervisor ikut naik; korelasi M8–load −0,399).
+
+**Yang berubah di model ini:**
+
+- Laju per-stream adalah FUNGSI JENDELA WAKTU: pagi/siang
+  ≈ 0,12–0,13; sore/malam ≈ 0,16–0,17. Angka "0,1746" (A2)
+  dan "0,1637" (Opsi 1, Tuas 1) keduanya adalah mean jendela
+  sore/malam — JANGAN dibandingkan dengan "0,120" (mean
+  pagi/siang) sebagai bukti efek konfigurasi.
+- **Lantai perencanaan 0,175 core/stream TETAP** — otoritas
+  biaya tetap TCO §7 (v1.2 §7.7). Opsi 1 hemat feeder ~0,055
+  kotor, bersih ~0,011 dalam jendela yang sama.
+- OQ-TCO-5 **TERJAWAB** (lantai tidak berubah); OQ-TCO-6
+  **TERJAWAB SEBAGIAN** (kerja terhantar naik 4,38 → 4,66
+  core/dtk; efisiensi per wakeup yang berubah, bukan kapasitas;
+  verifikasi independen rasio host tetap menunggu).
+- **D84 (owner ~20:54): TETAP 2 BOX** sampai solid 100% —
+  opsi 3 box DITUNDA; cap $34,67 TETAP mengikat.
+- Revisi penuh v2.0 TETAP menunggu V2-008 (benchmark belum
+  jalan — butuh SSH/sesi interaktif).
 
 ## Legenda label klaim
 
