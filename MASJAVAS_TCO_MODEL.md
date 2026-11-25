@@ -1,5 +1,7 @@
 # MODEL TOTAL COST OF OWNERSHIP (TCO) — MASJAVAS TUBE OS V2
 
+**Versi:** 1.1 — 25 Nov 2026, 18:50 WIB (Cycle 25: tambah §7 scale-up
+pasca-M8; §3 rujuk §7; OQ-TCO-5/6 baru).
 **Versi:** 1.0 — 22 Nov 2026, 13:05 WIB (sprint item #7).
 **Sumber:** `PLAN_PENAMBAHAN_VPS8_2026-11-22.md` §7,
 `MASJAVAS_COST_REGISTER.md`, `ENGINEERING_READINESS_DASHBOARD.md`.
@@ -108,7 +110,9 @@ bukan harga panel — labelnya mengikuti sumbernya (DF).
 Semua skenario memakai harga bulanan (bukan kontrak 12 bulan)
 kecuali dinyatakan lain. "Yang diketahui" = jumlah komponen yang
 punya angka; "yang belum diketahui" = komponen BELUM DIHITUNG yang
-tetap harus ditambahkan begitu ada angkanya.
+tetap harus ditambahkan begitu ada angkanya. Skenario di bawah
+adalah 2-box (Master + 1 VPS 8); untuk biaya di atas 2 box
+(scale-up live), lihat §7.
 
 ### Skenario MINIMUM — dua box saja
 
@@ -200,6 +204,8 @@ Sensitivitas ini BUKAN rekomendasi mengambil kontrak.
 9. Keputusan owner soal cakupan cap (§4 temuan #2) — DIPUTUSKAN
    22 Nov 13:13 WIB: cap mencakup SELURUH TCO.
 10. Keputusan owner soal cadangan 10% [PR] (terima / ubah / tolak).
+11. Rekonsiliasi §7 scale-up pasca-M8 — SELESAI Cycle 25
+    (25 Nov 18:50 WIB); hitung ulang bila OQ-TCO-5/6 terjawab.
 
 ## 6. Pertanyaan terbuka
 
@@ -217,3 +223,110 @@ Sensitivitas ini BUKAN rekomendasi mengambil kontrak.
 4. **[OQ-TCO-4]** Harga perpanjangan KEIN dan harga paket Dahono
    tidak tercatat di dokumen mana pun — apakah perlu dicari
    sebelum V2-009, atau tetap BELUM DIHITUNG karena D1 DITUTUP?
+
+## 7. Scale-up live pasca-M8 — biaya per milestone stream (REKONSILIASI Cycle 25)
+
+**Status bagian ini:** REKONSILIASI — menggantikan angka scale-up
+lama di dokumen program (RENCANA FINAL §4 + capacity model §3.1/
+§7.2) dengan matematika diagnosis M8. Angka di bawah adalah
+INFRASTRUKTUR SAJA (box live + Master); per §1 cap = seluruh TCO,
+jadi setiap milestone di atas 1 box sudah DI ATAS cap sebelum
+storage/domain dihitung — angka di bawah adalah LANTAI, bukan TCO
+penuh. Storage/domain per box tambahan BELUM DIHITUNG.
+
+### 7.1 Asumsi (sumber: `DIAGNOSIS_M8_2026-11-25.md`)
+
+| Asumsi | Nilai | Label |
+|---|---|---|
+| Biaya per stream, AAC-copy (steady-state, NO 88) | 0,175 core (feeder 0,055 + encoder 0,120) | DOCUMENTED (30 interval/33,5 mnt, delta-ticks /proc; M8 §1 + §4) |
+| Mean armada era AAC-copy (estimasi, bila semua stream pindah) | ~0,18–0,20 core/stream | DOCUMENTED (M8 §4.1 — 088 adalah kasus termurah; BUKAN angka terukur armada) |
+| Supervisor live per box | 0,18 core | DOCUMENTED (M8 §1.1) |
+| Kapasitas terpakai per box | 3,0–3,5 core (70% dari 4,3–5,0 core/dtk yang terhantar) | DOCUMENTED (M8 §5–§6; rasio penghantaran host 0,53–0,62, bisa berubah menurut waktu/host — verifikasi independen disarankan sebelum jadi konstanta) |
+| Harga box live (VPS 8, bulanan) | $18,65/bln incl. pajak | DF (listing; belum verifikasi panel — V2-009 F.1) |
+| Harga Master | $16,02/bln incl. pajak | ESTIMASI (belum verifikasi panel) |
+| Ambang M8 0,15 core/stream | BELUM diputuskan (D34 MENUNGGU) | OWNER DECISION REQUIRED — anggaran realistis per M8 §6(b) adalah ~0,17–0,18 |
+
+### 7.2 Tabel milestone (biaya infrastruktur saja)
+
+| Milestone | Core feeder+encoder | All-in (+supervisor per box) | Box live | $/bln (box live + Master $16,02) | vs cap $34,67 |
+|---|---|---|---|---|---|
+| **16–19 stream (1 box, dalam cap)** | 2,8–3,3 | 3,0–3,5 | **1** | **$34,67 (cap)** | **PAS** |
+| 50 stream | 8,75 | 9,3 | **3 (ketat) / 4 nyaman** | **$71,97** / $90,62 | LEBIH $37,30 / $55,95 |
+| 100 stream | 17,5 | 18,6 | **6** | **$127,92** | LEBIH $93,25 |
+| 696 stream | 121,8 | 129,4 | **35–41** | **$668–$781** | LEBIH $634–$746 |
+
+Perhitungan: $/bln = $16,02 + N × $18,65 (N = jumlah box live).
+3 box: 16,02 + 55,95 = 71,97; 4 box: 16,02 + 74,60 = 90,62;
+6 box: 16,02 + 111,90 = 127,92; 35 box: 16,02 + 652,75 = 668,77;
+41 box: 16,02 + 764,65 = 780,67. Tabel ini menyalin
+`DIAGNOSIS_M8_2026-11-25.md` §6(b) (supervisor dihitung per box).
+
+### 7.3 Yang SUPERSEDED oleh tabel ini
+
+- RENCANA FINAL §4 (D28, 25 Nov 09:24): "100 stream = 2 box
+  ≈ $53,32; cap cukup sampai 50 stream (bila A2 ≤0,07)" —
+  **SUPERSEDED**. Asumsi dasarnya (kapasitas efektif 5,6 core/box;
+  A2 ≤0,07 core/stream) gugur oleh M8: A2 terukur 0,1746 (bukan
+  ≤0,07) dan kapasitas efektif terukur 3,0–3,5 core/box (bukan 5,6).
+  Bahkan pada 0,15 pun 50 stream butuh 3 box ($71,97); pada 0,07
+  pun butuh 2 box ($53,32).
+- Capacity model §3.1 + §7.2 (v1.0): "Live 50 stream = 2,0 core;
+  total puncak ≈7,4 core; headroom ±0,6" — **SUPERSEDED** (angka
+  live 50 stream yang benar ≈9,3 core all-in; 50 stream + prep
+  penuh TIDAK muat di 1 box — melebihi kapasitas terpakai 3,0–3,5).
+  Lihat KOREKSI M8 di dokumen tersebut (Cycle 25).
+- Angka "696 pasca-A2 = 12–13 box ≈ $224–243" (RENCANA FINAL
+  changelog #2) — **SUPERSEDED** oleh 35–41 box $668–$781.
+- Milestone "50 stream stabil dalam cap" (RENCANA FINAL §5) —
+  **TIDAK BERLAKU** pada efisiensi sekarang. Target 50-dalam-cap
+  butuh BOTH: per-stream ≤ ~0,07 core DAN kapasitas efektif
+  ≥ ~3,7 core/box — keduanya belum terbukti (M8 §6(b)). JANGAN
+  janjikan.
+
+### 7.4 Sensitivitas: apa yang bisa mengubah tabel ini
+
+- **Opsi 1 (hapus feeder; encoder baca prebuilt langsung):**
+  harapan −0,055/stream → ~0,12. Pada 0,12: 50 stream = 6,0 +
+  0,36–0,54 = 6,36–6,54 core → 2 box (bila kapasitas 3,5) atau
+  3 box (bila 3,0) → $53,32–$71,97/bln — MASIH di atas cap.
+  Opsi 1 TIDAK mengembalikan 50-dalam-cap; ia hanya menurunkan
+  3 box → 2–3 box. Status: koordinator Opsi 5+1 berjalan (D33);
+  Opsi 1 belum ada bukti jalan (Cycle 24).
+  [PROPOSAL — aritmetika dari asumsi M8, bukan pengukuran baru]
+- **Opsi 5 (uji diskriminan klon encoder 60 dtk):** SELESAI
+  14:53:48–14:54:48, 0,1291 (ENC 0,0672 + FEED 0,0619) — uji
+  60 detik, BUKAN angka produksi; jangan dipakai sebagai
+  per-stream produksi. [DOCUMENTED — Gelombang 1, Cycle 24]
+- **Revisi ambang D34 (0,15 → ~0,17–0,18):** mengubah ambang
+  GO/NO-GO Fase 2, TIDAK mengubah jumlah box di tabel ini
+  (tabel memakai 0,175 terukur). [OWNER DECISION REQUIRED]
+- **Mean armada 0,18–0,20 (bukan 0,175):** 50 stream tetap 3–4
+  box (pada 0,20: 10,0 + 0,54 = 10,54 core → 4 box pada
+  kapasitas 3,0); 100 stream tetap 6–7 box. Rentang tabel di
+  atas adalah kasus optimistis (0,175).
+  [PROPOSAL — aritmetika]
+- **Rasio penghantaran host (0,53–0,62):** bila verifikasi
+  independen (grafik Contabo / uji beban box kosong) menunjukkan
+  rasio berbeda, kapasitas terpakai 3,0–3,5 ikut berubah — tabel
+  ini harus dihitung ulang. [OPEN QUESTION — OQ-TCO-6]
+
+### 7.5 Konsekuensi untuk skenario §3
+
+Skenario MINIMUM/EXPECTED/WORST di §3 adalah 2-box (Master +
+1 VPS 8) dan TIDAK berubah. Scale-up di §7 adalah biaya TAMBAHAN
+di luar skenario itu: setiap box live tambahan = +$18,65/bln
+infrastruktur saja, sebelum storage/domain per box (BELUM
+DIHITUNG). Karena cap = seluruh TCO (§1), milestone 50 stream
+($71,97 infra saja) sudah melampaui cap sebesar $37,30/bln
+SEBELUM satu dolar pun storage/domain — keputusan scale-up
+adalah keputusan anggaran baru, bukan optimasi dalam cap.
+
+### 7.6 Pertanyaan terbuka baru
+
+5. **[OQ-TCO-5 — BARU Cycle 25]** Apakah hasil Opsi 1 / Opsi 5
+   mengubah lantai per-stream 0,175? (Jawaban menunggu koordinator
+   Opsi 5+1; bila Opsi 1 lolos ≤0,15, hitung ulang §7.2.)
+6. **[OQ-TCO-6 — BARU Cycle 25]** Berapa rasio penghantaran host
+   VPS 8 yang sebenarnya dalam jangka panjang (0,53–0,62 terukur
+   1 jendela 33,5 mnt — butuh verifikasi independen via grafik
+   Contabo / uji beban box kosong, BUKAN VPS 8 live)?
