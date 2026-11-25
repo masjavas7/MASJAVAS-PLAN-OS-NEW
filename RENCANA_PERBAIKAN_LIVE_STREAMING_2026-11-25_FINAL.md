@@ -6,6 +6,29 @@
 
 > Prinsip: **ukur dulu, baru skala.** Semua angka wajib diverifikasi di node yang bersangkutan (PID + RTMP + sentinel). Sitasi kode wajib `grep -n` — nomor baris bisa kedaluwarsa antar-commit.
 
+> ## KOREKSI M8 — 25 Nov 2026, 14:51 WIB (Cycle 24; direkonsiliasi Cycle 25)
+>
+> Dokumen ini DISETUJUI user (D28, 09:24) — angka di bawah TIDAK
+> ditulis ulang; koreksi ini adalah addendum yang mengikat dan
+> menggantikan angka biaya di §4 dan §5 untuk perencanaan.
+> **Yang gugur:** kapasitas efektif **5,6 core/box** (70% dari 8
+> nominal) → terukur **3,0–3,5 core/box** (70% dari 4,3–5,0
+> core/dtk yang terhantar); A2 **≤0,07 core/stream** → terukur
+> **0,1746** (feeder 0,0548 + encoder 0,1199).
+> **Angka yang berlaku kini (TCO §7, Cycle 25):** cap $34,67 =
+> maks **~16–19 stream**; 50 stream = **3 box $71,97** (4 nyaman
+> $90,62); 100 stream = **6 box $127,92**; 696 stream = **35–41
+> box $668–$781**. Angka §4 ("100 stream = 2 box ≈ $53,32; cap
+> cukup sampai 50 stream"; "696 pasca-A2 = 12–13 box ≈ $224–243")
+> dan milestone §5 ("50 stream stabil dalam cap bila A2 ≤0,07")
+> **SUPERSEDED**. Target 50-dalam-cap butuh BOTH ≤0,07
+> core/stream DAN ≥3,7 core/box — keduanya belum terbukti; JANGAN
+> janjikan. Jalan (b) di catatan §4 (A2 ≤0,07 → dalam cap) GUGUR
+> oleh hasil ukur; jalan (c) (prep ke Master, B1 opsi (a))
+> tetap berlaku sebagai rekomendasi (aktivasi L3 menunggu user).
+> Sumber: `DIAGNOSIS_M8_2026-11-25.md` §6(b); rekonsiliasi:
+> `MASJAVAS_TCO_MODEL.md` §7.
+
 ---
 
 ## Changelog FINAL (yang berubah dari v3)
