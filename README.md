@@ -181,6 +181,33 @@ sampai semua gerbang lolos.
   terimplementasi commit `b63b733` (14:29–14:43, 62→0, JS 6/6,
   render 200); 2 bug pra-eksis ditemukan (escapeHtml undefined,
   logo.svg 403 — R46).
+- `RENCANA_PERBAIKAN_APLIKASI_2026-11-25.md` — rencana perbaikan
+  aplikasi v1.4 (25 Nov 2026, 05:02 → 06:15): skor aplikasi 66/100;
+  LIVESTREAMING prioritas 1 (perintah user 05:30), Fase 1–3 non-live
+  DITUNDA sampai livestreaming beres; koordinator livestreaming
+  SELESAI 06:11 (15/15 item kode + 110 tes hijau, HEAD `b6ceb80`);
+  migrasi 6/6 selesai 05:30 (Master 0 ffmpeg, DB 6/6 STREAMING);
+  klaster kematian ~05:32 + 06:09 + 06:18 (B10, → R54) (D25).
+- `DESAIN_JADWAL_LIVE_EDITABLE.md` — desain jadwal live yang bisa
+  diedit, disimpan & dipakai ulang (25 Nov 2026, 06:40–06:42, 14
+  bagian + 2 lampiran): endpoint edit POST + hot-swap URL relay tanpa
+  matikan encoder (`LiveAudioRelayManager.request_source_swap`) +
+  antrean order lintas-node `live_task_orders` + optimistic locking
+  `config_version` + template + riwayat revisi & rollback 1 klik;
+  validasi sumber saat simpan; rollout 6 fase; implementasi
+  DISETUJUI 06:43 (koordinator Fase 0–5 berjalan; keputusan §14
+  default) (D27).
+- `PANDUAN_GUI_MODERN_MASJAVAS.md` — panduan GUI modern (25 Nov 2026,
+  BERLAKU untuk semua UI baru): 1 aksen emerald + 4 warna status;
+  tipografi 14/12/12-mono, teks <12px dilarang; maks 2 tombol per
+  baris + menu ⋯; form create → wizard 4 langkah; migrasi bertahap
+  5 tahap (D27).
+- `RENCANA_1080P_4_STREAM_2026-11-25.md` — rencana migrasi 720p →
+  1080p 4 stream live (25 Nov 2026, ~05:40): RENCANA, belum
+  dieksekusi, menunggu persetujuan per stream; encoder memakai
+  `-c:v copy` (output = resolusi file sumber, bukan kolom DB);
+  2 dari 4 sumber SUDAH 1080p (label DB salah); VPS 8 JENUH saat
+  rencana dibuat (load 14,3/8, 13 kematian encoder/jam).
 
 ## Ringkasan arsitektur target
 
