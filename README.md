@@ -250,6 +250,41 @@ Catatan: `LAPORAN_ATRIBUSI_PUSH_REBASE_2026-11-25.md` DITAHAN dari
 repo publik — memuat IP publik operator; butuh keputusan owner/redaksi
 sebelum dipublikasikan (R57–R61 baru, D28–D32 baru, lihat dashboard).
 
+### Dokumen baru Cycle 24 (25 Nov 2026, 14:50 WIB)
+
+- `DIAGNOSIS_M8_2026-11-25.md` — diagnosis M8 SELESAI + terverifikasi
+  (14:51): A2 prebuilt GAGAL 0,1746 core/stream (feeder 0,0548 +
+  encoder 0,1199), 25/30 interval >0,15; biaya = kernel+wakeup, bukan
+  kerja data ffmpeg; VPS 8 hanya menghantar ~4,3–5,0 core/dtk (bukan
+  8,0) — matematika rollout ditulis ulang (cap = maks ~16–19 stream;
+  50 = 3 box $71,97; 100 = 6 box $127,92; 696 = 35–41 box $668–$781).
+- `EVALUASI_B1_2026-11-25.md` — evaluasi B1 SELESAI (12:00–12:35,
+  read-only): rekomendasi opsi (a) pindah prep_worker ke Master
+  BERTAHAP (Stage 2 dulu, ingestion setelah soak 24–48 jam); opsi (b)
+  tidak bisa capai 50 stream secara aritmetika; prep VPS 8 praktis
+  mati (0,12 core, 0 ffmpeg, 50.412 yield/jam, 49 DONE/24 jam);
+  aktivasi = L3, menunggu persetujuan user.
+- `AUDIT_D1_METRIK_PER_STREAM_2026-11-25.md` — audit D1 Fase 3:
+  metrik per-stream + dashboard + alert Telegram (yang sudah ada vs
+  celah: frame drop dup/drop tidak di-parse, %CPU per-stream tidak
+  diekspos, `cpu_display` placeholder hardcode yang salah).
+- `PROMPT_HERMES_ANALISA_SOLID_100_2026-11-25.md` — prompt instruksi
+  untuk Hermes menganalisa aplikasi menuju solid 100% (14:32):
+  peran analyser-only, definisi solid 100% terukur per komponen +
+  scorecard 13 metrik, keadaan awal 66/100, 6 fase kerja, output
+  AnalysisBrief DRAFT.
+
+DITAHAN dari repo publik siklus ini (memuat IP publik — butuh keputusan
+owner/redaksi sebelum dipublikasikan): `PROMPT_CHAT_UTAMA_PERBAIKAN_
+NONSTOP_SOLID_100_2026-11-25.md` (dokumen kanonis mandat D33, memuat IP
+publik Master) + `PROGRESS_IMPLEMENTASI_LIVE_STREAMING.md` (memuat IP
+publik Master + IP publik operator). KOREKSI mengikat siklus ini:
+angka ghost-kill 785 TANPA SUMBER di DB/kode (berhenti kutip sebagai
+fakta keras); klaim "TERBANTAH" Hermes soal PIN salah sasaran (rotasi
+tetap diperlukan; rotasi PIN OWNER-ONLY per aturan 15:03).
+R62–R67 baru, D33–D34 baru, OQ-101–OQ-105 baru (OQ-105 TERJAWAB,
+OQ-099 + OQ-056 TERJAWAB SEBAGIAN).
+
 ## Ringkasan arsitektur target
 
 - **Master** (Contabo, 4 vCPU): control plane + publish + prep (sementara).
