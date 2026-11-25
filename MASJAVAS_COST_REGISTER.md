@@ -1,5 +1,7 @@
 # MASJAVAS COST REGISTER — MASJAVAS TUBE OS V2
 
+**Versi:** 1.3 — 25 Nov 2026, 18:50 WIB (Cycle 25: + rujukan
+rekonsiliasi scale-up ke `MASJAVAS_TCO_MODEL.md` §7.)
 **Versi:** 1.2 — 25 Nov 2026, 14:50 WIB (Cycle 24: + term panjang VPS 8 (12 bln $15,85 / 24 bln $14,92 — pesan user, OQ-056 TERJAWAB SEBAGIAN) + matematika scale-up pasca-M8 (cap = maks ~16–19 stream; 50 = 3 box $71,97; 100 = 6 box $127,92; 696 = 35–41 box $668–$781); angka RENCANA FINAL SUPERSEDED.)
 **Versi:** 1.1 — 22 Nov 2026, 13:05 WIB (sprint item #7: tambah
 §6 rujukan model TCO. Isi §1–§5 tidak berubah).
@@ -30,7 +32,7 @@ masing-masing.
 | Master Contabo Plus 4 | ±$16,02/bln (pra-pajak ±$14,43) | **ESTIMASI** | PLAN §7. **Harga Master ±$14,43 pra-pajak adalah ESTIMASI — belum verifikasi panel Contabo.** Verifikasi wajib sebelum pembelian VPS 8 (V2-009) |
 | VPS 8 Contabo Core (8 vCPU / 24 GB / 300 GB / 600 Mbit/s) | $18,65/bln + $2,66 setup sekali | DOCUMENTED FACT NOT YET REVALIDATED | PLAN §7 (listing). Belum verifikasi panel (Turnstile blokir browser cloud — butuh user) |
 | VPS 8 Contabo Core — term panjang | 12 bln $15,85/bln; 24 bln $14,92/bln (vs bulanan $18,65); varian NVMe 150 GB $20,54/bln | DOCUMENTED (pesan user 25 Nov 2026, verified extraction — bukan angka panel/invoice; OQ-056 TERJAWAB SEBAGIAN) | Pesan user 25 Nov 2026 |
-| Scale-up pasca-M8 (DIAGNOSIS_M8 14:51) | Cap $34,67 = maks ~16–19 stream (1 box + Master); 50 stream = 3 box $71,97 (4 nyaman $90,62); 100 stream = 6 box $127,92; 696 stream = 35–41 box $668–$781; target 50-dalam-cap butuh BOTH ≤0,07 core/stream DAN ≥3,7 core/box — keduanya belum terbukti | DOCUMENTED (diagnosis M8 terverifikasi, 30 interval/33,5 mnt) | DIAGNOSIS_M8_2026-11-25.md — SUPERSEDES angka RENCANA FINAL (100 stream = 2 box $53,32; cap cukup 50 stream) |
+| Scale-up pasca-M8 (DIAGNOSIS_M8 14:51) | Cap $34,67 = maks ~16–19 stream (1 box + Master); 50 stream = 3 box $71,97 (4 nyaman $90,62); 100 stream = 6 box $127,92; 696 stream = 35–41 box $668–$781; target 50-dalam-cap butuh BOTH ≤0,07 core/stream DAN ≥3,7 core/box — keduanya belum terbukti | DOCUMENTED (diagnosis M8 terverifikasi, 30 interval/33,5 mnt) | DIAGNOSIS_M8_2026-11-25.md — SUPERSEDES angka RENCANA FINAL (100 stream = 2 box $53,32; cap cukup 50 stream). Rekonsiliasi lengkap + sensitivitas Opsi 1/Opsi 5 + OQ-TCO-5/6: `MASJAVAS_TCO_MODEL.md` §7 (Cycle 25). |
 | **TOTAL (Master + VPS 8)** | **$34,67/bln (±Rp 634 rb)** | **OWNER DECISION — mengikat** | Ditetapkan user 21–22 Nov 2026. Bila total riil > $34,67: eskalasi, jangan lanjut diam-diam |
 | Setup sekali VPS 8 | $2,66 (±Rp 49 rb) | DOCUMENTED FACT NOT YET REVALIDATED | PLAN §7 |
 | Tambahan bersih vs hari ini | +$4,25/bln | DOCUMENTED FACT NOT YET REVALIDATED | Tencent $14,40/bln berakhir 21 Nov 2026 |
